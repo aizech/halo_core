@@ -65,7 +65,6 @@ def _decode_text(data: bytes) -> str:
 
 
 def _extract_pdf(reader: PdfReader) -> str:
-    texts: Iterable[str] = []
     buffer: list[str] = []
     for page in reader.pages:
         extracted = page.extract_text() or ""
