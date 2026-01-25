@@ -126,7 +126,9 @@ def delete_source_chunks(source_id: str, title: Optional[str] = None) -> None:
         table.delete(f"meta.title == '{_escape(title)}'")
 
 
-def rename_source(source_id: str, new_title: str, previous_title: Optional[str] = None) -> None:
+def rename_source(
+    source_id: str, new_title: str, previous_title: Optional[str] = None
+) -> None:
     """Rename all chunks for a source, falling back to title matching if needed."""
     if not source_id or not new_title:
         return

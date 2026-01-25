@@ -1,6 +1,5 @@
 """Streamlit entrypoint for the NotebookLM-style MVP."""
 
-
 from __future__ import annotations
 
 import json
@@ -211,7 +210,9 @@ def _load_studio_templates() -> List[StudioTemplate]:
     return templates or _default_studio_templates()
 
 
-def _normalize_studio_output_payload(payload: Dict[str, str] | str) -> Dict[str, object]:
+def _normalize_studio_output_payload(
+    payload: Dict[str, str] | str,
+) -> Dict[str, object]:
     if isinstance(payload, dict):
         return {
             "content": payload.get("content", ""),
@@ -314,7 +315,9 @@ def _sanitize_filename_base(text: str) -> str:
     return cleaned or "download"
 
 
-def _build_download_filename(title: str, timestamp: Optional[str], extension: str) -> str:
+def _build_download_filename(
+    title: str, timestamp: Optional[str], extension: str
+) -> str:
     if timestamp:
         try:
             parsed = datetime.fromisoformat(timestamp)
@@ -378,7 +381,10 @@ def _init_state() -> None:
     _sync_source_checkbox_state()
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = [
-            {"role": "assistant", "content": "Willkommen! Frag mich etwas zu deinen Quellen."}
+            {
+                "role": "assistant",
+                "content": "Willkommen! Frag mich etwas zu deinen Quellen.",
+            }
         ]
     if "studio_templates" not in st.session_state:
         st.session_state["studio_templates"] = _load_studio_templates()
@@ -537,6 +543,7 @@ def render_sources_panel() -> None:
         """,
         unsafe_allow_html=True,
     )
+
     def _open_add_sources_dialog() -> None:
         @st.dialog("Quellen hinzufügen")
         def _dialog() -> None:
@@ -554,12 +561,16 @@ def render_sources_panel() -> None:
                 label_visibility="collapsed",
                 key="dialog_search_query",
             )
-            if search_cols[1].button("➜", use_container_width=True, key="dialog_search_button"):
+            if search_cols[1].button(
+                "➜", use_container_width=True, key="dialog_search_button"
+            ):
                 if search_query:
                     st.session_state["dialog_search_trigger"] = True
             filter_cols = st.columns([0.3, 0.4, 0.3])
             filter_cols[0].selectbox("", ["Web", "YouTube"], key="dialog_search_source")
-            filter_cols[1].selectbox("", ["Schnelle Recherche", "Deep Research"], key="dialog_search_mode")
+            filter_cols[1].selectbox(
+                "", ["Schnelle Recherche", "Deep Research"], key="dialog_search_mode"
+            )
             filter_cols[2].write("")
             if search_query and st.session_state.get("dialog_search_trigger"):
                 results = ingestion.search_web(search_query)
@@ -569,7 +580,12 @@ def render_sources_panel() -> None:
                         st.markdown(f"**{result['title']}**  — {result['description']}")
                         st.caption(result["meta"])
                         if st.button("Übernehmen", key=f"dialog_web_result_{idx}"):
-                            _add_source(result["title"], result["type"], result["meta"], result.get("description"))
+                            _add_source(
+                                result["title"],
+                                result["type"],
+                                result["meta"],
+                                result.get("description"),
+                            )
                             st.toast("Quelle übernommen")
             st.markdown(
                 """
@@ -612,16 +628,24 @@ def render_sources_panel() -> None:
                 label_visibility="collapsed",
                 key="dialog_file_uploader",
             )
-            upload_meta = st.text_input("Metainfo", value="Upload • Heute", key="dialog_upload_meta")
-            if uploaded_files and st.button("Dokumente importieren", use_container_width=True, key="dialog_import"):
+            upload_meta = st.text_input(
+                "Metainfo", value="Upload • Heute", key="dialog_upload_meta"
+            )
+            if uploaded_files and st.button(
+                "Dokumente importieren", use_container_width=True, key="dialog_import"
+            ):
                 imported = 0
                 for file in uploaded_files:
                     try:
-                        payload = ingestion.extract_document_payload(file.name, file.getvalue())
+                        payload = ingestion.extract_document_payload(
+                            file.name, file.getvalue()
+                        )
                     except ValueError as exc:
                         st.error(f"{file.name}: {exc}")
                         continue
-                    _add_document_payload(payload, upload_meta or f"Upload • {datetime.now():%d.%m.%Y}")
+                    _add_document_payload(
+                        payload, upload_meta or f"Upload • {datetime.now():%d.%m.%Y}"
+                    )
                     imported += 1
                 if imported:
                     st.toast(f"{imported} Dokument(e) importiert")
@@ -633,13 +657,17 @@ def render_sources_panel() -> None:
                 placeholder=r"C:\\Users\\...\\Dokumente",
                 key="dialog_directory_path",
             )
-            dir_meta = st.text_input("Metainfo", value="Ordnerimport", key="dialog_directory_meta")
+            dir_meta = st.text_input(
+                "Metainfo", value="Ordnerimport", key="dialog_directory_meta"
+            )
             if st.button("Verzeichnis laden", key="dialog_directory_load"):
                 if not directory_path:
                     st.warning("Bitte einen gültigen Pfad eingeben.")
                 else:
                     try:
-                        documents = ingestion.load_directory_documents(Path(directory_path).expanduser())
+                        documents = ingestion.load_directory_documents(
+                            Path(directory_path).expanduser()
+                        )
                     except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
                         st.error(str(exc))
                     else:
@@ -647,41 +675,6 @@ def render_sources_panel() -> None:
                             _add_document_payload(payload, dir_meta)
                         st.toast(f"{len(documents)} Dateien importiert")
                         st.rerun()
-
-        _dialog()
-
-    def _open_rename_output_dialog(output_id: str, title: str) -> None:
-        @st.dialog("Studio-Ausgabe umbenennen")
-        def _dialog() -> None:
-            new_title = st.text_input(
-                "Neuer Titel",
-                value=title,
-                key=f"rename_output_input_{output_id}",
-            ).strip()
-            confirm_col, cancel_col = st.columns(2)
-            if confirm_col.button(
-                "Speichern",
-                key=f"confirm_output_rename_{output_id}",
-                use_container_width=True,
-            ):
-                if new_title:
-                    updated_outputs = []
-                    for item in outputs_list:
-                        if item.get("output_id") == output_id:
-                            updated_outputs.append({**item, "title": new_title})
-                        else:
-                            updated_outputs.append(item)
-                    st.session_state["studio_outputs"] = updated_outputs
-                    st.toast("Titel aktualisiert")
-                st.session_state["confirm_rename_output_id"] = None
-                st.rerun()
-            if cancel_col.button(
-                "Abbrechen",
-                key=f"cancel_output_rename_{output_id}",
-                use_container_width=True,
-            ):
-                st.session_state["confirm_rename_output_id"] = None
-                st.rerun()
 
         _dialog()
 
@@ -694,10 +687,18 @@ def render_sources_panel() -> None:
                 key=f"source_rename_input_{source_id}",
             )
             confirm_col, cancel_col = st.columns(2)
-            if confirm_col.button("Speichern", key=f"confirm_source_rename_{source_id}", use_container_width=True):
+            if confirm_col.button(
+                "Speichern",
+                key=f"confirm_source_rename_{source_id}",
+                use_container_width=True,
+            ):
                 st.session_state["confirm_rename_source_id"] = None
                 _rename_source(source_id, new_name)
-            if cancel_col.button("Abbrechen", key=f"cancel_source_rename_{source_id}", use_container_width=True):
+            if cancel_col.button(
+                "Abbrechen",
+                key=f"cancel_source_rename_{source_id}",
+                use_container_width=True,
+            ):
                 st.session_state["confirm_rename_source_id"] = None
                 st.rerun()
 
@@ -708,10 +709,14 @@ def render_sources_panel() -> None:
         def _dialog() -> None:
             st.write(f"{len(selected_ids)} Quelle(n) wirklich löschen?")
             confirm_col, cancel_col = st.columns(2)
-            if confirm_col.button("Löschen", key="confirm_bulk_delete_dialog", use_container_width=True):
+            if confirm_col.button(
+                "Löschen", key="confirm_bulk_delete_dialog", use_container_width=True
+            ):
                 st.session_state["confirm_bulk_delete"] = False
                 _delete_sources(selected_ids)
-            if cancel_col.button("Abbrechen", key="cancel_bulk_delete_dialog", use_container_width=True):
+            if cancel_col.button(
+                "Abbrechen", key="cancel_bulk_delete_dialog", use_container_width=True
+            ):
                 st.session_state["confirm_bulk_delete"] = False
                 st.rerun()
 
@@ -719,21 +724,29 @@ def render_sources_panel() -> None:
 
     def _open_delete_source_dialog(source_id: str, source_name: str) -> None:
         dialog_title = f"Quelle löschen: {source_name}"
+
         @st.dialog(dialog_title)
         def _dialog() -> None:
             st.write(f"Quelle **{source_name}** wirklich löschen?")
             confirm_col, cancel_col = st.columns(2)
-            if confirm_col.button("Löschen", key="confirm_remove_dialog", use_container_width=True):
+            if confirm_col.button(
+                "Löschen", key="confirm_remove_dialog", use_container_width=True
+            ):
                 st.session_state["confirm_delete_source_id"] = None
                 st.session_state["confirm_delete_source_name"] = None
                 _delete_sources([source_id])
-            if cancel_col.button("Abbrechen", key="cancel_remove_dialog", use_container_width=True):
+            if cancel_col.button(
+                "Abbrechen", key="cancel_remove_dialog", use_container_width=True
+            ):
                 st.session_state["confirm_delete_source_id"] = None
                 st.session_state["confirm_delete_source_name"] = None
                 st.rerun()
 
         _dialog()
-    if st.button("＋ Quellen hinzufügen", use_container_width=True, key="open_add_sources"):
+
+    if st.button(
+        "＋ Quellen hinzufügen", use_container_width=True, key="open_add_sources"
+    ):
         _open_add_sources_dialog()
     connector_options = list(connectors.AVAILABLE_CONNECTORS.keys())
     connector_selection = st.multiselect(
@@ -750,7 +763,9 @@ def render_sources_panel() -> None:
                 st.markdown(f"**{result.title}**  — {result.description}")
                 st.caption(result.meta)
                 if st.button("Importieren", key=f"connector_result_{idx}"):
-                    _add_source(result.title, result.type_label, result.meta, result.description)
+                    _add_source(
+                        result.title, result.type_label, result.meta, result.description
+                    )
     sources = st.session_state["sources"]
     if sources:
         all_selected = all(src.selected for src in sources)
@@ -813,12 +828,16 @@ def render_sources_panel() -> None:
                     st.download_button(
                         ":material/download: Herunterladen",
                         data=source_download,
-                        file_name=_build_download_filename(src.name, src.created_at, "md"),
+                        file_name=_build_download_filename(
+                            src.name, src.created_at, "md"
+                        ),
                         mime="text/markdown",
                         key=f"source_download_{src.id}",
                         use_container_width=True,
                     )
-                    st.markdown("<div class='menu-divider'></div>", unsafe_allow_html=True)
+                    st.markdown(
+                        "<div class='menu-divider'></div>", unsafe_allow_html=True
+                    )
                     if st.button(
                         "Teilen",
                         key=f"source_share_{src.id}",
@@ -843,13 +862,17 @@ def render_sources_panel() -> None:
         if delete_source_id:
             _open_delete_source_dialog(delete_source_id, delete_source_name or "")
     else:
-        st.caption("Noch keine Quellen vorhanden. Füge neue Dokumente hinzu oder verbinde Connectoren.")
-    st.caption("Diese Liste zeigt deine lokalen Quellen. Der echte Service lädt Daten dynamisch über MCP/System APIs.")
+        st.caption(
+            "Noch keine Quellen vorhanden. Füge neue Dokumente hinzu oder verbinde Connectoren."
+        )
+    st.caption(
+        "Diese Liste zeigt deine lokalen Quellen. Der echte Service lädt Daten dynamisch über MCP/System APIs."
+    )
 
 
 def render_chat_panel() -> None:
     st.subheader("Chat")
-    #with st.container(border=True, height="calc(100vh - 260px)"):
+    # with st.container(border=True, height="calc(100vh - 260px)"):
     with st.container(border=True, height=700, gap="xxsmall"):
         for idx, message in enumerate(st.session_state["chat_history"]):
             with st.chat_message(message["role"]):
@@ -868,10 +891,14 @@ def render_chat_panel() -> None:
             audio_file = user_submission.audio
             audio_name = getattr(audio_file, "name", "audio.wav")
             try:
-                payload = ingestion.extract_document_payload(audio_name, audio_file.getvalue())
+                payload = ingestion.extract_document_payload(
+                    audio_name, audio_file.getvalue()
+                )
                 audio_text = payload.get("body", "").strip()
                 if audio_text:
-                    user_prompt = "\n\n".join(part for part in (user_prompt, f"[Audio]\n{audio_text}") if part)
+                    user_prompt = "\n\n".join(
+                        part for part in (user_prompt, f"[Audio]\n{audio_text}") if part
+                    )
             except ValueError as exc:
                 st.error(f"Audio: {exc}")
         if not user_prompt:
@@ -1030,7 +1057,9 @@ def render_studio_panel() -> None:
 
     templates = st.session_state["studio_templates"]
     if templates:
-        st.session_state.setdefault("studio_selected_template", templates[0].template_id)
+        st.session_state.setdefault(
+            "studio_selected_template", templates[0].template_id
+        )
         columns = st.columns(2)
         for idx, template in enumerate(templates):
             _render_studio_template_card(columns[idx % 2], template)
@@ -1043,7 +1072,9 @@ def render_studio_panel() -> None:
     _render_studio_notes_section()
 
 
-def _render_studio_template_card(column: st.delta_generator.DeltaGenerator, template: StudioTemplate) -> None:
+def _render_studio_template_card(
+    column: st.delta_generator.DeltaGenerator, template: StudioTemplate
+) -> None:
     lang_key = f"studio_lang_{template.template_id}"
     tone_key = f"studio_tone_{template.template_id}"
     instr_key = f"studio_instr_{template.template_id}"
@@ -1052,10 +1083,14 @@ def _render_studio_template_card(column: st.delta_generator.DeltaGenerator, temp
     st.session_state.setdefault(tone_key, template.defaults.get("tone", "Neutral"))
     st.session_state.setdefault(
         instr_key,
-        template.defaults.get("instructions") or template.agent.get("instructions") or template.description,
+        template.defaults.get("instructions")
+        or template.agent.get("instructions")
+        or template.description,
     )
     st.session_state.setdefault(user_prompt_key, "")
-    is_selected = st.session_state.get("studio_selected_template") == template.template_id
+    is_selected = (
+        st.session_state.get("studio_selected_template") == template.template_id
+    )
     outputs_list = _get_studio_outputs_list()
 
     with column.container():
@@ -1104,9 +1139,12 @@ def _render_studio_template_card(column: st.delta_generator.DeltaGenerator, temp
                     "Erstelle eine umfassende, prägnante Zusammenfassung der ausgewählten Quellen. "
                     "Strukturiere mit Überschriften und fasse Kernaussagen zusammen."
                 )
-                contexts = retrieval.query_similar("Zusammenfassung der ausgewählten Quellen")
+                contexts = retrieval.query_similar(
+                    "Zusammenfassung der ausgewählten Quellen"
+                )
                 context_chunks = "\n\n".join(
-                    f"Snippet: {ctx.get('text')}\nMeta: {ctx.get('meta')}" for ctx in contexts
+                    f"Snippet: {ctx.get('text')}\nMeta: {ctx.get('meta')}"
+                    for ctx in contexts
                 )
                 prompt = (
                     f"{prompt}\nZiel: {summary_goal}\n\n"
@@ -1120,7 +1158,9 @@ def _render_studio_template_card(column: st.delta_generator.DeltaGenerator, temp
             )
             normalized = _normalize_studio_output_payload(output)
             normalized.setdefault("sources", _selected_source_names())
-            normalized["generated_at"] = normalized.get("generated_at") or datetime.now(timezone.utc).isoformat()
+            normalized["generated_at"] = (
+                normalized.get("generated_at") or datetime.now(timezone.utc).isoformat()
+            )
             outputs_list = _get_studio_outputs_list()
             output_id = uuid4().hex
             outputs_list.insert(
@@ -1147,13 +1187,16 @@ def _render_studio_template_card(column: st.delta_generator.DeltaGenerator, temp
                 height=90,
             )
             st.selectbox("Sprache", ["Deutsch", "Englisch"], key=lang_key)
-            st.selectbox("Ton", ["Neutral", "Prägnant", "Analytisch", "Kreativ"], key=tone_key)
+            st.selectbox(
+                "Ton", ["Neutral", "Prägnant", "Analytisch", "Kreativ"], key=tone_key
+            )
             st.text_area(
                 "Anweisungen",
                 key=instr_key,
                 placeholder="z. B. Struktur, Stil, Umfang",
                 height=120,
             )
+
 
 def _render_studio_settings_panel(templates: List[StudioTemplate]) -> None:
     titles = [template.title for template in templates]
@@ -1167,15 +1210,21 @@ def _render_studio_settings_panel(templates: List[StudioTemplate]) -> None:
         index=template_ids.index(selected_id) if selected_id in template_ids else 0,
         key="studio_selected_template_title",
     )
-    selected_template = next((template for template in templates if template.title == selected_title), None)
+    selected_template = next(
+        (template for template in templates if template.title == selected_title), None
+    )
     if not selected_template:
         return
     st.session_state["studio_selected_template"] = selected_template.template_id
     lang_key = f"studio_lang_{selected_template.template_id}"
     tone_key = f"studio_tone_{selected_template.template_id}"
     instr_key = f"studio_instr_{selected_template.template_id}"
-    st.session_state.setdefault(lang_key, selected_template.defaults.get("language", "Deutsch"))
-    st.session_state.setdefault(tone_key, selected_template.defaults.get("tone", "Neutral"))
+    st.session_state.setdefault(
+        lang_key, selected_template.defaults.get("language", "Deutsch")
+    )
+    st.session_state.setdefault(
+        tone_key, selected_template.defaults.get("tone", "Neutral")
+    )
     st.session_state.setdefault(
         instr_key,
         selected_template.defaults.get("instructions")
@@ -1226,8 +1275,14 @@ def _render_studio_outputs_section() -> None:
         def _dialog() -> None:
             st.write(f"Studio-Ausgabe **{title}** wirklich löschen?")
             confirm_col, cancel_col = st.columns(2)
-            if confirm_col.button("Löschen", key=f"confirm_output_delete_{output_id}", use_container_width=True):
-                updated_outputs = [item for item in outputs_list if item.get("output_id") != output_id]
+            if confirm_col.button(
+                "Löschen",
+                key=f"confirm_output_delete_{output_id}",
+                use_container_width=True,
+            ):
+                updated_outputs = [
+                    item for item in outputs_list if item.get("output_id") != output_id
+                ]
                 st.session_state["studio_outputs"] = updated_outputs
                 st.session_state["confirm_delete_output_id"] = None
                 st.session_state["confirm_delete_output_title"] = None
@@ -1235,7 +1290,11 @@ def _render_studio_outputs_section() -> None:
                     st.session_state["studio_open_output"] = None
                 st.toast(f"{title} gelöscht")
                 st.rerun()
-            if cancel_col.button("Abbrechen", key=f"cancel_output_delete_{output_id}", use_container_width=True):
+            if cancel_col.button(
+                "Abbrechen",
+                key=f"cancel_output_delete_{output_id}",
+                use_container_width=True,
+            ):
                 st.session_state["confirm_delete_output_id"] = None
                 st.session_state["confirm_delete_output_title"] = None
                 st.rerun()
@@ -1299,7 +1358,9 @@ def _render_studio_outputs_section() -> None:
                         key=f"studio_output_download_{output_id}",
                         use_container_width=True,
                     )
-                    st.markdown("<div class='menu-divider'></div>", unsafe_allow_html=True)
+                    st.markdown(
+                        "<div class='menu-divider'></div>", unsafe_allow_html=True
+                    )
                     if st.button(
                         "Teilen",
                         key=f"studio_output_share_{output_id}",
@@ -1330,7 +1391,9 @@ def _render_studio_notes_section() -> None:
     )
     notes = st.session_state.get("notes", [])
     if not notes:
-        st.caption("Noch keine Notizen gespeichert. Speichere Antworten direkt aus dem Chat.")
+        st.caption(
+            "Noch keine Notizen gespeichert. Speichere Antworten direkt aus dem Chat."
+        )
     st.markdown(
         """
         <style>
@@ -1387,24 +1450,34 @@ def _render_studio_notes_section() -> None:
     )
 
     st.markdown('<div id="chat-notes-anchor"></div>', unsafe_allow_html=True)
+
     def _open_delete_note_dialog(note_index: int, title: str) -> None:
         @st.dialog("Notiz löschen")
         def _dialog() -> None:
             st.write(f"Notiz **{title}** wirklich löschen?")
             confirm_col, cancel_col = st.columns(2)
-            if confirm_col.button("Löschen", key=f"confirm_note_delete_{note_index}", use_container_width=True):
+            if confirm_col.button(
+                "Löschen",
+                key=f"confirm_note_delete_{note_index}",
+                use_container_width=True,
+            ):
                 st.session_state["notes"].pop(note_index)
                 storage.save_notes(st.session_state["notes"])
                 st.session_state["confirm_delete_note_index"] = None
                 st.session_state["confirm_delete_note_title"] = None
                 st.toast("Notiz gelöscht")
                 st.rerun()
-            if cancel_col.button("Abbrechen", key=f"cancel_note_delete_{note_index}", use_container_width=True):
+            if cancel_col.button(
+                "Abbrechen",
+                key=f"cancel_note_delete_{note_index}",
+                use_container_width=True,
+            ):
                 st.session_state["confirm_delete_note_index"] = None
                 st.session_state["confirm_delete_note_title"] = None
                 st.rerun()
 
         _dialog()
+
     def _open_rename_note_dialog(note_index: int, title: str) -> None:
         @st.dialog("Notiz umbenennen")
         def _dialog() -> None:
@@ -1414,20 +1487,33 @@ def _render_studio_notes_section() -> None:
                 key=f"note_rename_input_{note_index}",
             )
             confirm_col, cancel_col = st.columns(2)
-            if confirm_col.button("Speichern", key=f"confirm_note_rename_{note_index}", use_container_width=True):
-                st.session_state["notes"][note_index]["title"] = new_title.strip() or title
+            if confirm_col.button(
+                "Speichern",
+                key=f"confirm_note_rename_{note_index}",
+                use_container_width=True,
+            ):
+                st.session_state["notes"][note_index]["title"] = (
+                    new_title.strip() or title
+                )
                 storage.save_notes(st.session_state["notes"])
                 st.session_state["confirm_rename_note_index"] = None
                 st.rerun()
-            if cancel_col.button("Abbrechen", key=f"cancel_note_rename_{note_index}", use_container_width=True):
+            if cancel_col.button(
+                "Abbrechen",
+                key=f"cancel_note_rename_{note_index}",
+                use_container_width=True,
+            ):
                 st.session_state["confirm_rename_note_index"] = None
                 st.rerun()
 
         _dialog()
+
     for idx, note in enumerate(notes):
         content = note.get("content", "")
         note.setdefault("created_at", _now_iso())
-        title = note.get("title") or content.splitlines()[0].strip() or f"Notiz {idx + 1}"
+        title = (
+            note.get("title") or content.splitlines()[0].strip() or f"Notiz {idx + 1}"
+        )
         truncated_title = shorten(title, width=70, placeholder="…")
         sources = note.get("sources", [])
         created_label = _format_absolute_date(note.get("created_at"))
@@ -1443,7 +1529,7 @@ def _render_studio_notes_section() -> None:
                     st.write("Keine Inhalte verfügbar.")
                 source_names = sources or ["Alle Quellen"]
                 st.caption("Quellen: " + ", ".join(source_names))
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
         with cols[1]:
             st.markdown('<div class="note-actions">', unsafe_allow_html=True)
             with st.popover("", use_container_width=True):
@@ -1477,7 +1563,9 @@ def _render_studio_notes_section() -> None:
                 st.download_button(
                     ":material/download: Herunterladen",
                     data=content,
-                    file_name=_build_download_filename(title, note.get("created_at"), "md"),
+                    file_name=_build_download_filename(
+                        title, note.get("created_at"), "md"
+                    ),
                     mime="text/markdown",
                     key=f"note_export_{idx}",
                     use_container_width=True,
@@ -1504,7 +1592,8 @@ def _render_studio_notes_section() -> None:
                     _open_delete_note_dialog(idx, title)
                 elif st.session_state.get("confirm_delete_note_index") == idx:
                     _open_delete_note_dialog(idx, title)
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
     def _open_add_note_dialog() -> None:
         @st.dialog("Notiz hinzufügen")
         def _dialog() -> None:
@@ -1543,6 +1632,7 @@ def run_app() -> None:
         render_chat_panel()
     with col_studio:
         render_studio_panel()
+
 
 if __name__ == "__main__":
     run_app()

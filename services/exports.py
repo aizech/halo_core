@@ -17,7 +17,8 @@ def render_pdf(title: str, body: str) -> bytes:
         "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
         "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >> endobj\n"
         f"4 0 obj << /Length {len(body)+len(title)+20} >> stream\n"
-        f"{title}\n{body}\n" "endstream endobj\n"
+        f"{title}\n{body}\n"
+        "endstream endobj\n"
         "xref\n0 5\n0000000000 65535 f \n0000000010 00000 n \n0000000060 00000 n \n0000000114 00000 n \n0000000210 00000 n \n"
         "trailer << /Size 5 /Root 1 0 R >>\nstartxref\n310\n%%EOF"
     )

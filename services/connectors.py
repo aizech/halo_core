@@ -19,8 +19,7 @@ class ConnectorResult:
 class Connector(Protocol):
     name: str
 
-    def fetch_sources(self) -> List[ConnectorResult]:
-        ...
+    def fetch_sources(self) -> List[ConnectorResult]: ...
 
 
 class GoogleDriveConnector:
@@ -71,7 +70,9 @@ def _deserialize(entry: Dict[str, List[Dict[str, str]]]) -> List[ConnectorResult
     return [ConnectorResult(**item) for item in entry.get("items", [])]
 
 
-def collect_connector_results(slugs: List[str], refresh: bool = False) -> List[ConnectorResult]:
+def collect_connector_results(
+    slugs: List[str], refresh: bool = False
+) -> List[ConnectorResult]:
     cache = storage.load_connector_cache()
     results: List[ConnectorResult] = []
     cache_updated = False

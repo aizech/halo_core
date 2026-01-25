@@ -22,4 +22,6 @@ def generate_studio_artifact(
     sources: List[str],
     agent_config: Dict[str, str] | None = None,
 ) -> str:
-    return agents.render_studio_output(template_name, instructions, sources, agent_config)
+    return agents.render_studio_output(
+        template_name, instructions, sources, agent_config
+    )

@@ -95,7 +95,9 @@ def _extract_with_reader(reader: object, data: bytes, suffix: str) -> str:
         path = Path(handle.name)
     try:
         documents: Sequence[object] = reader.read(path)
-        return "\n\n".join(text for text in (_doc_to_text(doc) for doc in documents) if text).strip()
+        return "\n\n".join(
+            text for text in (_doc_to_text(doc) for doc in documents) if text
+        ).strip()
     finally:
         _safe_unlink(path)
 

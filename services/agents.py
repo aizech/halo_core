@@ -66,7 +66,15 @@ def _run_agent(payload: str, agent: Agent | None = None) -> str:
         agent = _AGENT
     if not agent:
         raise RuntimeError("Agent not configured")
-    raw = _invoke_agent(payload) if agent is _AGENT else _normalize_agent_output(agent.run_sync(payload) if hasattr(agent, "run_sync") else agent.run(payload))
+    raw = (
+        _invoke_agent(payload)
+        if agent is _AGENT
+        else _normalize_agent_output(
+            agent.run_sync(payload)
+            if hasattr(agent, "run_sync")
+            else agent.run(payload)
+        )
+    )
     return _normalize_agent_output(raw)
 
 
@@ -116,7 +124,9 @@ def render_studio_output(
     )
     agent_instructions = None
     if agent_config:
-        agent_instructions = agent_config.get("instructions") or agent_config.get("system_prompt")
+        agent_instructions = agent_config.get("instructions") or agent_config.get(
+            "system_prompt"
+        )
     agent = _build_agent(agent_instructions) if agent_instructions else _AGENT
     if agent:
         try:

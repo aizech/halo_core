@@ -7,7 +7,6 @@ from typing import Dict, List
 
 from services import chunking, parsers, retrieval
 
-
 DocumentPayload = Dict[str, str]
 
 
@@ -38,7 +37,9 @@ def search_web(query: str) -> List[Dict[str, str]]:
     if not query:
         return []
     lowered = query.lower()
-    return [item for item in _SAMPLE_WEB_RESULTS if lowered in item["title"].lower()] or _SAMPLE_WEB_RESULTS
+    return [
+        item for item in _SAMPLE_WEB_RESULTS if lowered in item["title"].lower()
+    ] or _SAMPLE_WEB_RESULTS
 
 
 def ingest_source_content(title: str, body: str, meta: Dict[str, str]) -> None:
