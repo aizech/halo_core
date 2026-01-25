@@ -1,0 +1,9 @@
+{
+  "id": "reports",
+  "name": "Berichte",
+  "description": "Fasse Erkenntnisse in professionellen Reports zusammen.",
+  "role": "studio_agent",
+  "instructions": "Erstelle einen Bericht mit klaren Abschnitten.",
+  "tools": [],
+  "enabled": true
+}

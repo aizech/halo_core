@@ -1,0 +1,15 @@
+{
+  "id": "pubmed",
+  "name": "Pubmed Agent",
+  "description": "Beantwortet Nutzerfragen basierend auf den ausgewählten Quellen.",
+  "role": "assistant",
+  "instructions": "Du bist ein Assistent, der Fragen nur mit den bereitgestellten Quellen beantwortet. Zitiere Quellen inline im Format [Quelle].",
+  "tools": [
+    "pubmed"
+  ],
+  "enabled": true,
+  "members": [
+    "chat",
+    "reports"
+  ]
+}

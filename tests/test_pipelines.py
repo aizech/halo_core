@@ -4,20 +4,24 @@ from services import pipelines
 def test_generate_chat_reply_delegates_to_agents(monkeypatch):
     captured = {}
 
-    def fake_reply(prompt, sources, notes, contexts):
+    def fake_reply(prompt, sources, notes, contexts, agent_config=None):
         captured["prompt"] = prompt
         captured["sources"] = sources
         captured["notes"] = notes
         captured["contexts"] = contexts
+        captured["agent_config"] = agent_config
         return "antwort"
 
     monkeypatch.setattr("services.agents.generate_grounded_reply", fake_reply)
 
-    result = pipelines.generate_chat_reply("Hallo?", ["A"], ["note"], ["ctx"])
+    result = pipelines.generate_chat_reply(
+        "Hallo?", ["A"], ["note"], ["ctx"], {"id": "chat"}
+    )
 
     assert result == "antwort"
     assert captured["sources"] == ["A"]
     assert captured["contexts"] == ["ctx"]
+    assert captured["agent_config"] == {"id": "chat"}
 
 
 def test_generate_studio_artifact_delegates(monkeypatch):

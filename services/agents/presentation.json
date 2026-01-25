@@ -1,0 +1,9 @@
+{
+  "id": "presentation",
+  "name": "Präsentation",
+  "description": "Erstelle Slides als Grundlage für Vorträge.",
+  "role": "studio_agent",
+  "instructions": "Erzeuge eine Folienstruktur mit Agenda.",
+  "tools": [],
+  "enabled": true
+}

@@ -1,0 +1,9 @@
+{
+  "id": "infographic",
+  "name": "Infografik",
+  "description": "Stelle Statistiken grafisch dar.",
+  "role": "studio_agent",
+  "instructions": "Fasse Kennzahlen als Infografik-Story zusammen.",
+  "tools": [],
+  "enabled": true
+}

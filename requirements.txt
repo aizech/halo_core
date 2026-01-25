@@ -18,3 +18,5 @@ aiofiles>=23.2.1
 moviepy>=1.0.3
 lancedb>=0.7.0
 numpy>=1.26.0
+pubmed>=0.0.2
+wikipedia>=1.4.0

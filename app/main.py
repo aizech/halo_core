@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,11 +16,28 @@ import streamlit as st
 from pydantic import BaseModel, Field, ValidationError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.append(str(PROJECT_ROOT))
+project_root_str = str(PROJECT_ROOT)
+sys.path = [
+    path
+    for path in sys.path
+    if path
+    and Path(path).resolve() != PROJECT_ROOT
+    and not str(Path(path)).casefold().endswith("\\onedrive\\dev\\halo_core")
+    and not str(Path(path)).casefold().endswith("\\onedrive\\dev\\halo_core\\app")
+]
+sys.path.insert(0, project_root_str)
 
+import services  # noqa: E402
 from services import connectors, ingestion, pipelines, retrieval, storage  # noqa: E402
+import services.agents as agents  # noqa: E402
+from services import agents_config  # noqa: E402
 from services import exports  # noqa: E402
+
+logging.basicConfig(level=logging.INFO)
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.info("main.py path: %s", __file__)
+_LOGGER.info("sys.path[0]: %s", sys.path[0])
+_LOGGER.info("services module path: %s", services.__file__)
 
 
 def _now_iso() -> str:
@@ -82,6 +100,16 @@ def _get_studio_template(template_id: str) -> Optional[StudioTemplate]:
     for template in st.session_state.get("studio_templates", []):
         if template.template_id == template_id:
             return template
+    return None
+
+
+def _get_agent_config(agent_id: str) -> Dict[str, object] | None:
+    configs = st.session_state.get("agent_configs", {})
+    config = configs.get(agent_id)
+    if isinstance(config, dict):
+        if config.get("enabled", True) is False:
+            return None
+        return config
     return None
 
 
@@ -411,8 +439,14 @@ def _init_state() -> None:
         default_config = {
             "enabled_connectors": list(connectors.AVAILABLE_CONNECTORS.keys()),
             "image_model": "gpt-image-1",
+            "log_agent_payload": False,
+            "log_agent_response": True,
+            "log_agent_errors": True,
+            "log_user_requests": True,
         }
         st.session_state["config"] = {**default_config, **stored_config}
+    if "agent_configs" not in st.session_state:
+        st.session_state["agent_configs"] = agents_config.load_agent_configs()
 
 
 def _render_configuration_panel() -> None:
@@ -434,8 +468,209 @@ def _render_configuration_panel() -> None:
     if st.sidebar.button("Speichern", key="save_connectors"):
         st.session_state["config"]["enabled_connectors"] = enabled
         st.session_state["config"]["image_model"] = image_model
+        st.session_state["config"]["log_agent_payload"] = bool(
+            st.session_state.get("log_agent_payload", True)
+        )
+        st.session_state["config"]["log_agent_response"] = bool(
+            st.session_state.get("log_agent_response", True)
+        )
+        st.session_state["config"]["log_agent_errors"] = bool(
+            st.session_state.get("log_agent_errors", True)
+        )
+        st.session_state["config"]["log_user_requests"] = bool(
+            st.session_state.get("log_user_requests", True)
+        )
         storage.save_config(st.session_state["config"])
         st.sidebar.success("Connector-Einstellungen aktualisiert")
+
+    st.sidebar.subheader("Agent-Logging")
+    st.sidebar.checkbox(
+        "Agent payload loggen",
+        value=bool(st.session_state["config"].get("log_agent_payload", True)),
+        key="log_agent_payload",
+    )
+    st.sidebar.checkbox(
+        "Agent response loggen",
+        value=bool(st.session_state["config"].get("log_agent_response", True)),
+        key="log_agent_response",
+    )
+    st.sidebar.checkbox(
+        "Agent Fehler loggen",
+        value=bool(st.session_state["config"].get("log_agent_errors", True)),
+        key="log_agent_errors",
+    )
+    st.sidebar.checkbox(
+        "User Requests loggen",
+        value=bool(st.session_state["config"].get("log_user_requests", True)),
+        key="log_user_requests",
+    )
+    agents.set_logging_preferences(
+        log_payload=bool(st.session_state.get("log_agent_payload", True)),
+        log_response=bool(st.session_state.get("log_agent_response", True)),
+        log_errors=bool(st.session_state.get("log_agent_errors", True)),
+    )
+
+    st.sidebar.subheader("Agenten")
+    agent_configs = st.session_state.get("agent_configs", {})
+    agent_ids = sorted(agent_configs.keys())
+    if agent_ids:
+        name_counts: Dict[str, int] = {}
+        for agent_id in agent_ids:
+            label = str(agent_configs.get(agent_id, {}).get("name", agent_id))
+            name_counts[label] = name_counts.get(label, 0) + 1
+
+        def _format_agent_label(agent_id: str) -> str:
+            label = str(agent_configs.get(agent_id, {}).get("name", agent_id))
+            if name_counts.get(label, 0) > 1:
+                return f"{label} ({agent_id})"
+            return label
+
+        selected_agent_id = st.sidebar.selectbox(
+            "Agent auswählen",
+            options=agent_ids,
+            format_func=_format_agent_label,
+        )
+        selected_agent = agent_configs.get(selected_agent_id, {})
+        key_suffix = selected_agent_id
+        enabled_key = f"agent_cfg_enabled_{key_suffix}"
+        name_key = f"agent_cfg_name_{key_suffix}"
+        role_key = f"agent_cfg_role_{key_suffix}"
+        description_key = f"agent_cfg_description_{key_suffix}"
+        instructions_key = f"agent_cfg_instructions_{key_suffix}"
+        members_key = f"agent_cfg_members_{key_suffix}"
+        tools_key = f"agent_cfg_tools_{key_suffix}"
+        pubmed_email_key = f"agent_cfg_pubmed_email_{key_suffix}"
+        pubmed_max_key = f"agent_cfg_pubmed_max_{key_suffix}"
+        pubmed_enable_key = f"agent_cfg_pubmed_enable_{key_suffix}"
+        pubmed_all_key = f"agent_cfg_pubmed_all_{key_suffix}"
+        member_options = [
+            agent_id
+            for agent_id in agent_ids
+            if agent_id != selected_agent_id
+        ]
+        st.sidebar.checkbox(
+            "Aktiviert",
+            value=bool(selected_agent.get("enabled", True)),
+            key=enabled_key,
+        )
+        st.sidebar.text_input(
+            "Name",
+            value=str(selected_agent.get("name", "")),
+            key=name_key,
+        )
+        st.sidebar.text_input(
+            "Rolle",
+            value=str(selected_agent.get("role", "")),
+            key=role_key,
+        )
+        st.sidebar.text_area(
+            "Beschreibung",
+            value=str(selected_agent.get("description", "")),
+            key=description_key,
+            height=100,
+        )
+        st.sidebar.text_area(
+            "Anweisungen",
+            value=str(selected_agent.get("instructions", "")),
+            key=instructions_key,
+            height=160,
+        )
+        available_tools = {
+            "pubmed": "PubMed Suche",
+            "wikipedia": "Wikipedia Suche",
+        }
+        raw_tools = selected_agent.get("tools", [])
+        normalized_tools: List[str] = []
+        if isinstance(raw_tools, list):
+            for tool in raw_tools:
+                if isinstance(tool, str):
+                    normalized_tools.append(tool)
+                else:
+                    tool_name = type(tool).__name__.lower()
+                    if "pubmed" in tool_name:
+                        normalized_tools.append("pubmed")
+                    elif "wikipedia" in tool_name:
+                        normalized_tools.append("wikipedia")
+        if tools_key in st.session_state:
+            stored_tools = st.session_state.get(tools_key)
+            if isinstance(stored_tools, list) and any(
+                not isinstance(tool, str) for tool in stored_tools
+            ):
+                st.session_state[tools_key] = normalized_tools
+        selected_tools = st.sidebar.multiselect(
+            "Tools",
+            options=list(available_tools.keys()),
+            default=normalized_tools,
+            format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
+            key=tools_key,
+        )
+        tool_settings = (
+            selected_agent.get("tool_settings", {})
+            if isinstance(selected_agent.get("tool_settings"), dict)
+            else {}
+        )
+        if "pubmed" in selected_tools:
+            pubmed_settings = tool_settings.get("pubmed", {})
+            st.sidebar.text_input(
+                "PubMed E-Mail",
+                value=str(pubmed_settings.get("email", "")),
+                key=pubmed_email_key,
+            )
+            st.sidebar.number_input(
+                "PubMed Max Results",
+                min_value=1,
+                value=int(pubmed_settings.get("max_results") or 5),
+                key=pubmed_max_key,
+            )
+            st.sidebar.checkbox(
+                "PubMed Suche aktiv",
+                value=bool(pubmed_settings.get("enable_search_pubmed", True)),
+                key=pubmed_enable_key,
+            )
+            st.sidebar.checkbox(
+                "PubMed Alle Quellen",
+                value=bool(pubmed_settings.get("all", False)),
+                key=pubmed_all_key,
+            )
+        st.sidebar.multiselect(
+            "Team-Mitglieder",
+            options=member_options,
+            default=selected_agent.get("members", [])
+            if isinstance(selected_agent.get("members"), list)
+            else [],
+            key=members_key,
+        )
+        if st.sidebar.button("Agent speichern", key="save_agent_config"):
+            updated_tool_settings: Dict[str, object] = {}
+            if "pubmed" in selected_tools:
+                email = st.session_state.get(pubmed_email_key, "").strip()
+                max_results = int(st.session_state.get(pubmed_max_key, 5))
+                updated_tool_settings["pubmed"] = {
+                    "email": email or None,
+                    "max_results": max_results,
+                    "enable_search_pubmed": bool(
+                        st.session_state.get(pubmed_enable_key, True)
+                    ),
+                    "all": bool(st.session_state.get(pubmed_all_key, False)),
+                }
+            updated = {
+                **selected_agent,
+                "id": selected_agent_id,
+                "enabled": st.session_state.get(enabled_key, True),
+                "name": st.session_state.get(name_key, ""),
+                "role": st.session_state.get(role_key, ""),
+                "description": st.session_state.get(description_key, ""),
+                "instructions": st.session_state.get(instructions_key, ""),
+                "members": st.session_state.get(members_key, []),
+                "tools": selected_tools,
+                "tool_settings": updated_tool_settings,
+            }
+            agents_config.save_agent_config(selected_agent_id, updated)
+            agent_configs[selected_agent_id] = updated
+            st.session_state["agent_configs"] = agent_configs
+            st.sidebar.success("Agent-Konfiguration gespeichert")
+    else:
+        st.sidebar.caption("Keine Agenten-Konfigurationen gefunden.")
 
 
 def _toggle_source(source_id: str) -> None:
@@ -853,7 +1088,7 @@ def render_sources_panel() -> None:
                 unsafe_allow_html=True,
             )
             with cols[2]:
-                with st.popover("", use_container_width=True):
+                with st.popover("", width="stretch"):
                     if st.button(
                         "Umbenennen",
                         key=f"source_rename_{src.id}",
@@ -925,6 +1160,10 @@ def render_chat_panel() -> None:
                 if message["role"] == "assistant":
                     if st.button("In Notiz speichern", key=f"save_note_{idx}"):
                         _save_note_from_message(message["content"])
+    trace = agents.get_last_trace()
+    if trace:
+        with st.expander("Transparenz", expanded=False):
+            st.json(trace)
     selected_count = len(_selected_source_names())
     user_submission = st.chat_input(
         f"Frage stellen oder Audio aufnehmen… ({selected_count} Quellen ausgewählt)",
@@ -950,13 +1189,24 @@ def render_chat_panel() -> None:
             st.warning("Bitte Text eingeben oder Audio aufnehmen.")
             return
         _append_chat("user", user_prompt)
+        if st.session_state.get("config", {}).get("log_user_requests", True):
+            _LOGGER.info("User request: %s", user_prompt)
         contexts = retrieval.query_similar(user_prompt)
-        response = pipelines.generate_chat_reply(
-            user_prompt,
-            _selected_source_names(),
-            st.session_state["notes"],
-            contexts,
-        )
+        try:
+            response = pipelines.generate_chat_reply(
+                user_prompt,
+                _selected_source_names(),
+                st.session_state["notes"],
+                contexts,
+                _get_agent_config("chat"),
+            )
+        except TypeError:
+            response = pipelines.generate_chat_reply(
+                user_prompt,
+                _selected_source_names(),
+                st.session_state["notes"],
+                contexts,
+            )
         _append_chat("assistant", response)
         st.toast("Antwort generiert – siehe Chat")
         st.rerun()
@@ -1197,6 +1447,7 @@ def _render_studio_template_card(
                 )
             selected_sources = _selected_source_names()
             if template.template_id == "infographic":
+                agent_config = _get_agent_config(template.template_id) or template.agent
                 contexts = retrieval.query_similar(
                     "Zusammenfassung der ausgewählten Quellen für eine Infografik"
                 )
@@ -1209,17 +1460,18 @@ def _render_studio_template_card(
                     prompt,
                     selected_sources,
                     context_chunks,
-                    template.agent,
+                    agent_config,
                     image_model=st.session_state.get("config", {}).get(
                         "image_model", "gpt-image-1"
                     ),
                 )
             else:
+                agent_config = _get_agent_config(template.template_id) or template.agent
                 output = _generate_studio_output(
                     template.title,
                     prompt,
                     selected_sources,
-                    template.agent,
+                    agent_config,
                 )
             normalized = _normalize_studio_output_payload(output)
             normalized.setdefault("sources", _selected_source_names())
@@ -1244,7 +1496,7 @@ def _render_studio_template_card(
             _persist_studio_outputs()
             st.session_state["studio_open_output"] = output_id
             st.toast(f"{template.title} aktualisiert")
-        with header_cols[1].popover("", use_container_width=True):
+        with header_cols[1].popover("", width="stretch"):
             st.caption(template.description)
             st.caption("Vorlage konfigurieren")
             st.text_area(
@@ -1423,7 +1675,7 @@ def _render_studio_outputs_section() -> None:
             image_path = entry.get("image_path")
             if image_path:
                 try:
-                    st.image(image_path, use_container_width=True)
+                    st.image(image_path, width="stretch")
                 except Exception:  # pragma: no cover - file IO errors
                     st.caption("Infografik konnte nicht geladen werden.")
             if content.strip():

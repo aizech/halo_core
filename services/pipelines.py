@@ -12,8 +12,11 @@ def generate_chat_reply(
     sources: List[str],
     notes: List[dict],
     contexts: List[dict],
+    agent_config: Dict[str, object] | None = None,
 ) -> str:
-    return agents.generate_grounded_reply(user_prompt, sources, notes, contexts)
+    return agents.generate_grounded_reply(
+        user_prompt, sources, notes, contexts, agent_config
+    )
 
 
 def generate_studio_artifact(

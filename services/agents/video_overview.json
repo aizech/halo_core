@@ -1,0 +1,9 @@
+{
+  "id": "video_overview",
+  "name": "Videoübersicht",
+  "description": "Erstelle ein kurzes Drehbuch für Clips.",
+  "role": "studio_agent",
+  "instructions": "Erstelle ein Clip-Storyboard mit Szenen.",
+  "tools": [],
+  "enabled": true
+}
