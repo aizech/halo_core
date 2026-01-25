@@ -39,6 +39,6 @@ def test_load_agent_configs_merges_defaults(tmp_path, monkeypatch):
     configs = agents_config.load_agent_configs()
 
     assert "chat" in configs
-    assert configs["chat"].get("members") == ["reports"]
+    assert configs["chat"].get("members") == ["reports", "infographic"]
     assert "pubmed" in configs
     assert "reports" in configs
