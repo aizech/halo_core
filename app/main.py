@@ -567,9 +567,17 @@ def render_sources_panel() -> None:
                 if search_query:
                     st.session_state["dialog_search_trigger"] = True
             filter_cols = st.columns([0.3, 0.4, 0.3])
-            filter_cols[0].selectbox("", ["Web", "YouTube"], key="dialog_search_source")
+            filter_cols[0].selectbox(
+                "Suchquelle",
+                ["Web", "YouTube"],
+                key="dialog_search_source",
+                label_visibility="collapsed",
+            )
             filter_cols[1].selectbox(
-                "", ["Schnelle Recherche", "Deep Research"], key="dialog_search_mode"
+                "Suchmodus",
+                ["Schnelle Recherche", "Deep Research"],
+                key="dialog_search_mode",
+                label_visibility="collapsed",
             )
             filter_cols[2].write("")
             if search_query and st.session_state.get("dialog_search_trigger"):
