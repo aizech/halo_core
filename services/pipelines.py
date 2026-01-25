@@ -25,3 +25,21 @@ def generate_studio_artifact(
     return agents.render_studio_output(
         template_name, instructions, sources, agent_config
     )
+
+
+def generate_infographic_artifact(
+    template_name: str,
+    instructions: str,
+    sources: List[str],
+    context_text: str,
+    agent_config: Dict[str, str] | None = None,
+    image_model: str = "gpt-image-1",
+) -> Dict[str, object]:
+    return agents.render_infographic_output(
+        template_name,
+        instructions,
+        sources,
+        context_text,
+        agent_config,
+        image_model=image_model,
+    )

@@ -218,8 +218,14 @@ def _normalize_studio_output_payload(
             "content": payload.get("content", ""),
             "sources": payload.get("sources", []),
             "generated_at": payload.get("generated_at"),
+            "image_path": payload.get("image_path"),
         }
-    return {"content": payload, "sources": [], "generated_at": None}
+    return {
+        "content": payload,
+        "sources": [],
+        "generated_at": None,
+        "image_path": None,
+    }
 
 
 def _generate_studio_output(
@@ -256,6 +262,7 @@ def _get_studio_outputs_list() -> List[Dict[str, object]]:
                     "content": normalized.get("content", ""),
                     "sources": normalized.get("sources", []),
                     "generated_at": normalized.get("generated_at"),
+                    "image_path": normalized.get("image_path"),
                 }
             )
         return legacy_list
@@ -350,7 +357,7 @@ def render_sidebar() -> None:
         key="sidebar_nav",
     )
     st.sidebar.write("Selected:", section)
-    st.sidebar.button("New Notebook", use_container_width=True)
+    st.sidebar.button("New Notebook", width="stretch")
     if section == "Configuration":
         _render_configuration_panel()
     st.sidebar.divider()
@@ -391,15 +398,21 @@ def _init_state() -> None:
     if "notes" not in st.session_state:
         st.session_state["notes"] = storage.load_notes()
     if "studio_outputs" not in st.session_state:
-        st.session_state["studio_outputs"] = []
+        stored_outputs = storage.load_studio_outputs()
+        if stored_outputs:
+            st.session_state["studio_outputs"] = stored_outputs
+        else:
+            st.session_state["studio_outputs"] = []
     elif isinstance(st.session_state.get("studio_outputs"), dict):
         st.session_state["studio_outputs"] = _get_studio_outputs_list()
+        storage.save_studio_outputs(st.session_state["studio_outputs"])
     if "config" not in st.session_state:
-        stored_config = storage.load_config()
+        stored_config = storage.load_config() or {}
         default_config = {
-            "enabled_connectors": list(connectors.AVAILABLE_CONNECTORS.keys())
+            "enabled_connectors": list(connectors.AVAILABLE_CONNECTORS.keys()),
+            "image_model": "gpt-image-1",
         }
-        st.session_state["config"] = stored_config or default_config
+        st.session_state["config"] = {**default_config, **stored_config}
 
 
 def _render_configuration_panel() -> None:
@@ -410,8 +423,17 @@ def _render_configuration_panel() -> None:
         default=st.session_state["config"].get("enabled_connectors", []),
         format_func=lambda key: connectors.AVAILABLE_CONNECTORS[key].name,
     )
+    st.sidebar.subheader("Bildgenerierung")
+    image_model = st.sidebar.selectbox(
+        "Bildmodell",
+        options=["gpt-image-1", "dall-e-3"],
+        index=["gpt-image-1", "dall-e-3"].index(
+            st.session_state["config"].get("image_model", "gpt-image-1")
+        ),
+    )
     if st.sidebar.button("Speichern", key="save_connectors"):
         st.session_state["config"]["enabled_connectors"] = enabled
+        st.session_state["config"]["image_model"] = image_model
         storage.save_config(st.session_state["config"])
         st.sidebar.success("Connector-Einstellungen aktualisiert")
 
@@ -448,6 +470,10 @@ def _add_document_payload(payload: Dict[str, str], fallback_meta: str) -> None:
 
 def _persist_sources() -> None:
     storage.save_sources([src.__dict__ for src in st.session_state["sources"]])
+
+
+def _persist_studio_outputs() -> None:
+    storage.save_studio_outputs(_get_studio_outputs_list())
 
 
 def _sync_source_checkbox_state() -> None:
@@ -592,7 +618,7 @@ def render_sources_panel() -> None:
                 "Metainfo", value="Upload • Heute", key="dialog_upload_meta"
             )
             if uploaded_files and st.button(
-                "Dokumente importieren", use_container_width=True, key="dialog_import"
+                "Dokumente importieren", width="stretch", key="dialog_import"
             ):
                 imported = 0
                 for file in uploaded_files:
@@ -630,7 +656,7 @@ def render_sources_panel() -> None:
                 key="dialog_search_query",
             )
             if search_cols[1].button(
-                "➜", use_container_width=True, key="dialog_search_button"
+                "➜", width="stretch", key="dialog_search_button"
             ):
                 if search_query:
                     st.session_state["dialog_search_trigger"] = True
@@ -678,7 +704,7 @@ def render_sources_panel() -> None:
     #            if confirm_col.button(
     #                "Speichern",
     #                key=f"confirm_output_rename_{output_id}",
-    #                use_container_width=True,
+    #                width="stretch",
     #            ):
     #                if new_title:
     #                    updated_outputs = []
@@ -694,7 +720,7 @@ def render_sources_panel() -> None:
     #            if cancel_col.button(
     #                "Abbrechen",
     #                key=f"cancel_output_rename_{output_id}",
-    #                use_container_width=True,
+    #                width="stretch",
     #            ):
     #                st.session_state["confirm_rename_output_id"] = None
     #                st.rerun()
@@ -713,14 +739,14 @@ def render_sources_panel() -> None:
             if confirm_col.button(
                 "Speichern",
                 key=f"confirm_source_rename_{source_id}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["confirm_rename_source_id"] = None
                 _rename_source(source_id, new_name)
             if cancel_col.button(
                 "Abbrechen",
                 key=f"cancel_source_rename_{source_id}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["confirm_rename_source_id"] = None
                 st.rerun()
@@ -733,12 +759,12 @@ def render_sources_panel() -> None:
             st.write(f"{len(selected_ids)} Quelle(n) wirklich löschen?")
             confirm_col, cancel_col = st.columns(2)
             if confirm_col.button(
-                "Löschen", key="confirm_bulk_delete_dialog", use_container_width=True
+                "Löschen", key="confirm_bulk_delete_dialog", width="stretch"
             ):
                 st.session_state["confirm_bulk_delete"] = False
                 _delete_sources(selected_ids)
             if cancel_col.button(
-                "Abbrechen", key="cancel_bulk_delete_dialog", use_container_width=True
+                "Abbrechen", key="cancel_bulk_delete_dialog", width="stretch"
             ):
                 st.session_state["confirm_bulk_delete"] = False
                 st.rerun()
@@ -753,13 +779,13 @@ def render_sources_panel() -> None:
             st.write(f"Quelle **{source_name}** wirklich löschen?")
             confirm_col, cancel_col = st.columns(2)
             if confirm_col.button(
-                "Löschen", key="confirm_remove_dialog", use_container_width=True
+                "Löschen", key="confirm_remove_dialog", width="stretch"
             ):
                 st.session_state["confirm_delete_source_id"] = None
                 st.session_state["confirm_delete_source_name"] = None
                 _delete_sources([source_id])
             if cancel_col.button(
-                "Abbrechen", key="cancel_remove_dialog", use_container_width=True
+                "Abbrechen", key="cancel_remove_dialog", width="stretch"
             ):
                 st.session_state["confirm_delete_source_id"] = None
                 st.session_state["confirm_delete_source_name"] = None
@@ -767,9 +793,7 @@ def render_sources_panel() -> None:
 
         _dialog()
 
-    if st.button(
-        "＋ Quellen hinzufügen", use_container_width=True, key="open_add_sources"
-    ):
+    if st.button("＋ Quellen hinzufügen", width="stretch", key="open_add_sources"):
         _open_add_sources_dialog()
     connector_options = list(connectors.AVAILABLE_CONNECTORS.keys())
     connector_selection = st.multiselect(
@@ -802,7 +826,7 @@ def render_sources_panel() -> None:
                 "🗑️",
                 disabled=not selected_ids,
                 help="Entfernt alle markierten Quellen aus dem Projekt.",
-                use_container_width=False,
+                width="content",
                 key="bulk_delete_button",
             ):
                 st.session_state["confirm_bulk_delete"] = True
@@ -856,7 +880,7 @@ def render_sources_panel() -> None:
                         ),
                         mime="text/markdown",
                         key=f"source_download_{src.id}",
-                        use_container_width=True,
+                        width="stretch",
                     )
                     st.markdown(
                         "<div class='menu-divider'></div>", unsafe_allow_html=True
@@ -1173,12 +1197,32 @@ def _render_studio_template_card(
                     f"{prompt}\nZiel: {summary_goal}\n\n"
                     f"Kontext (RAG):\n{context_chunks or '-'}"
                 )
-            output = _generate_studio_output(
-                template.title,
-                prompt,
-                _selected_source_names(),
-                template.agent,
-            )
+            selected_sources = _selected_source_names()
+            if template.template_id == "infographic":
+                contexts = retrieval.query_similar(
+                    "Zusammenfassung der ausgewählten Quellen für eine Infografik"
+                )
+                context_chunks = "\n\n".join(
+                    f"Snippet: {ctx.get('text')}\nMeta: {ctx.get('meta')}"
+                    for ctx in contexts
+                )
+                output = pipelines.generate_infographic_artifact(
+                    template.title,
+                    prompt,
+                    selected_sources,
+                    context_chunks,
+                    template.agent,
+                    image_model=st.session_state.get("config", {}).get(
+                        "image_model", "gpt-image-1"
+                    ),
+                )
+            else:
+                output = _generate_studio_output(
+                    template.title,
+                    prompt,
+                    selected_sources,
+                    template.agent,
+                )
             normalized = _normalize_studio_output_payload(output)
             normalized.setdefault("sources", _selected_source_names())
             normalized["generated_at"] = (
@@ -1195,9 +1239,11 @@ def _render_studio_template_card(
                     "content": normalized.get("content", ""),
                     "sources": normalized.get("sources", []),
                     "generated_at": normalized.get("generated_at"),
+                    "image_path": normalized.get("image_path"),
                 },
             )
             st.session_state["studio_outputs"] = outputs_list
+            _persist_studio_outputs()
             st.session_state["studio_open_output"] = output_id
             st.toast(f"{template.title} aktualisiert")
         with header_cols[1].popover("", use_container_width=True):
@@ -1301,12 +1347,13 @@ def _render_studio_outputs_section() -> None:
             if confirm_col.button(
                 "Löschen",
                 key=f"confirm_output_delete_{output_id}",
-                use_container_width=True,
+                width="stretch",
             ):
                 updated_outputs = [
                     item for item in outputs_list if item.get("output_id") != output_id
                 ]
                 st.session_state["studio_outputs"] = updated_outputs
+                _persist_studio_outputs()
                 st.session_state["confirm_delete_output_id"] = None
                 st.session_state["confirm_delete_output_title"] = None
                 if st.session_state.get("studio_open_output") == output_id:
@@ -1316,7 +1363,7 @@ def _render_studio_outputs_section() -> None:
             if cancel_col.button(
                 "Abbrechen",
                 key=f"cancel_output_delete_{output_id}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["confirm_delete_output_id"] = None
                 st.session_state["confirm_delete_output_title"] = None
@@ -1336,7 +1383,7 @@ def _render_studio_outputs_section() -> None:
             if confirm_col.button(
                 "Speichern",
                 key=f"confirm_output_rename_{output_id}",
-                use_container_width=True,
+                width="stretch",
             ):
                 if new_title:
                     updated_outputs = []
@@ -1346,13 +1393,14 @@ def _render_studio_outputs_section() -> None:
                         else:
                             updated_outputs.append(item)
                     st.session_state["studio_outputs"] = updated_outputs
+                    _persist_studio_outputs()
                     st.toast("Titel aktualisiert")
                 st.session_state["confirm_rename_output_id"] = None
                 st.rerun()
             if cancel_col.button(
                 "Abbrechen",
                 key=f"cancel_output_rename_{output_id}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["confirm_rename_output_id"] = None
                 st.rerun()
@@ -1374,13 +1422,19 @@ def _render_studio_outputs_section() -> None:
         with st.expander(f"{icon} {title}", expanded=output_id == open_id):
             st.caption(" • ".join(meta_bits))
             content = str(entry.get("content", ""))
+            image_path = entry.get("image_path")
+            if image_path:
+                try:
+                    st.image(image_path, use_container_width=True)
+                except Exception:  # pragma: no cover - file IO errors
+                    st.caption("Infografik konnte nicht geladen werden.")
             if content.strip():
                 st.markdown(content)
             else:
                 st.caption("Keine Inhalte verfügbar.")
             menu_cols = st.columns([0.82, 0.18])
             with menu_cols[1]:
-                with st.popover("", use_container_width=True):
+                with st.popover("", width="stretch"):
                     if st.button(
                         "Umbenennen",
                         key=f"studio_output_rename_{output_id}",
@@ -1414,7 +1468,7 @@ def _render_studio_outputs_section() -> None:
                         file_name=_build_download_filename(title, generated_at, "md"),
                         mime="text/markdown",
                         key=f"studio_output_download_{output_id}",
-                        use_container_width=True,
+                        width="stretch",
                     )
                     st.markdown(
                         "<div class='menu-divider'></div>", unsafe_allow_html=True
@@ -1517,7 +1571,7 @@ def _render_studio_notes_section() -> None:
             if confirm_col.button(
                 "Löschen",
                 key=f"confirm_note_delete_{note_index}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["notes"].pop(note_index)
                 storage.save_notes(st.session_state["notes"])
@@ -1528,7 +1582,7 @@ def _render_studio_notes_section() -> None:
             if cancel_col.button(
                 "Abbrechen",
                 key=f"cancel_note_delete_{note_index}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["confirm_delete_note_index"] = None
                 st.session_state["confirm_delete_note_title"] = None
@@ -1548,7 +1602,7 @@ def _render_studio_notes_section() -> None:
             if confirm_col.button(
                 "Speichern",
                 key=f"confirm_note_rename_{note_index}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["notes"][note_index]["title"] = (
                     new_title.strip() or title
@@ -1559,7 +1613,7 @@ def _render_studio_notes_section() -> None:
             if cancel_col.button(
                 "Abbrechen",
                 key=f"cancel_note_rename_{note_index}",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state["confirm_rename_note_index"] = None
                 st.rerun()
@@ -1590,7 +1644,7 @@ def _render_studio_notes_section() -> None:
             st.markdown("</div>", unsafe_allow_html=True)
         with cols[1]:
             st.markdown('<div class="note-actions">', unsafe_allow_html=True)
-            with st.popover("", use_container_width=True):
+            with st.popover("", width="stretch"):
                 if st.button(
                     "Umbenennen",
                     key=f"note_rename_button_{idx}",
@@ -1626,7 +1680,7 @@ def _render_studio_notes_section() -> None:
                     ),
                     mime="text/markdown",
                     key=f"note_export_{idx}",
-                    use_container_width=True,
+                    width="stretch",
                 )
                 st.markdown("<div class='menu-divider'></div>", unsafe_allow_html=True)
                 if st.button(
@@ -1656,7 +1710,7 @@ def _render_studio_notes_section() -> None:
         @st.dialog("Notiz hinzufügen")
         def _dialog() -> None:
             new_content = st.text_area("Notizinhalt", key="note_add_content")
-            if st.button("Speichern", key="note_add_save", use_container_width=True):
+            if st.button("Speichern", key="note_add_save", width="stretch"):
                 if new_content.strip():
                     st.session_state.setdefault("notes", []).insert(
                         0,
@@ -1674,7 +1728,7 @@ def _render_studio_notes_section() -> None:
 
         _dialog()
 
-    if st.button("Notiz hinzufügen", use_container_width=True, key="note_add_open"):
+    if st.button("Notiz hinzufügen", width="stretch", key="note_add_open"):
         _open_add_note_dialog()
 
 

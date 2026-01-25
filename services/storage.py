@@ -12,6 +12,7 @@ _SETTINGS = get_settings()
 _DATA_DIR = Path(_SETTINGS.data_dir)
 _SOURCES_FILE = _DATA_DIR / "sources.json"
 _NOTES_FILE = _DATA_DIR / "studio_notes.json"
+_STUDIO_OUTPUTS_FILE = _DATA_DIR / "studio_outputs.json"
 _CONFIG_FILE = _DATA_DIR / "config.json"
 _CONNECTOR_CACHE_FILE = _DATA_DIR / "connector_cache.json"
 
@@ -46,6 +47,20 @@ def save_notes(notes: List[Dict[str, str]]) -> None:
     _ensure_data_dir()
     with _NOTES_FILE.open("w", encoding="utf-8") as handle:
         json.dump(notes, handle, ensure_ascii=False, indent=2)
+
+
+def load_studio_outputs() -> List[Dict[str, object]]:
+    _ensure_data_dir()
+    if not _STUDIO_OUTPUTS_FILE.exists():
+        return []
+    with _STUDIO_OUTPUTS_FILE.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def save_studio_outputs(outputs: List[Dict[str, object]]) -> None:
+    _ensure_data_dir()
+    with _STUDIO_OUTPUTS_FILE.open("w", encoding="utf-8") as handle:
+        json.dump(outputs, handle, ensure_ascii=False, indent=2)
 
 
 def load_config() -> Dict[str, List[str]]:

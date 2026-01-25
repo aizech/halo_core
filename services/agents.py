@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import base64
+from pathlib import Path
 from typing import Any, Dict, Iterable, List
+from uuid import uuid4
 
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
+from agno.tools.openai import OpenAITools
 
 from services.settings import get_settings
 
@@ -135,3 +139,94 @@ def render_studio_output(
         except Exception as exc:  # pragma: no cover
             return f"Fehler bei der Generierung: {exc}"
     return f"(Demo Output) {template_name}: {instructions[:120]}..."
+
+
+def _save_image_payload(data: object, suffix: str = ".png") -> str | None:
+    if data is None:
+        return None
+    if isinstance(data, (bytes, bytearray)):
+        image_bytes = bytes(data)
+    elif isinstance(data, str):
+        try:
+            image_bytes = base64.b64decode(data)
+        except (ValueError, TypeError):
+            return None
+    else:
+        return None
+    output_dir = Path(_SETTINGS.data_dir) / "studio_outputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    filename = output_dir / f"infographic_{uuid4().hex}{suffix}"
+    filename.write_bytes(image_bytes)
+    return str(filename)
+
+
+def render_infographic_output(
+    template_name: str,
+    instructions: str,
+    sources: List[str],
+    context_text: str,
+    agent_config: Dict[str, str] | None = None,
+    image_model: str = "gpt-image-1",
+) -> Dict[str, object]:
+    agent_instructions = None
+    if agent_config:
+        agent_instructions = agent_config.get("instructions") or agent_config.get(
+            "system_prompt"
+        )
+    summary_agent = _build_agent(agent_instructions) if agent_instructions else _AGENT
+    if not summary_agent:
+        return {
+            "content": "(Demo) Infografik benötigt einen OpenAI API Key.",
+            "image_path": None,
+        }
+    summary_prompt = (
+        f"Template: {template_name}\nAnweisungen: {instructions}\n"
+        f"Quellen: {', '.join(sources) or 'keine'}\n\n"
+        "Erstelle eine prägnante Zusammenfassung der ausgewählten Quellen in 5-7 Stichpunkten. "
+        "Nutze nur die bereitgestellten Inhalte.\n\n"
+        f"Kontext (RAG):\n{context_text or '-'}"
+    )
+    try:
+        summary = _run_agent(summary_prompt, summary_agent).strip()
+    except Exception as exc:  # pragma: no cover
+        return {"content": f"Fehler bei der Zusammenfassung: {exc}", "image_path": None}
+
+    prompt_builder = _build_agent(agent_instructions) if agent_instructions else _AGENT
+    prompt_prompt = (
+        "Erstelle einen klaren, detailreichen Prompt zur Generierung einer Infografik. "
+        "Die Infografik soll die folgenden Stichpunkte visualisieren. "
+        "Gib nur den Prompt aus, ohne zusätzliche Erklärungen.\n\n"
+        f"Stichpunkte:\n{summary}"
+    )
+    try:
+        image_prompt = _run_agent(prompt_prompt, prompt_builder).strip()
+    except Exception as exc:  # pragma: no cover
+        return {"content": f"Fehler beim Infografik-Prompt: {exc}", "image_path": None}
+
+    api_key = _SETTINGS.openai_api_key
+    if not api_key:
+        return {
+            "content": f"{summary}\n\n**Infografik-Prompt**\n{image_prompt}",
+            "image_path": None,
+        }
+    image_agent = Agent(
+        name="InfographicGenerator",
+        model=OpenAIChat(id="gpt-5.2", api_key=api_key),
+        tools=[OpenAITools(image_model=image_model)],
+        markdown=True,
+    )
+    try:
+        response = image_agent.run(image_prompt)
+    except Exception as exc:  # pragma: no cover
+        return {
+            "content": f"{summary}\n\n**Infografik-Prompt**\n{image_prompt}\n\nFehler: {exc}",
+            "image_path": None,
+        }
+    image_path = None
+    images = getattr(response, "images", None) or []
+    if images and getattr(images[0], "content", None):
+        image_path = _save_image_payload(images[0].content)
+    return {
+        "content": f"{summary}\n\n**Infografik-Prompt**\n{image_prompt}",
+        "image_path": image_path,
+    }
