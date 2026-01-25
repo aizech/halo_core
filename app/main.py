@@ -549,60 +549,12 @@ def render_sources_panel() -> None:
         def _dialog() -> None:
             st.markdown(
                 "<div style='text-align:center; font-size:18px; font-weight:600;'>"
-                "..."
+                "Dateien importieren  "
+                "&nbsp;"
                 "</div>",
                 unsafe_allow_html=True,
             )
             st.markdown("&nbsp;", unsafe_allow_html=True)
-            search_cols = st.columns([0.85, 0.15])
-            search_query = search_cols[0].text_input(
-                "Im Web nach neuen Quellen suchen",
-                placeholder="Im Web nach neuen Quellen suchen",
-                label_visibility="collapsed",
-                key="dialog_search_query",
-            )
-            if search_cols[1].button(
-                "➜", use_container_width=True, key="dialog_search_button"
-            ):
-                if search_query:
-                    st.session_state["dialog_search_trigger"] = True
-            filter_cols = st.columns([0.3, 0.4, 0.3])
-            filter_cols[0].selectbox(
-                "Suchquelle",
-                ["Web", "YouTube"],
-                key="dialog_search_source",
-                label_visibility="collapsed",
-            )
-            filter_cols[1].selectbox(
-                "Suchmodus",
-                ["Schnelle Recherche", "Deep Research"],
-                key="dialog_search_mode",
-                label_visibility="collapsed",
-            )
-            filter_cols[2].write("")
-            if search_query and st.session_state.get("dialog_search_trigger"):
-                results = ingestion.search_web(search_query)
-                with st.container(border=True):
-                    st.caption("Vorschläge aus Web & System APIs")
-                    for idx, result in enumerate(results):
-                        st.markdown(f"**{result['title']}**  — {result['description']}")
-                        st.caption(result["meta"])
-                        if st.button("Übernehmen", key=f"dialog_web_result_{idx}"):
-                            _add_source(
-                                result["title"],
-                                result["type"],
-                                result["meta"],
-                                result.get("description"),
-                            )
-                            st.toast("Quelle übernommen")
-            st.markdown(
-                """
-                <div style='margin-top:16px; border:1px dashed #CAD2E2; border-radius:16px; padding:18px;'>
-                  <div style='text-align:center; color:#6B7280; font-weight:600;'>or drop your files</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
             upload_label = "PDF, DOCX, CSV, XLSX, PPTX, Bilder, Audio/Video oder Textdateien hochladen"
             uploaded_files = st.file_uploader(
                 upload_label,
@@ -658,32 +610,60 @@ def render_sources_panel() -> None:
                 if imported:
                     st.toast(f"{imported} Dokument(e) importiert")
                     st.rerun()
-            st.divider()
-            st.caption("Oder Ordnerpfad einfügen")
-            directory_path = st.text_input(
-                "Ordnerpfad",
-                placeholder=r"C:\\Users\\...\\Dokumente",
-                key="dialog_directory_path",
-            )
-            dir_meta = st.text_input(
-                "Metainfo", value="Ordnerimport", key="dialog_directory_meta"
-            )
-            if st.button("Verzeichnis laden", key="dialog_directory_load"):
-                if not directory_path:
-                    st.warning("Bitte einen gültigen Pfad eingeben.")
-                else:
-                    try:
-                        documents = ingestion.load_directory_documents(
-                            Path(directory_path).expanduser()
-                        )
-                    except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
-                        st.error(str(exc))
-                    else:
-                        for payload in documents:
-                            _add_document_payload(payload, dir_meta)
-                        st.toast(f"{len(documents)} Dateien importiert")
-                        st.rerun()
 
+            st.markdown(
+                "<hr>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                "<div style='text-align:center; font-size:18px; font-weight:600;'>"
+                "Im Web suchen & importieren  "
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown("&nbsp;", unsafe_allow_html=True)
+            search_cols = st.columns([0.85, 0.15])
+            search_query = search_cols[0].text_input(
+                "Im Web nach neuen Quellen suchen",
+                placeholder="Im Web nach neuen Quellen suchen",
+                label_visibility="collapsed",
+                key="dialog_search_query",
+            )
+            if search_cols[1].button(
+                "➜", use_container_width=True, key="dialog_search_button"
+            ):
+                if search_query:
+                    st.session_state["dialog_search_trigger"] = True
+            filter_cols = st.columns([0.3, 0.4, 0.3])
+            filter_cols[0].selectbox(
+                "Suchquelle",
+                ["Web", "YouTube"],
+                key="dialog_search_source",
+                label_visibility="collapsed",
+            )
+            filter_cols[1].selectbox(
+                "Suchmodus",
+                ["Schnelle Recherche", "Deep Research"],
+                key="dialog_search_mode",
+                label_visibility="collapsed",
+            )
+            filter_cols[2].write("")
+            if search_query and st.session_state.get("dialog_search_trigger"):
+                results = ingestion.search_web(search_query)
+                with st.container(border=True):
+                    st.caption("Vorschläge aus Web & System APIs")
+                    for idx, result in enumerate(results):
+                        st.markdown(f"**{result['title']}**  — {result['description']}")
+                        st.caption(result["meta"])
+                        if st.button("Übernehmen", key=f"dialog_web_result_{idx}"):
+                            _add_source(
+                                result["title"],
+                                result["type"],
+                                result["meta"],
+                                result.get("description"),
+                            )
+                            st.toast("Quelle übernommen")
+            
         _dialog()
 
     #    def _open_rename_output_dialog(output_id: str, title: str) -> None:
