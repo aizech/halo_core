@@ -19,8 +19,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from services import connectors, ingestion, pipelines, retrieval, storage
-from services import exports
+from services import connectors, ingestion, pipelines, retrieval, storage  # noqa: E402
+from services import exports  # noqa: E402
 
 
 def _now_iso() -> str:
@@ -649,6 +649,42 @@ def render_sources_panel() -> None:
                         st.rerun()
 
         _dialog()
+
+    def _open_rename_output_dialog(output_id: str, title: str) -> None:
+        @st.dialog("Studio-Ausgabe umbenennen")
+        def _dialog() -> None:
+            new_title = st.text_input(
+                "Neuer Titel",
+                value=title,
+                key=f"rename_output_input_{output_id}",
+            ).strip()
+            confirm_col, cancel_col = st.columns(2)
+            if confirm_col.button(
+                "Speichern",
+                key=f"confirm_output_rename_{output_id}",
+                use_container_width=True,
+            ):
+                if new_title:
+                    updated_outputs = []
+                    for item in outputs_list:
+                        if item.get("output_id") == output_id:
+                            updated_outputs.append({**item, "title": new_title})
+                        else:
+                            updated_outputs.append(item)
+                    st.session_state["studio_outputs"] = updated_outputs
+                    st.toast("Titel aktualisiert")
+                st.session_state["confirm_rename_output_id"] = None
+                st.rerun()
+            if cancel_col.button(
+                "Abbrechen",
+                key=f"cancel_output_rename_{output_id}",
+                use_container_width=True,
+            ):
+                st.session_state["confirm_rename_output_id"] = None
+                st.rerun()
+
+        _dialog()
+
     def _open_rename_source_dialog(source_id: str, source_name: str) -> None:
         @st.dialog("Quelle umbenennen")
         def _dialog() -> None:
@@ -1027,11 +1063,6 @@ def _render_studio_template_card(column: st.delta_generator.DeltaGenerator, temp
         column.markdown(
             f"<div class='studio-card-anchor{selected_marker}'></div>",
             unsafe_allow_html=True,
-        )
-        badge_html = (
-            f"<span style='margin-left:auto;background:#111;color:#fff;font-size:0.6rem;padding:1px 6px;border-radius:999px;letter-spacing:0.4px;'>{template.badge}</span>"
-            if template.badge
-            else ""
         )
         column.markdown(
             f"""
