@@ -147,7 +147,7 @@ def rename_source(source_id: str, new_title: str, previous_title: Optional[str] 
         data_frame = None
         try:
             # pandas offers the most convenient conversion, but keep it optional
-            import pandas as pd  # type: ignore
+            import pandas as pd  # type: ignore[import-not-found]  # noqa: F401
 
             if hasattr(table, "to_pandas"):
                 data_frame = table.to_pandas()  # type: ignore[attr-defined]
