@@ -105,7 +105,14 @@ def load_directory_documents(directory: Path) -> List[DocumentPayload]:
     for path in directory.rglob("*"):
         if not path.is_file():
             continue
-        if path.suffix.lower() not in parsers.SUPPORTED_EXTENSIONS:
+        suffix = path.suffix.lower()
+        if suffix not in parsers.SUPPORTED_EXTENSIONS:
+            continue
+        if suffix in (
+            parsers._IMAGE_EXTENSIONS
+            | parsers._AUDIO_EXTENSIONS
+            | parsers._VIDEO_EXTENSIONS
+        ):
             continue
         body = parsers.extract_text_from_path(path)
         documents.append(

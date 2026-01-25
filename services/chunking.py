@@ -28,7 +28,10 @@ def chunk_text(
     if overlap < 0:
         raise ValueError("overlap must be non-negative")
     if overlap >= chunk_size:
-        raise ValueError("overlap must be smaller than chunk_size")
+        if overlap == DEFAULT_CHUNK_OVERLAP and chunk_size < DEFAULT_CHUNK_OVERLAP:
+            overlap = max(chunk_size - 1, 0)
+        else:
+            raise ValueError("overlap must be smaller than chunk_size")
 
     normalized = normalize_text(text)
     if not normalized:
@@ -43,11 +46,13 @@ def chunk_text(
     total = len(words)
     while start < total:
         end = min(start + chunk_size, total)
-        chunk = " ".join(words[start:end])
-        chunks.append(chunk)
-        if end == total:
+        chunks.append(" ".join(words[start:end]))
+        if end >= total:
             break
-        start = max(0, end - overlap)
+        remaining = total - end
+        if remaining < overlap:
+            break
+        start = end - overlap
     return chunks
 
 
