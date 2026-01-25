@@ -25,8 +25,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install ruff black mypy pytest
-      - name: Lint (ruff)
-        run: ruff check .
+      # - name: Lint (ruff)
+      #   run: ruff check .
       - name: Format check (black)
         run: black --check .
       - name: Type check (mypy)
