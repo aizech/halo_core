@@ -7,7 +7,7 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from time import sleep
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from agno.agent import Agent
 from agno.media import Image
