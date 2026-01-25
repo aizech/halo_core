@@ -655,9 +655,7 @@ def render_sources_panel() -> None:
                 label_visibility="collapsed",
                 key="dialog_search_query",
             )
-            if search_cols[1].button(
-                "➜", width="stretch", key="dialog_search_button"
-            ):
+            if search_cols[1].button("➜", width="stretch", key="dialog_search_button"):
                 if search_query:
                     st.session_state["dialog_search_trigger"] = True
             filter_cols = st.columns([0.3, 0.4, 0.3])
@@ -689,7 +687,7 @@ def render_sources_panel() -> None:
                                 result.get("description"),
                             )
                             st.toast("Quelle übernommen")
-            
+
         _dialog()
 
     #    def _open_rename_output_dialog(output_id: str, title: str) -> None:
