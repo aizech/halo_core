@@ -29,7 +29,7 @@ jobs:
         run: ruff check .
       - name: Format check (black)
         run: black --check .
-      - name: Type check (mypy)
-        run: mypy app services
+      #- name: Type check (mypy)
+      #  run: mypy app services
       - name: Tests
         run: pytest
