@@ -1,0 +1,172 @@
+{
+  "templates": [
+    {
+      "id": "podcast",
+      "title": "Podcast",
+      "description": "Konvertiere Erkenntnisse in Hörstücke.",
+      "status": "BETA",
+      "icon": "🎧",
+      "color": "#F3ECFF",
+      "badge": "BETA",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Erzeuge ein strukturiertes Podcast-Skript."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "video_overview",
+      "title": "Videoübersicht",
+      "description": "Erstelle ein kurzes Drehbuch für Clips.",
+      "icon": "🎬",
+      "color": "#DFF5EC",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Erstelle ein Clip-Storyboard mit Szenen."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "mindmap",
+      "title": "Mindmap",
+      "description": "Visualisiere Kernthemen und Beziehungen.",
+      "icon": "🕸️",
+      "color": "#FFEEDB",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Extrahiere Hauptthemen und Beziehungen."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "reports",
+      "title": "Berichte",
+      "description": "Fasse Erkenntnisse in professionellen Reports zusammen.",
+      "icon": "📊",
+      "color": "#E7F0FF",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Erstelle einen Bericht mit klaren Abschnitten."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "flashcards",
+      "title": "Karteikarten",
+      "description": "Lerne mit automatisch generierten Fragen.",
+      "icon": "🗂️",
+      "color": "#FFE4E2",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Erzeuge Q&A-Karteikarten."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "quiz",
+      "title": "Quiz",
+      "description": "Teste dein Wissen mit individuellen Quizfragen.",
+      "icon": "❔",
+      "color": "#E0F4FF",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Erstelle Quizfragen mit Lösungen."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "infographic",
+      "title": "Infografik",
+      "description": "Stelle Statistiken grafisch dar.",
+      "status": "BETA",
+      "icon": "📈",
+      "color": "#EDE7FF",
+      "badge": "BETA",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Fasse Kennzahlen als Infografik-Story zusammen."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "presentation",
+      "title": "Präsentation",
+      "description": "Erstelle Slides als Grundlage für Vorträge.",
+      "status": "BETA",
+      "icon": "🖥️",
+      "color": "#FFF4E0",
+      "badge": "BETA",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Erzeuge eine Folienstruktur mit Agenda."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    },
+    {
+      "id": "datatable",
+      "title": "Datentabelle",
+      "description": "Strukturiere Fakten in tabellarischer Form.",
+      "icon": "📋",
+      "color": "#F1F5F9",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Erstelle eine tabellarische Zusammenfassung."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral"
+      }
+    }
+  ]
+}
