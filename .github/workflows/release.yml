@@ -1,0 +1,20 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build Docker image
+        run: |
+          docker build -t halo-core:${{ github.ref_name }} .
+      - name: Build summary
+        run: echo "Built halo-core:${{ github.ref_name }}"

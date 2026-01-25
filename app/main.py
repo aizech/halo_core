@@ -374,20 +374,7 @@ def _init_state() -> None:
             if needs_resave:
                 _persist_sources()
         else:
-            default_sources = [
-                SourceItem(
-                    "Eigene_Homepage_erstellen.mp4",
-                    "Video",
-                    "2 Quellen | Vor 7 Tagen",
-                ),
-                SourceItem(
-                    "GFS Informatik – Erstellung",
-                    "PDF",
-                    "1 Quelle | Vor 9 Tagen",
-                ),
-            ]
-            st.session_state["sources"] = default_sources
-            _persist_sources()
+            st.session_state["sources"] = []
     _sync_source_checkbox_state()
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = [
@@ -755,7 +742,6 @@ def render_sources_panel() -> None:
             cols = st.columns([0.08, 0.74, 0.18])
             cols[0].checkbox(
                 label=f"Quelle auswählen: {src.name}",
-                value=st.session_state.get(f"src_{src.id}", src.selected),
                 key=f"src_{src.id}",
                 on_change=lambda sid=src.id: _toggle_source(sid),
                 label_visibility="collapsed",
