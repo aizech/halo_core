@@ -544,9 +544,7 @@ def _render_configuration_panel() -> None:
         pubmed_enable_key = f"agent_cfg_pubmed_enable_{key_suffix}"
         pubmed_all_key = f"agent_cfg_pubmed_all_{key_suffix}"
         member_options = [
-            agent_id
-            for agent_id in agent_ids
-            if agent_id != selected_agent_id
+            agent_id for agent_id in agent_ids if agent_id != selected_agent_id
         ]
         st.sidebar.checkbox(
             "Aktiviert",
@@ -635,9 +633,11 @@ def _render_configuration_panel() -> None:
         st.sidebar.multiselect(
             "Team-Mitglieder",
             options=member_options,
-            default=selected_agent.get("members", [])
-            if isinstance(selected_agent.get("members"), list)
-            else [],
+            default=(
+                selected_agent.get("members", [])
+                if isinstance(selected_agent.get("members"), list)
+                else []
+            ),
             key=members_key,
         )
         if st.sidebar.button("Agent speichern", key="save_agent_config"):

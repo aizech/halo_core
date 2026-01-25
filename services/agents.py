@@ -123,9 +123,7 @@ def _build_team(master_config: Dict[str, object]) -> Team | None:
             if member:
                 members.append(member)
     instructions = build_agent_instructions(master_config)
-    tools = _build_tools(
-        master_config.get("tools"), master_config.get("tool_settings")
-    )
+    tools = _build_tools(master_config.get("tools"), master_config.get("tool_settings"))
     _LOGGER.info(
         "Building master team '%s' with members=%s",
         master_config.get("name") or master_config.get("id") or "HALO Master",
@@ -259,10 +257,8 @@ def generate_grounded_reply(
         f"Ausgewählte Quellen:\n{context}\n\nZusätzliche Notizen:\n{notes_text or '-'}"
         f"\n\nKontext (RAG):\n{context_chunks or '-'}\n\nFrage: {prompt}"
     )
-    agent_instructions = None
     team_agent: Team | None = None
     if agent_config:
-        agent_instructions = build_agent_instructions(agent_config)
         if agent_config.get("members") or agent_config.get("id") == "chat":
             _LOGGER.info(
                 "Chat agent config: id=%s members=%s tools=%s",
