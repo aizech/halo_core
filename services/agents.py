@@ -15,7 +15,13 @@ from agno.tools.pubmed import PubmedTools
 from agno.tools.wikipedia import WikipediaTools
 from agno.tools.openai import OpenAITools
 
+try:  # Optional Mermaid tool
+    from agno.tools.mermaid import MermaidTools
+except ImportError:  # pragma: no cover - optional dependency
+    MermaidTools = None
+
 from services.agents_config import build_agent_instructions
+from services.halo_team import build_master_team_from_config
 from services.settings import get_settings
 
 _SETTINGS = get_settings()
@@ -85,6 +91,11 @@ def _build_tools(
                 tools.append(PubmedTools())
         if tool_id == "wikipedia":
             tools.append(WikipediaTools())
+        if tool_id == "mermaid":
+            if MermaidTools is None:
+                _LOGGER.warning("Mermaid tool not available")
+            else:
+                tools.append(MermaidTools())
     return tools
 
 
@@ -98,49 +109,6 @@ def _build_agent_from_config(config: Dict[str, object]) -> Agent | None:
     if tools:
         agent.tools = tools
     return agent
-
-
-def _build_team(master_config: Dict[str, object]) -> Team | None:
-    api_key = _SETTINGS.openai_api_key
-    if not api_key:
-        _LOGGER.warning("Team not built: missing OpenAI API key")
-        return None
-    model_id = str(master_config.get("model") or "gpt-5.2")
-    model = OpenAIChat(id=model_id, api_key=api_key)
-    member_ids = master_config.get("members") or []
-    members: List[Agent] = []
-    if isinstance(member_ids, list):
-        from services.agents_config import load_agent_configs
-
-        all_configs = load_agent_configs()
-        for agent_id in member_ids:
-            member_config = all_configs.get(str(agent_id))
-            if not isinstance(member_config, dict):
-                continue
-            if member_config.get("enabled", True) is False:
-                continue
-            member = _build_agent_from_config(member_config)
-            if member:
-                members.append(member)
-    instructions = build_agent_instructions(master_config)
-    tools = _build_tools(master_config.get("tools"), master_config.get("tool_settings"))
-    _LOGGER.info(
-        "Building master team '%s' with members=%s",
-        master_config.get("name") or master_config.get("id") or "HALO Master",
-        member_ids,
-    )
-    return Team(
-        name=str(master_config.get("name") or "HALO Master"),
-        model=model,
-        members=members,
-        tools=tools,
-        instructions=instructions,
-        respond_directly=True,
-        show_members_responses=True,
-        delegate_task_to_all_members=False,
-        determine_input_for_members=True,
-        markdown=True,
-    )
 
 
 _AGENT = _build_agent()
@@ -266,7 +234,7 @@ def generate_grounded_reply(
                 agent_config.get("members"),
                 agent_config.get("tools"),
             )
-            team_agent = _build_team(agent_config)
+            team_agent = build_master_team_from_config(agent_config)
             _LOGGER.info(
                 "Chat team build result: %s",
                 type(team_agent).__name__ if team_agent is not None else "None",

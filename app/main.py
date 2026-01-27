@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import re
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -13,6 +15,7 @@ from uuid import uuid4
 from textwrap import shorten
 
 import streamlit as st
+from streamlit import components
 from pydantic import BaseModel, Field, ValidationError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -537,6 +540,7 @@ def _render_configuration_panel() -> None:
         role_key = f"agent_cfg_role_{key_suffix}"
         description_key = f"agent_cfg_description_{key_suffix}"
         instructions_key = f"agent_cfg_instructions_{key_suffix}"
+        model_key = f"agent_cfg_model_{key_suffix}"
         members_key = f"agent_cfg_members_{key_suffix}"
         tools_key = f"agent_cfg_tools_{key_suffix}"
         pubmed_email_key = f"agent_cfg_pubmed_email_{key_suffix}"
@@ -573,9 +577,16 @@ def _render_configuration_panel() -> None:
             key=instructions_key,
             height=160,
         )
+        st.sidebar.text_input(
+            "Model",
+            value=str(selected_agent.get("model", "openai:gpt-5.2")),
+            key=model_key,
+            help="Format: provider:model (z.B. openai:gpt-5.2)",
+        )
         available_tools = {
             "pubmed": "PubMed Suche",
             "wikipedia": "Wikipedia Suche",
+            "mermaid": "Mermaid Diagramme",
         }
         raw_tools = selected_agent.get("tools", [])
         normalized_tools: List[str] = []
@@ -589,6 +600,8 @@ def _render_configuration_panel() -> None:
                         normalized_tools.append("pubmed")
                     elif "wikipedia" in tool_name:
                         normalized_tools.append("wikipedia")
+                    elif "mermaid" in tool_name:
+                        normalized_tools.append("mermaid")
         if tools_key in st.session_state:
             stored_tools = st.session_state.get(tools_key)
             if isinstance(stored_tools, list) and any(
@@ -661,6 +674,7 @@ def _render_configuration_panel() -> None:
                 "role": st.session_state.get(role_key, ""),
                 "description": st.session_state.get(description_key, ""),
                 "instructions": st.session_state.get(instructions_key, ""),
+                "model": st.session_state.get(model_key, "openai:gpt-5.2"),
                 "members": st.session_state.get(members_key, []),
                 "tools": selected_tools,
                 "tool_settings": updated_tool_settings,
@@ -803,8 +817,169 @@ def _generate_all_sources_summary() -> str:
         return _generate_studio_output("Bericht", instructions, source_names)
 
 
-def _append_chat(role: Literal["user", "assistant"], content: str) -> None:
-    st.session_state["chat_history"].append({"role": role, "content": content})
+def _append_chat(
+    role: Literal["user", "assistant"],
+    content: str,
+    trace: Dict[str, object] | None = None,
+) -> None:
+    payload = {"role": role, "content": content}
+    if trace:
+        payload["trace"] = trace
+    st.session_state["chat_history"].append(payload)
+
+
+def _render_thinking_trace(trace: Dict[str, object]) -> None:
+    agent_name = trace.get("agent_name") or trace.get("agent_id") or "Agent"
+    agent_type = trace.get("agent_type")
+    agent_tools = trace.get("agent_tools_runtime") or trace.get("agent_tools") or []
+    agent_members = (
+        trace.get("agent_members_runtime") or trace.get("agent_members") or []
+    )
+    payload = trace.get("payload")
+    error = trace.get("error")
+
+    st.markdown(f"**Agent:** {agent_name}" + (f" ({agent_type})" if agent_type else ""))
+    if agent_members:
+        st.markdown(f"**Team members:** {', '.join(agent_members)}")
+    if agent_tools:
+        st.markdown(f"**Tools:** {', '.join(agent_tools)}")
+    if payload:
+        st.markdown("**Input:**")
+        st.code(str(payload), language="text")
+    if error:
+        st.markdown("**Error:**")
+        st.code(str(error), language="text")
+
+
+def _extract_mermaid_blocks(content: str) -> tuple[str, List[str]]:
+    blocks = re.findall(r"```mermaid\n(.*?)```", content, re.DOTALL)
+    cleaned = re.sub(r"```mermaid\n(.*?)```", "", content, flags=re.DOTALL)
+    return cleaned.strip(), [block.strip() for block in blocks]
+
+
+def _render_mermaid_diagram(block: str) -> None:
+    diagram_id = f"mermaid-{uuid.uuid4().hex}"
+    zoom_in_id = f"zoom-in-{uuid.uuid4().hex}"
+    zoom_out_id = f"zoom-out-{uuid.uuid4().hex}"
+    zoom_reset_id = f"zoom-reset-{uuid.uuid4().hex}"
+    lines = max(4, len(block.splitlines()))
+    height = min(800, 120 + lines * 24)
+    mermaid_code = json.dumps(block)
+    html = """
+    <style>
+      .mermaid-zoom-wrap {{
+        position: relative;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+      }}
+      .mermaid-zoom-controls {{
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: flex;
+        gap: 6px;
+        z-index: 2;
+      }}
+      .mermaid-zoom-controls button {{
+        border: 1px solid rgba(0,0,0,0.12);
+        background: #fff;
+        border-radius: 8px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 12px;
+      }}
+      .mermaid-zoom-canvas {{
+        width: 100%;
+        height: 100%;
+        min-height: 360px;
+      }}
+      .mermaid-error {{
+        color: #b91c1c;
+        padding: 12px;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+      }}
+    </style>
+    <div class="mermaid-zoom-wrap" id="wrap-{diagram_id}">
+      <div class="mermaid-zoom-controls">
+        <button id="{zoom_in_id}">＋</button>
+        <button id="{zoom_out_id}">－</button>
+        <button id="{zoom_reset_id}">Reset</button>
+      </div>
+      <div class="mermaid-zoom-canvas" id="{diagram_id}"></div>
+    </div>
+    <script>
+      const target = document.getElementById("{diagram_id}");
+      const code = {mermaid_code};
+      const ensureScript = (src) => new Promise((resolve, reject) => {{
+        if (document.querySelector(`script[src="${{src}}"]`)) {{
+          const check = () => (src.includes("mermaid") ? window.mermaid : window.panzoom);
+          if (check()) return resolve();
+        }}
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load ${{src}}`));
+        document.head.appendChild(script);
+      }});
+
+      Promise.all([
+        ensureScript("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"),
+        ensureScript("https://cdn.jsdelivr.net/npm/panzoom@9.4.0/dist/panzoom.min.js"),
+      ])
+        .then(() => {{
+          if (!target) throw new Error("Mermaid container not found");
+          if (!window.mermaid) throw new Error("Mermaid library unavailable");
+          mermaid.initialize({{ startOnLoad: false, securityLevel: "loose" }});
+          return mermaid.render("{diagram_id}-svg", code);
+        }})
+        .then((result) => {{
+          const svgCode = result?.svg || result;
+          if (!target) return;
+          target.innerHTML = svgCode;
+          const svg = target.querySelector("svg");
+          if (!svg || !window.panzoom) return;
+          const zoom = window.panzoom(svg, {{
+            maxZoom: 4,
+            minZoom: 0.4,
+            zoomSpeed: 0.2,
+            bounds: true,
+            boundsPadding: 0.1,
+          }});
+          document.getElementById("{zoom_in_id}")?.addEventListener("click", () => zoom.smoothZoom(0, 0, 1.2));
+          document.getElementById("{zoom_out_id}")?.addEventListener("click", () => zoom.smoothZoom(0, 0, 0.8));
+          document.getElementById("{zoom_reset_id}")?.addEventListener("click", () => {{
+            zoom.moveTo(0, 0);
+            zoom.zoomAbs(0, 0, 1);
+          }});
+          if (typeof result?.bindFunctions === "function") {{
+            result.bindFunctions(target);
+          }}
+        }})
+        .catch((err) => {{
+          if (target) {{
+            target.innerHTML = `<div class='mermaid-error'>${{err}}</div>`;
+          }}
+        }});
+    </script>
+    """.format(
+        diagram_id=diagram_id,
+        zoom_in_id=zoom_in_id,
+        zoom_out_id=zoom_out_id,
+        zoom_reset_id=zoom_reset_id,
+        mermaid_code=mermaid_code,
+    )
+    components.v1.html(html, height=height, scrolling=False)
+
+
+def _render_chat_markdown(content: str) -> None:
+    cleaned, mermaid_blocks = _extract_mermaid_blocks(content)
+    if cleaned:
+        st.markdown(cleaned, unsafe_allow_html=False)
+    for block in mermaid_blocks:
+        _render_mermaid_diagram(block)
 
 
 def _save_note_from_message(content: str) -> None:
@@ -1204,7 +1379,7 @@ def render_chat_panel() -> None:
     if stored_signature != current_signature:
         st.session_state["all_sources_summary_stale"] = True
     # with st.container(border=True, height="calc(100vh - 260px)"):
-    with st.container(border=True, height=1000, gap="xxsmall"):
+    with st.container(border=True, height=900, gap="xxsmall"):
         with st.expander(
             f"Zusammenfassung aller Quellen ({all_source_count} Quellen)",
             expanded=True,
@@ -1255,14 +1430,37 @@ def render_chat_panel() -> None:
                     _save_note_from_all_sources_summary(summary_content)
         for idx, message in enumerate(st.session_state["chat_history"]):
             with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+                if message["role"] == "assistant":
+                    trace = message.get("trace") if isinstance(message, dict) else None
+                    if trace:
+                        with st.expander("Thinking", expanded=False):
+                            _render_thinking_trace(trace)
+                _render_chat_markdown(message["content"])
                 if message["role"] == "assistant":
                     if st.button("In Notiz speichern", key=f"save_note_{idx}"):
                         _save_note_from_message(message["content"])
-    trace = agents.get_last_trace()
-    if trace:
-        with st.expander("Transparenz", expanded=False):
-            st.json(trace)
+    pending_prompt = st.session_state.pop("pending_chat_prompt", None)
+    if pending_prompt:
+        contexts = retrieval.query_similar(pending_prompt)
+        try:
+            response = pipelines.generate_chat_reply(
+                pending_prompt,
+                _selected_source_names(),
+                st.session_state["notes"],
+                contexts,
+                _get_agent_config("chat"),
+            )
+        except TypeError:
+            response = pipelines.generate_chat_reply(
+                pending_prompt,
+                _selected_source_names(),
+                st.session_state["notes"],
+                contexts,
+            )
+        trace = agents.get_last_trace()
+        _append_chat("assistant", response, trace=trace)
+        st.toast("Antwort generiert – siehe Chat")
+        st.rerun()
     selected_count = len(_selected_source_names())
     user_submission = st.chat_input(
         f"Frage stellen oder Audio aufnehmen… ({selected_count} Quellen ausgewählt)",
@@ -1290,24 +1488,7 @@ def render_chat_panel() -> None:
         _append_chat("user", user_prompt)
         if st.session_state.get("config", {}).get("log_user_requests", True):
             _LOGGER.info("User request: %s", user_prompt)
-        contexts = retrieval.query_similar(user_prompt)
-        try:
-            response = pipelines.generate_chat_reply(
-                user_prompt,
-                _selected_source_names(),
-                st.session_state["notes"],
-                contexts,
-                _get_agent_config("chat"),
-            )
-        except TypeError:
-            response = pipelines.generate_chat_reply(
-                user_prompt,
-                _selected_source_names(),
-                st.session_state["notes"],
-                contexts,
-            )
-        _append_chat("assistant", response)
-        st.toast("Antwort generiert – siehe Chat")
+        st.session_state["pending_chat_prompt"] = user_prompt
         st.rerun()
 
 

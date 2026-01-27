@@ -39,6 +39,7 @@ def _default_chat_config() -> Dict[str, object]:
         "instructions": DEFAULT_CHAT_INSTRUCTIONS,
         "members": ["reports"],
         "tools": [],
+        "model": "openai:gpt-5.2",
         "enabled": True,
     }
 
@@ -133,6 +134,11 @@ def build_agent_instructions(config: Dict[str, object]) -> str:
             "Du darfst die konfigurierten Tools nutzen, um externe Informationen zu "
             f"suchen ({tool_names}). Wenn du Tools nutzt, gib die Quelle an."
         )
+        if "wikipedia" in [str(tool).lower() for tool in tools]:
+            tool_notice = (
+                f"{tool_notice} Wenn du Wikipedia nutzt, gib einen klickbaren "
+                "Wikipedia-Link in der Antwort an."
+            )
     header_lines = []
     if role:
         header_lines.append(f"Rolle: {role}")
