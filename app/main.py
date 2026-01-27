@@ -769,6 +769,40 @@ def _selected_source_names() -> List[str]:
     return [src.name for src in st.session_state["sources"] if src.selected]
 
 
+def _all_source_names() -> List[str]:
+    return [src.name for src in st.session_state["sources"]]
+
+
+def _sources_signature(names: List[str]) -> str:
+    return "|".join(sorted(name.strip() for name in names if name and name.strip()))
+
+
+def _generate_all_sources_summary() -> str:
+    source_names = _all_source_names()
+    instructions = (
+        "Synthesize the sources into a single, coherent summary.\n"
+        "Begin with a concise, fitting title (max 8 words).\n"
+        "Follow these rules:\n"
+        "- Extract only the essential themes, methods, and strategic goals.\n"
+        "- Highlight how the sources connect and reinforce each other.\n"
+        "- Maintain a neutral, professional, and concise tone.\n"
+        "- Limit the summary to 1–2 paragraphs, max 150 words.\n"
+        "- Emphasize technological approaches, practical user benefits, and strategic context.\n"
+        "- Avoid repetition and do not list the sources individually.\n"
+        "After the summary, provide one distilled key message in no more than 20 words.\n"
+        "Sources: [INSERT SOURCES]"
+    )
+    try:
+        return _generate_studio_output(
+            "Bericht",
+            instructions,
+            source_names,
+            _get_agent_config("reports"),
+        )
+    except TypeError:
+        return _generate_studio_output("Bericht", instructions, source_names)
+
+
 def _append_chat(role: Literal["user", "assistant"], content: str) -> None:
     st.session_state["chat_history"].append({"role": role, "content": content})
 
@@ -777,6 +811,17 @@ def _save_note_from_message(content: str) -> None:
     note = {
         "content": content,
         "sources": _selected_source_names(),
+        "created_at": _now_iso(),
+    }
+    st.session_state.setdefault("notes", []).append(note)
+    storage.save_notes(st.session_state["notes"])
+    st.toast("Als Notiz gespeichert")
+
+
+def _save_note_from_all_sources_summary(content: str) -> None:
+    note = {
+        "content": content,
+        "sources": _all_source_names(),
         "created_at": _now_iso(),
     }
     st.session_state.setdefault("notes", []).append(note)
@@ -1152,8 +1197,62 @@ def render_sources_panel() -> None:
 
 def render_chat_panel() -> None:
     st.subheader("Chat")
+    all_source_names = _all_source_names()
+    all_source_count = len(all_source_names)
+    current_signature = _sources_signature(all_source_names)
+    stored_signature = st.session_state.get("all_sources_summary_signature")
+    if stored_signature != current_signature:
+        st.session_state["all_sources_summary_stale"] = True
     # with st.container(border=True, height="calc(100vh - 260px)"):
-    with st.container(border=True, height=700, gap="xxsmall"):
+    with st.container(border=True, height=1000, gap="xxsmall"):
+        with st.expander(
+            f"Zusammenfassung aller Quellen ({all_source_count} Quellen)",
+            expanded=True,
+        ):
+            is_stale = bool(st.session_state.get("all_sources_summary_stale"))
+            summary_content = str(
+                st.session_state.get("all_sources_summary_content") or ""
+            ).strip()
+            if not all_source_count:
+                st.caption("Noch keine Quellen in der Bibliothek.")
+            elif summary_content:
+                st.markdown(summary_content)
+            else:
+                st.caption("Noch keine Zusammenfassung generiert. Bitte aktualisieren.")
+
+            controls = st.columns([0.74, 0.13, 0.13])
+            status_text = f"Quellen in der Bibliothek: {all_source_count}"
+            if is_stale:
+                status_text = f"{status_text} · Neue Quellen erkannt"
+            controls[0].caption(status_text)
+            with controls[1]:
+                if st.button(
+                    "",
+                    key="update_all_sources_summary",
+                    icon=":material/refresh:",
+                    help="Zusammenfassung aktualisieren",
+                    width="stretch",
+                    disabled=not bool(all_source_count),
+                ):
+                    st.session_state["all_sources_summary_content"] = (
+                        _generate_all_sources_summary() if all_source_count else ""
+                    )
+                    st.session_state["all_sources_summary_signature"] = (
+                        current_signature
+                    )
+                    st.session_state["all_sources_summary_generated_at"] = _now_iso()
+                    st.session_state["all_sources_summary_stale"] = False
+                    st.rerun()
+            with controls[2]:
+                if st.button(
+                    "",
+                    key="pin_all_sources_summary",
+                    icon=":material/push_pin:",
+                    help="Zusammenfassung als Notiz speichern",
+                    width="stretch",
+                    disabled=not bool(summary_content),
+                ):
+                    _save_note_from_all_sources_summary(summary_content)
         for idx, message in enumerate(st.session_state["chat_history"]):
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
@@ -1214,6 +1313,7 @@ def render_chat_panel() -> None:
 
 def render_studio_panel() -> None:
     st.subheader("Studio")
+    st.markdown("<br>", unsafe_allow_html=True)
     st.caption("Wähle eine Vorlage, generiere Inhalte und verwalte deine Artefakte.")
 
     st.markdown(
