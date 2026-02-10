@@ -208,6 +208,39 @@ def _format_sources(sources: Iterable[str]) -> str:
     return "\n".join(f"- {name}" for name in sources)
 
 
+def build_chat_payload(
+    prompt: str,
+    sources: List[str],
+    notes: List[dict],
+    contexts: List[dict],
+) -> str:
+    context = _format_sources(sources)
+    notes_text = "\n".join(f"Note: {note.get('content')}" for note in notes[-5:])
+    context_chunks = "\n\n".join(
+        f"Snippet: {ctx.get('text')}\nMeta: {ctx.get('meta')}" for ctx in contexts
+    )
+    return (
+        f"Ausgewählte Quellen:\n{context}\n\nZusätzliche Notizen:\n{notes_text or '-'}"
+        f"\n\nKontext (RAG):\n{context_chunks or '-'}\n\nFrage: {prompt}"
+    )
+
+
+def build_chat_agent(
+    agent_config: Dict[str, object] | None = None,
+) -> Agent | Team | None:
+    team_agent: Team | None = None
+    if agent_config:
+        if agent_config.get("members") or agent_config.get("id") == "chat":
+            team_agent = build_master_team_from_config(agent_config)
+            if team_agent is None:
+                _LOGGER.warning("Falling back to single agent for chat")
+    if team_agent is not None:
+        return team_agent
+    if agent_config:
+        return _build_agent_from_config(agent_config)
+    return _AGENT
+
+
 def generate_grounded_reply(
     prompt: str,
     sources: List[str],
@@ -216,37 +249,20 @@ def generate_grounded_reply(
     agent_config: Dict[str, object] | None = None,
 ) -> str:
     _LOGGER.info("agents.py path: %s", __file__)
-    context = _format_sources(sources)
-    notes_text = "\n".join(f"Note: {note.get('content')}" for note in notes[-5:])
-    context_chunks = "\n\n".join(
-        f"Snippet: {ctx.get('text')}\nMeta: {ctx.get('meta')}" for ctx in contexts
-    )
-    payload = (
-        f"Ausgewählte Quellen:\n{context}\n\nZusätzliche Notizen:\n{notes_text or '-'}"
-        f"\n\nKontext (RAG):\n{context_chunks or '-'}\n\nFrage: {prompt}"
-    )
-    team_agent: Team | None = None
+    payload = build_chat_payload(prompt, sources, notes, contexts)
     if agent_config:
-        if agent_config.get("members") or agent_config.get("id") == "chat":
-            _LOGGER.info(
-                "Chat agent config: id=%s members=%s tools=%s",
-                agent_config.get("id"),
-                agent_config.get("members"),
-                agent_config.get("tools"),
-            )
-            team_agent = build_master_team_from_config(agent_config)
-            _LOGGER.info(
-                "Chat team build result: %s",
-                type(team_agent).__name__ if team_agent is not None else "None",
-            )
-            if team_agent is None:
-                _LOGGER.warning("Falling back to single agent for chat")
-    if team_agent is not None:
-        agent = team_agent
-    elif agent_config:
-        agent = _build_agent_from_config(agent_config)
-    else:
-        agent = _AGENT
+        _LOGGER.info(
+            "Chat agent config: id=%s members=%s tools=%s",
+            agent_config.get("id"),
+            agent_config.get("members"),
+            agent_config.get("tools"),
+        )
+    agent = build_chat_agent(agent_config)
+    if agent is not None:
+        _LOGGER.info(
+            "Chat agent class: %s",
+            type(agent).__name__,
+        )
     if agent:
         try:
             agent_name = getattr(agent, "name", "Agent")
@@ -287,7 +303,7 @@ def generate_grounded_reply(
             )
             return response
         except Exception as exc:  # pragma: no cover - API errors
-            error = f"(Agno Fehler: {exc}). Antwort (Fallback): {prompt} -> {context}"
+            error = f"(Agno Fehler: {exc}). Antwort (Fallback): {prompt} -> {payload}"
             if _LOG_AGENT_ERRORS:
                 _LOGGER.exception("Agent error")
             _record_trace(

@@ -7,6 +7,8 @@ import logging
 import sys
 import re
 import uuid
+import asyncio
+import inspect
 from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -15,6 +17,7 @@ from uuid import uuid4
 from textwrap import shorten
 
 import streamlit as st
+from agno.media import Image
 from streamlit import components
 from pydantic import BaseModel, Field, ValidationError
 
@@ -32,6 +35,7 @@ sys.path.insert(0, project_root_str)
 
 import services  # noqa: E402
 from services import connectors, ingestion, pipelines, retrieval, storage  # noqa: E402
+from services import presets  # noqa: E402
 import services.agents as agents  # noqa: E402
 from services import agents_config  # noqa: E402
 from services import exports  # noqa: E402
@@ -398,6 +402,8 @@ def render_sidebar() -> None:
 
 
 def _init_state() -> None:
+    if "session_id" not in st.session_state:
+        st.session_state["session_id"] = uuid4().hex
     if "sources" not in st.session_state:
         stored_sources = storage.load_sources()
         if stored_sources:
@@ -418,12 +424,20 @@ def _init_state() -> None:
             st.session_state["sources"] = []
     _sync_source_checkbox_state()
     if "chat_history" not in st.session_state:
-        st.session_state["chat_history"] = [
-            {
-                "role": "assistant",
-                "content": "Willkommen! Frag mich etwas zu deinen Quellen.",
-            }
-        ]
+        session_id = st.session_state.get("session_id")
+        stored_history = storage.load_chat_history(session_id) if session_id else []
+        if stored_history:
+            st.session_state["chat_history"] = stored_history
+        else:
+            st.session_state["chat_history"] = [
+                {
+                    "role": "assistant",
+                    "content": "Willkommen! Frag mich etwas zu deinen Quellen.",
+                    "tool_calls": None,
+                }
+            ]
+    if "persistent_tool_calls" not in st.session_state:
+        st.session_state["persistent_tool_calls"] = {}
     if "studio_templates" not in st.session_state:
         st.session_state["studio_templates"] = _load_studio_templates()
     if "notes" not in st.session_state:
@@ -446,10 +460,28 @@ def _init_state() -> None:
             "log_agent_response": True,
             "log_agent_errors": True,
             "log_user_requests": True,
+            "chat_preset": "Default",
         }
         st.session_state["config"] = {**default_config, **stored_config}
     if "agent_configs" not in st.session_state:
         st.session_state["agent_configs"] = agents_config.load_agent_configs()
+
+
+def _normalize_agent_tools(raw_tools: object) -> List[str]:
+    normalized: List[str] = []
+    if isinstance(raw_tools, list):
+        for tool in raw_tools:
+            if isinstance(tool, str):
+                normalized.append(tool)
+            else:
+                tool_name = type(tool).__name__.lower()
+                if "pubmed" in tool_name:
+                    normalized.append("pubmed")
+                elif "wikipedia" in tool_name:
+                    normalized.append("wikipedia")
+                elif "mermaid" in tool_name:
+                    normalized.append("mermaid")
+    return normalized
 
 
 def _render_configuration_panel() -> None:
@@ -512,6 +544,95 @@ def _render_configuration_panel() -> None:
         log_response=bool(st.session_state.get("log_agent_response", True)),
         log_errors=bool(st.session_state.get("log_agent_errors", True)),
     )
+
+    st.sidebar.subheader("Chat Presets")
+    presets_payload = presets.load_presets()
+    preset_names = sorted(presets_payload.keys())
+    if preset_names:
+        current_preset = st.session_state.get("config", {}).get(
+            "chat_preset", "Default"
+        )
+        preset_index = (
+            preset_names.index(current_preset) if current_preset in preset_names else 0
+        )
+        selected_preset = st.sidebar.selectbox(
+            "Preset",
+            options=preset_names,
+            index=preset_index,
+            key="chat_preset_selector",
+        )
+        if st.sidebar.button("Preset anwenden", key="apply_chat_preset"):
+            try:
+                updated = presets.apply_preset_to_chat(selected_preset)
+            except ValueError as exc:
+                st.sidebar.error(str(exc))
+            else:
+                st.session_state["config"]["chat_preset"] = selected_preset
+                storage.save_config(st.session_state["config"])
+                agent_configs = st.session_state.get("agent_configs", {})
+                agent_configs["chat"] = updated
+                st.session_state["agent_configs"] = agent_configs
+                st.sidebar.success("Chat-Preset angewendet")
+    else:
+        st.sidebar.caption("Keine Presets gefunden (presets.json fehlt).")
+
+    st.sidebar.subheader("Chat Modell & Tools")
+    agent_configs = st.session_state.get("agent_configs", {})
+    chat_config = (
+        agent_configs.get("chat", {}) if isinstance(agent_configs, dict) else {}
+    )
+    member_options = [
+        agent_id for agent_id in agent_configs.keys() if agent_id != "chat"
+    ]
+    available_tools = {
+        "pubmed": "PubMed Suche",
+        "wikipedia": "Wikipedia Suche",
+        "mermaid": "Mermaid Diagramme",
+    }
+    chat_model_key = "chat_cfg_model"
+    chat_members_key = "chat_cfg_members"
+    chat_tools_key = "chat_cfg_tools"
+    st.sidebar.text_input(
+        "Chat Model",
+        value=str(chat_config.get("model", "openai:gpt-5.2")),
+        key=chat_model_key,
+        help="Format: provider:model (z.B. openai:gpt-5.2)",
+    )
+    st.sidebar.multiselect(
+        "Chat Team",
+        options=member_options,
+        default=(
+            chat_config.get("members", [])
+            if isinstance(chat_config.get("members"), list)
+            else []
+        ),
+        key=chat_members_key,
+    )
+    normalized_chat_tools = _normalize_agent_tools(chat_config.get("tools", []))
+    if chat_tools_key in st.session_state:
+        stored_tools = st.session_state.get(chat_tools_key)
+        if isinstance(stored_tools, list) and any(
+            not isinstance(tool, str) for tool in stored_tools
+        ):
+            st.session_state[chat_tools_key] = normalized_chat_tools
+    st.sidebar.multiselect(
+        "Chat Tools",
+        options=list(available_tools.keys()),
+        default=normalized_chat_tools,
+        format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
+        key=chat_tools_key,
+    )
+    if st.sidebar.button("Chat speichern", key="save_chat_config"):
+        updated = {
+            **chat_config,
+            "model": st.session_state.get(chat_model_key, "openai:gpt-5.2"),
+            "members": st.session_state.get(chat_members_key, []),
+            "tools": st.session_state.get(chat_tools_key, []),
+        }
+        agents_config.save_agent_config("chat", updated)
+        agent_configs["chat"] = updated
+        st.session_state["agent_configs"] = agent_configs
+        st.sidebar.success("Chat-Konfiguration gespeichert")
 
     st.sidebar.subheader("Agenten")
     agent_configs = st.session_state.get("agent_configs", {})
@@ -588,20 +709,7 @@ def _render_configuration_panel() -> None:
             "wikipedia": "Wikipedia Suche",
             "mermaid": "Mermaid Diagramme",
         }
-        raw_tools = selected_agent.get("tools", [])
-        normalized_tools: List[str] = []
-        if isinstance(raw_tools, list):
-            for tool in raw_tools:
-                if isinstance(tool, str):
-                    normalized_tools.append(tool)
-                else:
-                    tool_name = type(tool).__name__.lower()
-                    if "pubmed" in tool_name:
-                        normalized_tools.append("pubmed")
-                    elif "wikipedia" in tool_name:
-                        normalized_tools.append("wikipedia")
-                    elif "mermaid" in tool_name:
-                        normalized_tools.append("mermaid")
+        normalized_tools = _normalize_agent_tools(selected_agent.get("tools", []))
         if tools_key in st.session_state:
             stored_tools = st.session_state.get(tools_key)
             if isinstance(stored_tools, list) and any(
@@ -817,15 +925,102 @@ def _generate_all_sources_summary() -> str:
         return _generate_studio_output("Bericht", instructions, source_names)
 
 
+def _serialize_tool_calls(tool_calls: object) -> List[Dict[str, object]] | None:
+    if not tool_calls:
+        return None
+    if isinstance(tool_calls, dict):
+        tool_calls = [tool_calls]
+    if not isinstance(tool_calls, list):
+        try:
+            tool_calls = list(tool_calls)
+        except (TypeError, ValueError):
+            return [{"name": str(tool_calls)}]
+    serialized: List[Dict[str, object]] = []
+    for tool_call in tool_calls:
+        if tool_call is None:
+            continue
+        if hasattr(tool_call, "get"):
+            serialized.append(dict(tool_call))
+            continue
+        if hasattr(tool_call, "__dict__"):
+            sanitized: Dict[str, object] = {}
+            for key, value in tool_call.__dict__.items():
+                if isinstance(value, (str, int, float, bool, type(None))):
+                    sanitized[key] = value
+                else:
+                    sanitized[key] = str(value)
+            serialized.append(sanitized)
+            continue
+        serialized.append({"name": str(tool_call)})
+    return serialized or None
+
+
 def _append_chat(
     role: Literal["user", "assistant"],
     content: str,
     trace: Dict[str, object] | None = None,
+    tool_calls: object | None = None,
+    images: List[Dict[str, object]] | None = None,
 ) -> None:
-    payload = {"role": role, "content": content}
+    payload = {
+        "role": role,
+        "content": content,
+        "tool_calls": _serialize_tool_calls(tool_calls),
+    }
+    if images:
+        payload["images"] = images
     if trace:
         payload["trace"] = trace
     st.session_state["chat_history"].append(payload)
+    session_id = st.session_state.get("session_id")
+    if session_id:
+        storage.save_chat_history(session_id, st.session_state["chat_history"])
+
+
+def _display_tool_calls(
+    tool_calls_container: st.delta_generator.DeltaGenerator, tools: object
+) -> None:
+    if tools is None:
+        return
+    if tool_calls_container is None:
+        return
+    try:
+        with tool_calls_container.container():
+            if isinstance(tools, dict):
+                tools = [tools]
+            elif isinstance(tools, (str, int, float, bool)):
+                tools = [{"name": "Tool Call", "content": str(tools)}]
+            elif not isinstance(tools, list):
+                try:
+                    tools = list(tools)
+                except (TypeError, ValueError):
+                    return
+            if not tools:
+                return
+            for tool_call in tools:
+                if tool_call is None:
+                    continue
+                if hasattr(tool_call, "get"):
+                    tool_name = tool_call.get("tool_name") or tool_call.get(
+                        "name", "Unknown Tool"
+                    )
+                    tool_args = tool_call.get("tool_args") or tool_call.get("args", {})
+                    content = tool_call.get("content")
+                else:
+                    tool_name = getattr(tool_call, "tool_name", None) or getattr(
+                        tool_call, "name", "Unknown Tool"
+                    )
+                    tool_args = getattr(tool_call, "tool_args", None) or getattr(
+                        tool_call, "args", {}
+                    )
+                    content = getattr(tool_call, "content", None)
+                with st.expander(f"Tool: {tool_name}", expanded=False):
+                    if tool_args:
+                        st.code(json.dumps(tool_args, ensure_ascii=True, indent=2))
+                    if content:
+                        st.markdown(str(content))
+    except Exception as exc:
+        _LOGGER.warning("Failed to render tool calls: %s", exc)
 
 
 def _render_thinking_trace(trace: Dict[str, object]) -> None:
@@ -851,10 +1046,146 @@ def _render_thinking_trace(trace: Dict[str, object]) -> None:
         st.code(str(error), language="text")
 
 
+def _stream_agent_response(
+    agent,
+    payload: str,
+    response_container: st.delta_generator.DeltaGenerator | None = None,
+    tool_calls_container: st.delta_generator.DeltaGenerator | None = None,
+    images: List[Image] | None = None,
+) -> Dict[str, object] | None:
+    if agent is None:
+        return None
+    try:
+        if images:
+            run_response = agent.run(
+                payload,
+                images=images,
+                stream=True,
+                stream_intermediate_steps=True,
+            )
+        else:
+            run_response = agent.run(
+                payload,
+                stream=True,
+                stream_intermediate_steps=True,
+            )
+    except TypeError:
+        try:
+            run_response = agent.run(payload, stream=True, images=images)
+        except TypeError:
+            return None
+
+    current_tools: List[object] = []
+    response = ""
+    saw_content = False
+    saw_member_output = False
+
+    def _update_response() -> None:
+        if response_container is not None:
+            response_container.markdown(response)
+
+    def _update_tools() -> None:
+        if tool_calls_container is not None:
+            _display_tool_calls(tool_calls_container, current_tools)
+
+    def _handle_chunk(chunk) -> None:
+        nonlocal response
+        nonlocal saw_content
+        nonlocal saw_member_output
+        if chunk is None:
+            return
+        event = getattr(chunk, "event", None)
+        is_team_output = event in ("TeamRunContent", "TeamRunResponse")
+        if is_team_output and saw_member_output:
+            return
+        tool = getattr(chunk, "tool", None)
+        tools = getattr(chunk, "tools", None)
+        if event == "TeamToolCallStarted" and tool is not None:
+            tool_id = getattr(tool, "tool_name", None) or getattr(tool, "name", None)
+            if tool_id and not any(
+                getattr(t, "tool_name", None) == tool_id
+                or getattr(t, "name", None) == tool_id
+                for t in current_tools
+            ):
+                current_tools.append(tool)
+                _update_tools()
+        if tools:
+            for tool_item in tools:
+                if hasattr(tool_item, "get"):
+                    tool_id = tool_item.get("name") or tool_item.get("tool_name")
+                else:
+                    tool_id = getattr(tool_item, "name", None) or getattr(
+                        tool_item, "tool_name", None
+                    )
+                if tool_id and not any(
+                    getattr(t, "tool_name", None) == tool_id
+                    or getattr(t, "name", None) == tool_id
+                    for t in current_tools
+                ):
+                    current_tools.append(tool_item)
+            _update_tools()
+        if getattr(chunk, "content", None) is not None:
+            if not is_team_output:
+                saw_member_output = True
+            saw_content = True
+            chunk_text = str(chunk.content)
+            if response:
+                if chunk_text.startswith(response):
+                    response = chunk_text
+                elif response.startswith(chunk_text):
+                    response = response
+                else:
+                    response += chunk_text
+            else:
+                response = chunk_text
+            _update_response()
+            return
+        if getattr(chunk, "response", None) is not None:
+            if not is_team_output:
+                saw_member_output = True
+            chunk_text = str(chunk.response)
+            if saw_content:
+                if chunk_text.startswith(response):
+                    response = chunk_text
+                elif response.startswith(chunk_text):
+                    response = response
+                else:
+                    response = chunk_text
+            else:
+                if chunk_text.startswith(response):
+                    response = chunk_text
+                else:
+                    response += chunk_text
+            _update_response()
+
+    async def _consume_async() -> None:
+        async for chunk in run_response:
+            _handle_chunk(chunk)
+
+    if inspect.isasyncgen(run_response):
+        asyncio.run(_consume_async())
+    else:
+        for chunk in run_response:
+            _handle_chunk(chunk)
+
+    return {"response": response, "tools": current_tools}
+
+
 def _extract_mermaid_blocks(content: str) -> tuple[str, List[str]]:
     blocks = re.findall(r"```mermaid\n(.*?)```", content, re.DOTALL)
     cleaned = re.sub(r"```mermaid\n(.*?)```", "", content, flags=re.DOTALL)
     return cleaned.strip(), [block.strip() for block in blocks]
+
+
+def _sanitize_mermaid_block(block: str) -> str:
+    sanitized = block.strip()
+    pattern = re.compile(r'"([^"]*)"\s+"([^"]*)"', re.DOTALL)
+    while True:
+        updated = pattern.sub(lambda match: f'"{match.group(1)}<br/>{match.group(2)}"', sanitized)
+        if updated == sanitized:
+            break
+        sanitized = updated
+    return sanitized
 
 
 def _render_mermaid_diagram(block: str) -> None:
@@ -979,7 +1310,29 @@ def _render_chat_markdown(content: str) -> None:
     if cleaned:
         st.markdown(cleaned, unsafe_allow_html=False)
     for block in mermaid_blocks:
-        _render_mermaid_diagram(block)
+        _render_mermaid_diagram(_sanitize_mermaid_block(block))
+
+
+def _save_uploaded_images(
+    uploaded_files: List[st.runtime.uploaded_file_manager.UploadedFile],
+) -> tuple[List[Dict[str, object]], List[Image]]:
+    uploads_dir = PROJECT_ROOT / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    saved_images: List[Dict[str, object]] = []
+    image_artifacts: List[Image] = []
+    for uploaded_file in uploaded_files:
+        safe_name = f"{uuid.uuid4().hex}_{uploaded_file.name}"
+        target_path = uploads_dir / safe_name
+        target_path.write_bytes(uploaded_file.getvalue())
+        saved_images.append(
+            {
+                "filepath": str(target_path),
+                "name": uploaded_file.name,
+                "mime_type": uploaded_file.type,
+            }
+        )
+        image_artifacts.append(Image(filepath=str(target_path)))
+    return saved_images, image_artifacts
 
 
 def _save_note_from_message(content: str) -> None:
@@ -1430,44 +1783,146 @@ def render_chat_panel() -> None:
                     _save_note_from_all_sources_summary(summary_content)
         for idx, message in enumerate(st.session_state["chat_history"]):
             with st.chat_message(message["role"]):
+                message_key = (
+                    f"{message['role']}_{hash(message.get('content', ''))}_{idx}"
+                )
                 if message["role"] == "assistant":
                     trace = message.get("trace") if isinstance(message, dict) else None
                     if trace:
                         with st.expander("Thinking", expanded=False):
                             _render_thinking_trace(trace)
+                if message.get("tool_calls"):
+                    st.session_state["persistent_tool_calls"][message_key] = message[
+                        "tool_calls"
+                    ]
+                if message_key in st.session_state.get("persistent_tool_calls", {}):
+                    _display_tool_calls(
+                        st.container(),
+                        st.session_state["persistent_tool_calls"][message_key],
+                    )
                 _render_chat_markdown(message["content"])
+                message_images = (
+                    message.get("images") if isinstance(message, dict) else None
+                )
+                if message_images:
+                    cols = st.columns(2)
+                    for img_idx, image in enumerate(message_images):
+                        image_path = (
+                            image.get("filepath") if isinstance(image, dict) else None
+                        )
+                        if not image_path:
+                            continue
+                        with cols[img_idx % 2]:
+                            st.image(
+                                image_path,
+                                caption=(
+                                    image.get("name")
+                                    if isinstance(image, dict)
+                                    else None
+                                ),
+                                use_container_width=True,
+                            )
                 if message["role"] == "assistant":
                     if st.button("In Notiz speichern", key=f"save_note_{idx}"):
                         _save_note_from_message(message["content"])
     pending_prompt = st.session_state.pop("pending_chat_prompt", None)
+    pending_images = st.session_state.pop("pending_chat_images", None)
     if pending_prompt:
         contexts = retrieval.query_similar(pending_prompt)
-        try:
-            response = pipelines.generate_chat_reply(
-                pending_prompt,
-                _selected_source_names(),
-                st.session_state["notes"],
-                contexts,
-                _get_agent_config("chat"),
+        agent_config = _get_agent_config("chat")
+        payload = agents.build_chat_payload(
+            pending_prompt,
+            _selected_source_names(),
+            st.session_state["notes"],
+            contexts,
+        )
+        agent = agents.build_chat_agent(agent_config)
+        with st.chat_message("assistant"):
+            tool_calls_container = st.empty()
+            response_container = st.empty()
+            streamed = _stream_agent_response(
+                agent,
+                payload,
+                response_container=response_container,
+                tool_calls_container=tool_calls_container,
+                images=pending_images,
             )
-        except TypeError:
-            response = pipelines.generate_chat_reply(
-                pending_prompt,
-                _selected_source_names(),
-                st.session_state["notes"],
-                contexts,
-            )
-        trace = agents.get_last_trace()
-        _append_chat("assistant", response, trace=trace)
+        if streamed is None:
+            try:
+                response = pipelines.generate_chat_reply(
+                    pending_prompt,
+                    _selected_source_names(),
+                    st.session_state["notes"],
+                    contexts,
+                    agent_config,
+                )
+            except TypeError:
+                response = pipelines.generate_chat_reply(
+                    pending_prompt,
+                    _selected_source_names(),
+                    st.session_state["notes"],
+                    contexts,
+                )
+            trace = agents.get_last_trace()
+            _append_chat("assistant", response, trace=trace)
+        else:
+            response = (streamed.get("response") or "").strip()
+            tool_calls = streamed.get("tools")
+            trace = agents.get_last_trace()
+            if not response:
+                try:
+                    response = pipelines.generate_chat_reply(
+                        pending_prompt,
+                        _selected_source_names(),
+                        st.session_state["notes"],
+                        contexts,
+                        agent_config,
+                    )
+                except TypeError:
+                    response = pipelines.generate_chat_reply(
+                        pending_prompt,
+                        _selected_source_names(),
+                        st.session_state["notes"],
+                        contexts,
+                    )
+            _append_chat("assistant", response, trace=trace, tool_calls=tool_calls)
         st.toast("Antwort generiert – siehe Chat")
         st.rerun()
     selected_count = len(_selected_source_names())
     user_submission = st.chat_input(
         f"Frage stellen oder Audio aufnehmen… ({selected_count} Quellen ausgewählt)",
         accept_audio=True,
+        accept_file=True,
+        file_type=["jpg", "jpeg", "png"],
     )
     if user_submission:
         user_prompt = (user_submission.text or "").strip()
+        uploaded_images: List[Dict[str, object]] = []
+        image_artifacts: List[Image] = []
+        if getattr(user_submission, "files", None):
+            uploaded_images, image_artifacts = _save_uploaded_images(
+                list(user_submission.files)
+            )
+            if user_prompt:
+                if len(uploaded_images) == 1:
+                    user_prompt = (
+                        f"{user_prompt} (Bild: {uploaded_images[0].get('name')})"
+                    )
+                else:
+                    filenames = ", ".join(
+                        img.get("name", "Bild") for img in uploaded_images
+                    )
+                    user_prompt = f"{user_prompt} (Bilder: {filenames})"
+            else:
+                if len(uploaded_images) == 1:
+                    user_prompt = (
+                        f"Bitte analysiere das Bild {uploaded_images[0].get('name')}."
+                    )
+                else:
+                    filenames = ", ".join(
+                        img.get("name", "Bild") for img in uploaded_images
+                    )
+                    user_prompt = f"Bitte analysiere die Bilder: {filenames}."
         if user_submission.audio:
             audio_file = user_submission.audio
             audio_name = getattr(audio_file, "name", "audio.wav")
@@ -1485,10 +1940,12 @@ def render_chat_panel() -> None:
         if not user_prompt:
             st.warning("Bitte Text eingeben oder Audio aufnehmen.")
             return
-        _append_chat("user", user_prompt)
+        _append_chat("user", user_prompt, images=uploaded_images)
         if st.session_state.get("config", {}).get("log_user_requests", True):
             _LOGGER.info("User request: %s", user_prompt)
         st.session_state["pending_chat_prompt"] = user_prompt
+        if image_artifacts:
+            st.session_state["pending_chat_images"] = image_artifacts
         st.rerun()
 
 

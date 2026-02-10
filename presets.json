@@ -1,0 +1,34 @@
+{
+  "Research": {
+    "model": "openai:gpt-5",
+    "members": [
+      "reports",
+      "pubmed"
+    ],
+    "tools": [
+      "pubmed"
+    ]
+  },
+  "Default": {
+    "model": "openai:gpt-5.2",
+    "members": [
+      "reports",
+      "infographic"
+    ],
+    "tools": [
+      "wikipedia",
+      "pubmed",
+      "mermaid"
+    ]
+  },
+  "GodsinWhite": {
+    "model": "openai:gpt-5",
+    "members": [
+      "infographic",
+      "pubmed"
+    ],
+    "tools": [
+      "pubmed"
+    ]
+  }
+}

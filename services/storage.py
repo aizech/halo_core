@@ -15,10 +15,12 @@ _NOTES_FILE = _DATA_DIR / "studio_notes.json"
 _STUDIO_OUTPUTS_FILE = _DATA_DIR / "studio_outputs.json"
 _CONFIG_FILE = _DATA_DIR / "config.json"
 _CONNECTOR_CACHE_FILE = _DATA_DIR / "connector_cache.json"
+_CHAT_HISTORY_DIR = _DATA_DIR / "chat_history"
 
 
 def _ensure_data_dir() -> None:
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _CHAT_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_sources() -> List[Dict[str, str]]:
@@ -83,6 +85,22 @@ def load_connector_cache() -> Dict[str, Dict[str, List[Dict[str, str]]]]:
         return {}
     with _CONNECTOR_CACHE_FILE.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def load_chat_history(session_id: str) -> List[Dict[str, object]]:
+    _ensure_data_dir()
+    history_file = _CHAT_HISTORY_DIR / f"{session_id}.json"
+    if not history_file.exists():
+        return []
+    with history_file.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def save_chat_history(session_id: str, history: List[Dict[str, object]]) -> None:
+    _ensure_data_dir()
+    history_file = _CHAT_HISTORY_DIR / f"{session_id}.json"
+    with history_file.open("w", encoding="utf-8") as handle:
+        json.dump(history, handle, ensure_ascii=False, indent=2)
 
 
 def save_connector_cache(cache: Dict[str, Dict[str, List[Dict[str, str]]]]) -> None:
