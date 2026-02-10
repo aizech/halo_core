@@ -1181,7 +1181,9 @@ def _sanitize_mermaid_block(block: str) -> str:
     sanitized = block.strip()
     pattern = re.compile(r'"([^"]*)"\s+"([^"]*)"', re.DOTALL)
     while True:
-        updated = pattern.sub(lambda match: f'"{match.group(1)}<br/>{match.group(2)}"', sanitized)
+        updated = pattern.sub(
+            lambda match: f'"{match.group(1)}<br/>{match.group(2)}"', sanitized
+        )
         if updated == sanitized:
             break
         sanitized = updated
