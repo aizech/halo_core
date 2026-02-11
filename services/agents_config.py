@@ -18,7 +18,7 @@ DEFAULT_CHAT_INSTRUCTIONS = (
 
 
 def _agent_dir() -> Path:
-    return Path(__file__).resolve().parent / "agents"
+    return Path(_SETTINGS.data_dir) / "agents"
 
 
 def _load_templates() -> List[dict]:
@@ -37,7 +37,7 @@ def _default_chat_config() -> Dict[str, object]:
         "description": "Beantwortet Nutzerfragen basierend auf den ausgewählten Quellen.",
         "role": "assistant",
         "instructions": DEFAULT_CHAT_INSTRUCTIONS,
-        "members": ["reports"],
+        "members": ["reports", "infographic"],
         "tools": [],
         "model": "openai:gpt-5.2",
         "enabled": True,
