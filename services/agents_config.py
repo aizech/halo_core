@@ -40,6 +40,7 @@ def _default_chat_config() -> Dict[str, object]:
         "members": ["reports", "infographic"],
         "tools": [],
         "model": "openai:gpt-5.2",
+        "stream_events": True,
         "enabled": True,
     }
 
@@ -103,6 +104,27 @@ def load_agent_configs() -> Dict[str, Dict[str, object]]:
             payload = json.load(handle)
         agent_id = str(payload.get("id", path.stem))
         payload.setdefault("id", agent_id)
+        skills = payload.get("skills")
+        if skills is not None and (
+            not isinstance(skills, list)
+            or not all(isinstance(skill, str) for skill in skills)
+        ):
+            raise ValueError("Agent skills must be a list of strings.")
+        mcp_calls = payload.get("mcp_calls")
+        if mcp_calls is not None and (
+            not isinstance(mcp_calls, list)
+            or not all(isinstance(call, str) for call in mcp_calls)
+        ):
+            raise ValueError("Agent mcp_calls must be a list of strings.")
+        memory_scope = payload.get("memory_scope")
+        if memory_scope is not None and not isinstance(memory_scope, str):
+            raise ValueError("Agent memory_scope must be a string.")
+        coordination_mode = payload.get("coordination_mode")
+        if coordination_mode is not None and not isinstance(coordination_mode, str):
+            raise ValueError("Agent coordination_mode must be a string.")
+        stream_events = payload.get("stream_events")
+        if stream_events is not None and not isinstance(stream_events, bool):
+            raise ValueError("Agent stream_events must be a boolean.")
         defaults = defaults_by_id.get(agent_id)
         if isinstance(defaults, dict):
             merged = {**defaults, **payload, "id": agent_id}

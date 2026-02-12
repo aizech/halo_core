@@ -52,6 +52,16 @@ def apply_preset_to_chat(
         ):
             raise ValueError("Preset members must be a list of strings.")
         update["members"] = members
+    if "stream_events" in preset:
+        stream_events = preset.get("stream_events")
+        if not isinstance(stream_events, bool):
+            raise ValueError("Preset stream_events must be a boolean.")
+        update["stream_events"] = stream_events
+    if "coordination_mode" in preset:
+        coordination_mode = preset.get("coordination_mode")
+        if not isinstance(coordination_mode, str):
+            raise ValueError("Preset coordination_mode must be a string.")
+        update["coordination_mode"] = coordination_mode
     if not update:
         raise ValueError("Preset must define model, tools, or members.")
 

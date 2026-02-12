@@ -57,6 +57,9 @@ Build a Streamlit application that replicates Google NotebookLM's three-panel ex
 - Retrieval-augmented generation with top-k chunk citations.
 - Tooling hooks (summarize_source, search_web, create_note).
 - Session persistence per notebook; ability to fork conversations.
+- Persist chat history to local JSON storage with session IDs and restore on reload.
+- Preset-driven chat configuration (model, tools, team members) exposed in sidebar.
+- Streaming responses must handle cumulative chunks and team/member duplicates without repeating text.
 - Saved highlights convertible into Studio artifacts.
 - "Save to Studio" action on every assistant response pushes the rendered text (and referenced sources) into the Studio "Notes" board where it can be edited, tagged, or repurposed in other templates.
 - Streamlit chat input uses the latest `st.chat_input` multimodal capabilities (text, file upload, microphone capture) so users can dictate or attach reference files directly; content is automatically transcribed and routed through the same ingestion pipeline.

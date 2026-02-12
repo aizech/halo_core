@@ -67,6 +67,17 @@ class FakeMixedAgent:
         ]
 
 
+class FakeToolCallAgent:
+    """Simulates tool call started events with tool payloads."""
+
+    def run(self, payload, stream=True, stream_intermediate_steps=True):
+        tool = {"name": "search", "args": {"q": "halo"}}
+        return [
+            FakeChunk(event="ToolCallStarted", tool=tool),
+            FakeChunk(response="done", event="RunResponse"),
+        ]
+
+
 def test_stream_team_skips_duplicate_team_events():
     result = main._stream_agent_response(FakeTeamAgent(), "payload")
 
@@ -79,6 +90,16 @@ def test_stream_team_only_output():
 
     assert result is not None
     assert result.get("response") == "Hallo Welt"
+
+
+def test_stream_tool_call_started_updates_tools():
+    result = main._stream_agent_response(FakeToolCallAgent(), "payload")
+
+    assert result is not None
+    tools = result.get("tools") or []
+    assert any(
+        getattr(tool, "get", None) and tool.get("name") == "search" for tool in tools
+    )
 
 
 def test_stream_single_agent_appends_tokens():

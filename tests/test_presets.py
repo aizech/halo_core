@@ -30,6 +30,8 @@ def test_apply_preset_updates_chat_config(tmp_path, monkeypatch):
                     "model": "openai:gpt-5",
                     "members": ["reports"],
                     "tools": ["pubmed"],
+                    "stream_events": False,
+                    "coordination_mode": "direct_only",
                 }
             }
         ),
@@ -44,3 +46,5 @@ def test_apply_preset_updates_chat_config(tmp_path, monkeypatch):
     assert saved.get("model") == "openai:gpt-5"
     assert saved.get("members") == ["reports"]
     assert saved.get("tools") == ["pubmed"]
+    assert saved.get("stream_events") is False
+    assert saved.get("coordination_mode") == "direct_only"

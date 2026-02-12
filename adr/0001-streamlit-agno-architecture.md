@@ -10,6 +10,11 @@
 - **Consequences**:
   - **Positive**: Rapid UI iterations, centralized agent logic, built-in async workers, simple swapping of OpenAI/Azure/local models, MCP compatibility, reusable memory/knowledge stores.
   - **Negative**: Streamlit layout constraints may need custom CSS; Agno adds dependency surface area and requires ops familiarity; tight coupling to Python stack.
+- **Additional Notes (2026-02)**:
+  - Persist chat history to JSON via `HALO_DATA_DIR` to ensure session restoration across reloads.
+  - Introduce preset-driven chat configuration (model/tools/members) to keep agent orchestration data-driven.
+  - Streaming response handling must de-duplicate team/member events and cumulative content chunks.
+  - Mermaid diagrams are rendered from fenced code blocks and sanitized for multiline labels.
 - **Implementation Notes**:
   - Scaffold project with `/app`, `/services`, `/data`, `/templates`, `/adr` directories.
   - Install Agno core modules (Memory, Knowledge, Async) plus selected LLM adapters during foundation phase.

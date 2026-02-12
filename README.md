@@ -28,7 +28,9 @@ streamlit run app/main.py
 ```
 The default layout renders the sidebar (Administration, Configuration, Account, Help) and the three primary panels with Studio templates driven by `/templates/studio_templates.json`. Studio cards use clickable header strips for generation with inline ⋯ menus for configuration and standardized download filenames for exports.
 
-Uploaded sources and studio notes are saved as JSON under the `data/` folder. Override the location with `HALO_DATA_DIR` if you want per-environment persistence.
+Uploaded sources, studio notes, and chat history are saved as JSON under the `data/` folder. Override the location with `HALO_DATA_DIR` if you want per-environment persistence.
+Chat presets (model/tools/team members) are loaded from `presets.json` and can be applied from the sidebar.
+Mermaid diagrams are rendered from fenced ` ```mermaid ` blocks; multiline labels are sanitized for browser rendering.
 
 ## Repository Structure
 ```
@@ -47,7 +49,7 @@ adr/                # Architectural Decision Records
 
 ## Testing
 ```bash
-pytest
+python -m pytest
 ```
 Add or update tests alongside code changes. Use fixtures/mocks for external APIs and MCP servers.
 

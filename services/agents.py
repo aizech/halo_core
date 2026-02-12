@@ -152,6 +152,9 @@ def _record_trace(
             trace["agent_members_runtime"] = [
                 member.name for member in getattr(agent, "members", [])
             ]
+            selected_member_ids = getattr(agent, "selected_member_ids", None)
+            if selected_member_ids:
+                trace["selected_member_ids"] = list(selected_member_ids)
     _LAST_TRACE = trace
 
 
@@ -227,11 +230,12 @@ def build_chat_payload(
 
 def build_chat_agent(
     agent_config: Dict[str, object] | None = None,
+    prompt: str | None = None,
 ) -> Agent | Team | None:
     team_agent: Team | None = None
     if agent_config:
         if agent_config.get("members") or agent_config.get("id") == "chat":
-            team_agent = build_master_team_from_config(agent_config)
+            team_agent = build_master_team_from_config(agent_config, prompt=prompt)
             if team_agent is None:
                 _LOGGER.warning("Falling back to single agent for chat")
     if team_agent is not None:
@@ -257,7 +261,7 @@ def generate_grounded_reply(
             agent_config.get("members"),
             agent_config.get("tools"),
         )
-    agent = build_chat_agent(agent_config)
+    agent = build_chat_agent(agent_config, prompt=prompt)
     if agent is not None:
         _LOGGER.info(
             "Chat agent class: %s",

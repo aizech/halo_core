@@ -123,7 +123,42 @@ def build_agent_from_config(config: Dict[str, object], model) -> Agent | None:
     return agent
 
 
-def build_master_team_from_config(master_config: Dict[str, object]) -> Team | None:
+def _select_member_ids(
+    master_config: Dict[str, object],
+    prompt: str | None,
+    member_configs: Dict[str, Dict[str, object]],
+) -> List[str]:
+    coordination_mode = str(master_config.get("coordination_mode") or "").strip()
+    member_ids = master_config.get("members") or []
+    if not isinstance(member_ids, list):
+        return []
+    normalized_ids = [str(member_id) for member_id in member_ids]
+    if coordination_mode == "direct_only":
+        return []
+    if coordination_mode in ("", "always_delegate"):
+        return normalized_ids
+    if coordination_mode != "delegate_on_complexity":
+        return normalized_ids
+    if not prompt:
+        return []
+    prompt_lower = prompt.casefold()
+    selected: List[str] = []
+    for member_id in normalized_ids:
+        member_config = member_configs.get(member_id)
+        if not isinstance(member_config, dict):
+            continue
+        skills = member_config.get("skills")
+        if not isinstance(skills, list):
+            continue
+        if any(str(skill).casefold() in prompt_lower for skill in skills):
+            selected.append(member_id)
+    return selected
+
+
+def build_master_team_from_config(
+    master_config: Dict[str, object],
+    prompt: str | None = None,
+) -> Team | None:
     model_id = _normalize_model_id(
         master_config.get("model") or master_config.get("model_id")
     )
@@ -133,19 +168,30 @@ def build_master_team_from_config(master_config: Dict[str, object]) -> Team | No
 
     member_ids = master_config.get("members") or []
     members: List[Agent] = []
+    member_map: Dict[str, Agent] = {}
+    member_configs: Dict[str, Dict[str, object]] = {}
     if isinstance(member_ids, list):
         from services.agents_config import load_agent_configs
 
         all_configs = load_agent_configs()
         for agent_id in member_ids:
-            member_config = all_configs.get(str(agent_id))
+            member_id = str(agent_id)
+            member_config = all_configs.get(member_id)
             if not isinstance(member_config, dict):
                 continue
             if member_config.get("enabled", True) is False:
                 continue
             member = build_agent_from_config(member_config, model)
             if member:
-                members.append(member)
+                member_map[member_id] = member
+                member_configs[member_id] = member_config
+
+    selected_member_ids = _select_member_ids(master_config, prompt, member_configs)
+    members = [
+        member_map[member_id]
+        for member_id in selected_member_ids
+        if member_id in member_map
+    ]
 
     instructions = build_agent_instructions(master_config)
     tools = build_tools(master_config.get("tools"), master_config.get("tool_settings"))
@@ -155,11 +201,11 @@ def build_master_team_from_config(master_config: Dict[str, object]) -> Team | No
     _LOGGER.info(
         "Building master team '%s' with members=%s model=%s",
         master_config.get("name") or master_config.get("id") or "HALO Master",
-        member_ids,
+        selected_member_ids,
         model_id,
     )
 
-    return Team(
+    team = Team(
         name=str(master_config.get("name") or "HALO Master"),
         model=model,
         members=members,
@@ -171,3 +217,5 @@ def build_master_team_from_config(master_config: Dict[str, object]) -> Team | No
         determine_input_for_members=True,
         markdown=True,
     )
+    team.selected_member_ids = selected_member_ids
+    return team

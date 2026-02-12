@@ -35,6 +35,7 @@ sys.path.insert(0, project_root_str)
 
 import services  # noqa: E402
 from services import connectors, ingestion, pipelines, retrieval, storage  # noqa: E402
+from services import chat_state  # noqa: E402
 from services import presets  # noqa: E402
 import services.agents as agents  # noqa: E402
 from services import agents_config  # noqa: E402
@@ -94,13 +95,17 @@ class StudioTemplateConfig(BaseModel):
     icon: str = "🧩"
     color: str = "#f5f5f5"
     badge: Optional[str] = None
-    actions: List[StudioActionConfig] = Field(default_factory=list)
-    agent: Dict[str, str] = Field(default_factory=dict)
-    defaults: Dict[str, str] = Field(default_factory=dict)
+    actions: list[StudioActionConfig] = Field(default_factory=list)
+    agent: dict[str, str] = Field(default_factory=dict)
+    defaults: dict[str, str] = Field(default_factory=dict)
 
 
 class StudioTemplatesConfig(BaseModel):
-    templates: List[StudioTemplateConfig] = Field(default_factory=list)
+    templates: list[StudioTemplateConfig] = Field(default_factory=list)
+
+
+StudioTemplateConfig.model_rebuild()
+StudioTemplatesConfig.model_rebuild()
 
 
 def _get_studio_template(template_id: str) -> Optional[StudioTemplate]:
@@ -395,6 +400,12 @@ def render_sidebar() -> None:
     st.sidebar.button("New Notebook", width="stretch")
     if section == "Configuration":
         _render_configuration_panel()
+    st.sidebar.subheader("Pages")
+    if st.sidebar.button("Agent Config", key="nav_agent_config"):
+        try:
+            st.switch_page("pages/Agent_Config.py")
+        except Exception:
+            st.sidebar.error("Agent Config navigation requires Streamlit multipage.")
     st.sidebar.divider()
     st.sidebar.markdown(
         "Need help? Visit [AGENTS.md](../AGENTS.md) or join the #halo-support channel."
@@ -926,33 +937,7 @@ def _generate_all_sources_summary() -> str:
 
 
 def _serialize_tool_calls(tool_calls: object) -> List[Dict[str, object]] | None:
-    if not tool_calls:
-        return None
-    if isinstance(tool_calls, dict):
-        tool_calls = [tool_calls]
-    if not isinstance(tool_calls, list):
-        try:
-            tool_calls = list(tool_calls)
-        except (TypeError, ValueError):
-            return [{"name": str(tool_calls)}]
-    serialized: List[Dict[str, object]] = []
-    for tool_call in tool_calls:
-        if tool_call is None:
-            continue
-        if hasattr(tool_call, "get"):
-            serialized.append(dict(tool_call))
-            continue
-        if hasattr(tool_call, "__dict__"):
-            sanitized: Dict[str, object] = {}
-            for key, value in tool_call.__dict__.items():
-                if isinstance(value, (str, int, float, bool, type(None))):
-                    sanitized[key] = value
-                else:
-                    sanitized[key] = str(value)
-            serialized.append(sanitized)
-            continue
-        serialized.append({"name": str(tool_call)})
-    return serialized or None
+    return chat_state.serialize_tool_calls(tool_calls)
 
 
 def _append_chat(
@@ -962,19 +947,15 @@ def _append_chat(
     tool_calls: object | None = None,
     images: List[Dict[str, object]] | None = None,
 ) -> None:
-    payload = {
-        "role": role,
-        "content": content,
-        "tool_calls": _serialize_tool_calls(tool_calls),
-    }
-    if images:
-        payload["images"] = images
-    if trace:
-        payload["trace"] = trace
-    st.session_state["chat_history"].append(payload)
-    session_id = st.session_state.get("session_id")
-    if session_id:
-        storage.save_chat_history(session_id, st.session_state["chat_history"])
+    chat_state.append_and_persist_chat(
+        st.session_state["chat_history"],
+        st.session_state.get("session_id"),
+        role,
+        content,
+        trace=trace,
+        tool_calls=tool_calls,
+        images=images,
+    )
 
 
 def _display_tool_calls(
@@ -1052,6 +1033,7 @@ def _stream_agent_response(
     response_container: st.delta_generator.DeltaGenerator | None = None,
     tool_calls_container: st.delta_generator.DeltaGenerator | None = None,
     images: List[Image] | None = None,
+    stream_events: bool = True,
 ) -> Dict[str, object] | None:
     if agent is None:
         return None
@@ -1061,19 +1043,34 @@ def _stream_agent_response(
                 payload,
                 images=images,
                 stream=True,
+                stream_events=stream_events,
                 stream_intermediate_steps=True,
             )
         else:
             run_response = agent.run(
                 payload,
                 stream=True,
+                stream_events=stream_events,
                 stream_intermediate_steps=True,
             )
     except TypeError:
         try:
-            run_response = agent.run(payload, stream=True, images=images)
+            if images:
+                run_response = agent.run(
+                    payload, stream=True, images=images, stream_events=stream_events
+                )
+            else:
+                run_response = agent.run(
+                    payload, stream=True, stream_events=stream_events
+                )
         except TypeError:
-            return None
+            try:
+                if images:
+                    run_response = agent.run(payload, stream=True, images=images)
+                else:
+                    run_response = agent.run(payload, stream=True)
+            except TypeError:
+                return None
 
     current_tools: List[object] = []
     response = ""
@@ -1100,11 +1097,22 @@ def _stream_agent_response(
             return
         tool = getattr(chunk, "tool", None)
         tools = getattr(chunk, "tools", None)
-        if event == "TeamToolCallStarted" and tool is not None:
-            tool_id = getattr(tool, "tool_name", None) or getattr(tool, "name", None)
+        if event in ("TeamToolCallStarted", "ToolCallStarted") and tool is not None:
+            if hasattr(tool, "get"):
+                tool_id = tool.get("tool_name") or tool.get("name")
+            else:
+                tool_id = getattr(tool, "tool_name", None) or getattr(
+                    tool, "name", None
+                )
             if tool_id and not any(
-                getattr(t, "tool_name", None) == tool_id
-                or getattr(t, "name", None) == tool_id
+                (
+                    hasattr(t, "get")
+                    and (t.get("tool_name") == tool_id or t.get("name") == tool_id)
+                )
+                or (
+                    getattr(t, "tool_name", None) == tool_id
+                    or getattr(t, "name", None) == tool_id
+                )
                 for t in current_tools
             ):
                 current_tools.append(tool)
@@ -1838,7 +1846,13 @@ def render_chat_panel() -> None:
             st.session_state["notes"],
             contexts,
         )
-        agent = agents.build_chat_agent(agent_config)
+        try:
+            agent = agents.build_chat_agent(agent_config, prompt=pending_prompt)
+        except TypeError:
+            st.warning(
+                "Prompt-aware routing is unavailable; using default team selection."
+            )
+            agent = agents.build_chat_agent(agent_config)
         with st.chat_message("assistant"):
             tool_calls_container = st.empty()
             response_container = st.empty()
@@ -1848,6 +1862,7 @@ def render_chat_panel() -> None:
                 response_container=response_container,
                 tool_calls_container=tool_calls_container,
                 images=pending_images,
+                stream_events=bool(agent_config.get("stream_events", True)),
             )
         if streamed is None:
             try:
