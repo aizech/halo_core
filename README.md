@@ -121,3 +121,5 @@ GitHub Actions run linting (`ruff`, `black --check`), tests (`pytest`), and type
 - [Streamlit App](app/main.py)
 - [Agno documentation](https://github.com/agno-agi/agno)
 - [Streamlit documentation](https://docs.streamlit.io)
+
+Made with ❤️ by Corpus Analytica
