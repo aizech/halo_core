@@ -7,8 +7,6 @@ import logging
 import sys
 import re
 import uuid
-import asyncio
-import inspect
 from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -18,6 +16,10 @@ from textwrap import shorten
 
 import streamlit as st
 from agno.media import Image
+try:
+    from agno.agent import RunEvent
+except ImportError:  # pragma: no cover
+    RunEvent = None
 from streamlit import components
 from pydantic import BaseModel, Field, ValidationError
 
@@ -40,6 +42,8 @@ from services import presets  # noqa: E402
 import services.agents as agents  # noqa: E402
 from services import agents_config  # noqa: E402
 from services import exports  # noqa: E402
+from services.streaming_adapter import stream_agent_response  # noqa: E402
+from services.chat_runtime import ChatTurnInput, run_chat_turn  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
@@ -389,32 +393,38 @@ def configure_page() -> None:
 
 
 def render_sidebar() -> None:
-    st.sidebar.title("HALO Admin")
-    section = st.sidebar.radio(
-        "Navigation",
-        ["Dashboard", "Administration", "Configuration", "Account", "Help"],
-        index=0,
-        key="sidebar_nav",
-    )
-    st.sidebar.write("Selected:", section)
-    st.sidebar.button("New Notebook", width="stretch")
-    if section == "Configuration":
-        _render_configuration_panel()
+    st.sidebar.title("HALO")
+    st.sidebar.button("New Notebook", width="stretch", key="new_notebook")
     st.sidebar.subheader("Pages")
-    if st.sidebar.button("Agent Config", key="nav_agent_config"):
+    if st.sidebar.button("Dashboard", key="nav_dashboard", width="stretch"):
         try:
-            st.switch_page("pages/Agent_Config.py")
+            st.switch_page("pages/Dashboard.py")
         except Exception:
-            st.sidebar.error("Agent Config navigation requires Streamlit multipage.")
+            st.sidebar.error("Dashboard navigation requires Streamlit multipage.")
+    if st.sidebar.button("Configuration", key="nav_configuration", width="stretch"):
+        try:
+            st.switch_page("pages/Configuration.py")
+        except Exception:
+            st.sidebar.error("Configuration navigation requires Streamlit multipage.")
+    if st.sidebar.button("Account", key="nav_account", width="stretch"):
+        try:
+            st.switch_page("pages/Account.py")
+        except Exception:
+            st.sidebar.error("Account navigation requires Streamlit multipage.")
+    if st.sidebar.button("Help", key="nav_help", width="stretch"):
+        try:
+            st.switch_page("pages/Help.py")
+        except Exception:
+            st.sidebar.error("Help navigation requires Streamlit multipage.")
     st.sidebar.divider()
-    st.sidebar.markdown(
-        "Need help? Visit [AGENTS.md](../AGENTS.md) or join the #halo-support channel."
-    )
+    st.sidebar.caption("Need help? Visit AGENTS.md or join the #halo-support channel.")
 
 
 def _init_state() -> None:
-    if "session_id" not in st.session_state:
-        st.session_state["session_id"] = uuid4().hex
+    _ensure = chat_state.ensure_state_key
+
+    _ensure(st.session_state, "session_id", chat_state.new_session_id)
+
     if "sources" not in st.session_state:
         stored_sources = storage.load_sources()
         if stored_sources:
@@ -434,48 +444,37 @@ def _init_state() -> None:
         else:
             st.session_state["sources"] = []
     _sync_source_checkbox_state()
-    if "chat_history" not in st.session_state:
-        session_id = st.session_state.get("session_id")
-        stored_history = storage.load_chat_history(session_id) if session_id else []
-        if stored_history:
-            st.session_state["chat_history"] = stored_history
-        else:
-            st.session_state["chat_history"] = [
-                {
-                    "role": "assistant",
-                    "content": "Willkommen! Frag mich etwas zu deinen Quellen.",
-                    "tool_calls": None,
-                }
-            ]
-    if "persistent_tool_calls" not in st.session_state:
-        st.session_state["persistent_tool_calls"] = {}
-    if "studio_templates" not in st.session_state:
-        st.session_state["studio_templates"] = _load_studio_templates()
-    if "notes" not in st.session_state:
-        st.session_state["notes"] = storage.load_notes()
+
+    _ensure(
+        st.session_state,
+        "chat_history",
+        lambda: chat_state.load_or_default_chat_history(
+            st.session_state.get("session_id")
+        ),
+    )
+    _ensure(st.session_state, "persistent_tool_calls", dict)
+    _ensure(st.session_state, "studio_templates", _load_studio_templates)
+    _ensure(st.session_state, "notes", storage.load_notes)
+
     if "studio_outputs" not in st.session_state:
-        stored_outputs = storage.load_studio_outputs()
-        if stored_outputs:
-            st.session_state["studio_outputs"] = stored_outputs
-        else:
-            st.session_state["studio_outputs"] = []
+        st.session_state["studio_outputs"] = storage.load_studio_outputs() or []
     elif isinstance(st.session_state.get("studio_outputs"), dict):
         st.session_state["studio_outputs"] = _get_studio_outputs_list()
         storage.save_studio_outputs(st.session_state["studio_outputs"])
-    if "config" not in st.session_state:
-        stored_config = storage.load_config() or {}
-        default_config = {
-            "enabled_connectors": list(connectors.AVAILABLE_CONNECTORS.keys()),
-            "image_model": "gpt-image-1",
-            "log_agent_payload": False,
-            "log_agent_response": True,
-            "log_agent_errors": True,
-            "log_user_requests": True,
-            "chat_preset": "Default",
-        }
-        st.session_state["config"] = {**default_config, **stored_config}
-    if "agent_configs" not in st.session_state:
-        st.session_state["agent_configs"] = agents_config.load_agent_configs()
+
+    _ensure(
+        st.session_state,
+        "config",
+        lambda: chat_state.load_or_default_config(
+            stored_config=storage.load_config(),
+            enabled_connectors=list(connectors.AVAILABLE_CONNECTORS.keys()),
+        ),
+    )
+    _ensure(
+        st.session_state,
+        "agent_configs",
+        agents_config.load_agent_configs,
+    )
 
 
 def _normalize_agent_tools(raw_tools: object) -> List[str]:
@@ -495,23 +494,27 @@ def _normalize_agent_tools(raw_tools: object) -> List[str]:
     return normalized
 
 
-def _render_configuration_panel() -> None:
-    st.sidebar.subheader("Quellen & Connectoren")
-    enabled = st.sidebar.multiselect(
+def _render_configuration_panel(
+    container: st.delta_generator.DeltaGenerator | None = None,
+) -> None:
+    if container is None:
+        container = st.sidebar
+    container.subheader("Quellen & Connectoren")
+    enabled = container.multiselect(
         "Aktivierte Connectoren",
         options=list(connectors.AVAILABLE_CONNECTORS.keys()),
         default=st.session_state["config"].get("enabled_connectors", []),
         format_func=lambda key: connectors.AVAILABLE_CONNECTORS[key].name,
     )
-    st.sidebar.subheader("Bildgenerierung")
-    image_model = st.sidebar.selectbox(
+    container.subheader("Bildgenerierung")
+    image_model = container.selectbox(
         "Bildmodell",
         options=["gpt-image-1", "dall-e-3"],
         index=["gpt-image-1", "dall-e-3"].index(
             st.session_state["config"].get("image_model", "gpt-image-1")
         ),
     )
-    if st.sidebar.button("Speichern", key="save_connectors"):
+    if container.button("Speichern", key="save_connectors"):
         st.session_state["config"]["enabled_connectors"] = enabled
         st.session_state["config"]["image_model"] = image_model
         st.session_state["config"]["log_agent_payload"] = bool(
@@ -526,29 +529,37 @@ def _render_configuration_panel() -> None:
         st.session_state["config"]["log_user_requests"] = bool(
             st.session_state.get("log_user_requests", True)
         )
+        st.session_state["config"]["log_stream_events"] = bool(
+            st.session_state.get("log_stream_events", False)
+        )
         storage.save_config(st.session_state["config"])
-        st.sidebar.success("Connector-Einstellungen aktualisiert")
+        container.success("Connector-Einstellungen aktualisiert")
 
-    st.sidebar.subheader("Agent-Logging")
-    st.sidebar.checkbox(
+    container.subheader("Agent-Logging")
+    container.checkbox(
         "Agent payload loggen",
         value=bool(st.session_state["config"].get("log_agent_payload", True)),
         key="log_agent_payload",
     )
-    st.sidebar.checkbox(
+    container.checkbox(
         "Agent response loggen",
         value=bool(st.session_state["config"].get("log_agent_response", True)),
         key="log_agent_response",
     )
-    st.sidebar.checkbox(
+    container.checkbox(
         "Agent Fehler loggen",
         value=bool(st.session_state["config"].get("log_agent_errors", True)),
         key="log_agent_errors",
     )
-    st.sidebar.checkbox(
+    container.checkbox(
         "User Requests loggen",
         value=bool(st.session_state["config"].get("log_user_requests", True)),
         key="log_user_requests",
+    )
+    container.checkbox(
+        "Stream-Events debug",
+        value=bool(st.session_state["config"].get("log_stream_events", False)),
+        key="log_stream_events",
     )
     agents.set_logging_preferences(
         log_payload=bool(st.session_state.get("log_agent_payload", True)),
@@ -556,7 +567,7 @@ def _render_configuration_panel() -> None:
         log_errors=bool(st.session_state.get("log_agent_errors", True)),
     )
 
-    st.sidebar.subheader("Chat Presets")
+    container.subheader("Chat Presets")
     presets_payload = presets.load_presets()
     preset_names = sorted(presets_payload.keys())
     if preset_names:
@@ -566,28 +577,28 @@ def _render_configuration_panel() -> None:
         preset_index = (
             preset_names.index(current_preset) if current_preset in preset_names else 0
         )
-        selected_preset = st.sidebar.selectbox(
+        selected_preset = container.selectbox(
             "Preset",
             options=preset_names,
             index=preset_index,
             key="chat_preset_selector",
         )
-        if st.sidebar.button("Preset anwenden", key="apply_chat_preset"):
+        if container.button("Preset anwenden", key="apply_chat_preset"):
             try:
                 updated = presets.apply_preset_to_chat(selected_preset)
             except ValueError as exc:
-                st.sidebar.error(str(exc))
+                container.error(str(exc))
             else:
                 st.session_state["config"]["chat_preset"] = selected_preset
                 storage.save_config(st.session_state["config"])
                 agent_configs = st.session_state.get("agent_configs", {})
                 agent_configs["chat"] = updated
                 st.session_state["agent_configs"] = agent_configs
-                st.sidebar.success("Chat-Preset angewendet")
+                container.success("Chat-Preset angewendet")
     else:
-        st.sidebar.caption("Keine Presets gefunden (presets.json fehlt).")
+        container.caption("Keine Presets gefunden (presets.json fehlt).")
 
-    st.sidebar.subheader("Chat Modell & Tools")
+    container.subheader("Chat Modell & Tools")
     agent_configs = st.session_state.get("agent_configs", {})
     chat_config = (
         agent_configs.get("chat", {}) if isinstance(agent_configs, dict) else {}
@@ -603,13 +614,13 @@ def _render_configuration_panel() -> None:
     chat_model_key = "chat_cfg_model"
     chat_members_key = "chat_cfg_members"
     chat_tools_key = "chat_cfg_tools"
-    st.sidebar.text_input(
+    container.text_input(
         "Chat Model",
         value=str(chat_config.get("model", "openai:gpt-5.2")),
         key=chat_model_key,
         help="Format: provider:model (z.B. openai:gpt-5.2)",
     )
-    st.sidebar.multiselect(
+    container.multiselect(
         "Chat Team",
         options=member_options,
         default=(
@@ -626,14 +637,14 @@ def _render_configuration_panel() -> None:
             not isinstance(tool, str) for tool in stored_tools
         ):
             st.session_state[chat_tools_key] = normalized_chat_tools
-    st.sidebar.multiselect(
+    container.multiselect(
         "Chat Tools",
         options=list(available_tools.keys()),
         default=normalized_chat_tools,
         format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
         key=chat_tools_key,
     )
-    if st.sidebar.button("Chat speichern", key="save_chat_config"):
+    if container.button("Chat speichern", key="save_chat_config"):
         updated = {
             **chat_config,
             "model": st.session_state.get(chat_model_key, "openai:gpt-5.2"),
@@ -643,9 +654,9 @@ def _render_configuration_panel() -> None:
         agents_config.save_agent_config("chat", updated)
         agent_configs["chat"] = updated
         st.session_state["agent_configs"] = agent_configs
-        st.sidebar.success("Chat-Konfiguration gespeichert")
+        container.success("Chat-Konfiguration gespeichert")
 
-    st.sidebar.subheader("Agenten")
+    container.subheader("Agenten")
     agent_configs = st.session_state.get("agent_configs", {})
     agent_ids = sorted(agent_configs.keys())
     if agent_ids:
@@ -660,7 +671,7 @@ def _render_configuration_panel() -> None:
                 return f"{label} ({agent_id})"
             return label
 
-        selected_agent_id = st.sidebar.selectbox(
+        selected_agent_id = container.selectbox(
             "Agent auswählen",
             options=agent_ids,
             format_func=_format_agent_label,
@@ -682,34 +693,34 @@ def _render_configuration_panel() -> None:
         member_options = [
             agent_id for agent_id in agent_ids if agent_id != selected_agent_id
         ]
-        st.sidebar.checkbox(
+        container.checkbox(
             "Aktiviert",
             value=bool(selected_agent.get("enabled", True)),
             key=enabled_key,
         )
-        st.sidebar.text_input(
+        container.text_input(
             "Name",
             value=str(selected_agent.get("name", "")),
             key=name_key,
         )
-        st.sidebar.text_input(
+        container.text_input(
             "Rolle",
             value=str(selected_agent.get("role", "")),
             key=role_key,
         )
-        st.sidebar.text_area(
+        container.text_area(
             "Beschreibung",
             value=str(selected_agent.get("description", "")),
             key=description_key,
             height=100,
         )
-        st.sidebar.text_area(
+        container.text_area(
             "Anweisungen",
             value=str(selected_agent.get("instructions", "")),
             key=instructions_key,
             height=160,
         )
-        st.sidebar.text_input(
+        container.text_input(
             "Model",
             value=str(selected_agent.get("model", "openai:gpt-5.2")),
             key=model_key,
@@ -727,7 +738,7 @@ def _render_configuration_panel() -> None:
                 not isinstance(tool, str) for tool in stored_tools
             ):
                 st.session_state[tools_key] = normalized_tools
-        selected_tools = st.sidebar.multiselect(
+        selected_tools = container.multiselect(
             "Tools",
             options=list(available_tools.keys()),
             default=normalized_tools,
@@ -741,28 +752,28 @@ def _render_configuration_panel() -> None:
         )
         if "pubmed" in selected_tools:
             pubmed_settings = tool_settings.get("pubmed", {})
-            st.sidebar.text_input(
+            container.text_input(
                 "PubMed E-Mail",
                 value=str(pubmed_settings.get("email", "")),
                 key=pubmed_email_key,
             )
-            st.sidebar.number_input(
+            container.number_input(
                 "PubMed Max Results",
                 min_value=1,
                 value=int(pubmed_settings.get("max_results") or 5),
                 key=pubmed_max_key,
             )
-            st.sidebar.checkbox(
+            container.checkbox(
                 "PubMed Suche aktiv",
                 value=bool(pubmed_settings.get("enable_search_pubmed", True)),
                 key=pubmed_enable_key,
             )
-            st.sidebar.checkbox(
+            container.checkbox(
                 "PubMed Alle Quellen",
                 value=bool(pubmed_settings.get("all", False)),
                 key=pubmed_all_key,
             )
-        st.sidebar.multiselect(
+        container.multiselect(
             "Team-Mitglieder",
             options=member_options,
             default=(
@@ -772,7 +783,7 @@ def _render_configuration_panel() -> None:
             ),
             key=members_key,
         )
-        if st.sidebar.button("Agent speichern", key="save_agent_config"):
+        if container.button("Agent speichern", key="save_agent_config"):
             updated_tool_settings: Dict[str, object] = {}
             if "pubmed" in selected_tools:
                 email = st.session_state.get(pubmed_email_key, "").strip()
@@ -801,9 +812,9 @@ def _render_configuration_panel() -> None:
             agents_config.save_agent_config(selected_agent_id, updated)
             agent_configs[selected_agent_id] = updated
             st.session_state["agent_configs"] = agent_configs
-            st.sidebar.success("Agent-Konfiguration gespeichert")
+            container.success("Agent-Konfiguration gespeichert")
     else:
-        st.sidebar.caption("Keine Agenten-Konfigurationen gefunden.")
+        container.caption("Keine Agenten-Konfigurationen gefunden.")
 
 
 def _toggle_source(source_id: str) -> None:
@@ -1035,148 +1046,25 @@ def _stream_agent_response(
     images: List[Image] | None = None,
     stream_events: bool = True,
 ) -> Dict[str, object] | None:
-    if agent is None:
-        return None
-    try:
-        if images:
-            run_response = agent.run(
-                payload,
-                images=images,
-                stream=True,
-                stream_events=stream_events,
-                stream_intermediate_steps=True,
-            )
-        else:
-            run_response = agent.run(
-                payload,
-                stream=True,
-                stream_events=stream_events,
-                stream_intermediate_steps=True,
-            )
-    except TypeError:
-        try:
-            if images:
-                run_response = agent.run(
-                    payload, stream=True, images=images, stream_events=stream_events
-                )
-            else:
-                run_response = agent.run(
-                    payload, stream=True, stream_events=stream_events
-                )
-        except TypeError:
-            try:
-                if images:
-                    run_response = agent.run(payload, stream=True, images=images)
-                else:
-                    run_response = agent.run(payload, stream=True)
-            except TypeError:
-                return None
-
-    current_tools: List[object] = []
-    response = ""
-    saw_content = False
-    saw_member_output = False
-
-    def _update_response() -> None:
+    def _update_response(value: str) -> None:
         if response_container is not None:
-            response_container.markdown(response)
+            response_container.markdown(value)
 
-    def _update_tools() -> None:
+    def _update_tools(tools: List[object]) -> None:
         if tool_calls_container is not None:
-            _display_tool_calls(tool_calls_container, current_tools)
+            _display_tool_calls(tool_calls_container, tools)
 
-    def _handle_chunk(chunk) -> None:
-        nonlocal response
-        nonlocal saw_content
-        nonlocal saw_member_output
-        if chunk is None:
-            return
-        event = getattr(chunk, "event", None)
-        is_team_output = event in ("TeamRunContent", "TeamRunResponse")
-        if is_team_output and saw_member_output:
-            return
-        tool = getattr(chunk, "tool", None)
-        tools = getattr(chunk, "tools", None)
-        if event in ("TeamToolCallStarted", "ToolCallStarted") and tool is not None:
-            if hasattr(tool, "get"):
-                tool_id = tool.get("tool_name") or tool.get("name")
-            else:
-                tool_id = getattr(tool, "tool_name", None) or getattr(
-                    tool, "name", None
-                )
-            if tool_id and not any(
-                (
-                    hasattr(t, "get")
-                    and (t.get("tool_name") == tool_id or t.get("name") == tool_id)
-                )
-                or (
-                    getattr(t, "tool_name", None) == tool_id
-                    or getattr(t, "name", None) == tool_id
-                )
-                for t in current_tools
-            ):
-                current_tools.append(tool)
-                _update_tools()
-        if tools:
-            for tool_item in tools:
-                if hasattr(tool_item, "get"):
-                    tool_id = tool_item.get("name") or tool_item.get("tool_name")
-                else:
-                    tool_id = getattr(tool_item, "name", None) or getattr(
-                        tool_item, "tool_name", None
-                    )
-                if tool_id and not any(
-                    getattr(t, "tool_name", None) == tool_id
-                    or getattr(t, "name", None) == tool_id
-                    for t in current_tools
-                ):
-                    current_tools.append(tool_item)
-            _update_tools()
-        if getattr(chunk, "content", None) is not None:
-            if not is_team_output:
-                saw_member_output = True
-            saw_content = True
-            chunk_text = str(chunk.content)
-            if response:
-                if chunk_text.startswith(response):
-                    response = chunk_text
-                elif response.startswith(chunk_text):
-                    response = response
-                else:
-                    response += chunk_text
-            else:
-                response = chunk_text
-            _update_response()
-            return
-        if getattr(chunk, "response", None) is not None:
-            if not is_team_output:
-                saw_member_output = True
-            chunk_text = str(chunk.response)
-            if saw_content:
-                if chunk_text.startswith(response):
-                    response = chunk_text
-                elif response.startswith(chunk_text):
-                    response = response
-                else:
-                    response = chunk_text
-            else:
-                if chunk_text.startswith(response):
-                    response = chunk_text
-                else:
-                    response += chunk_text
-            _update_response()
-
-    async def _consume_async() -> None:
-        async for chunk in run_response:
-            _handle_chunk(chunk)
-
-    if inspect.isasyncgen(run_response):
-        asyncio.run(_consume_async())
-    else:
-        for chunk in run_response:
-            _handle_chunk(chunk)
-
-    return {"response": response, "tools": current_tools}
+    return stream_agent_response(
+        agent,
+        payload,
+        images=images,
+        stream_events=stream_events,
+        run_event=RunEvent,
+        logger=_LOGGER,
+        log_stream_events=bool(st.session_state.get("config", {}).get("log_stream_events")),
+        on_response=_update_response,
+        on_tools=_update_tools,
+    )
 
 
 def _extract_mermaid_blocks(content: str) -> tuple[str, List[str]]:
@@ -1321,6 +1209,113 @@ def _render_chat_markdown(content: str) -> None:
         st.markdown(cleaned, unsafe_allow_html=False)
     for block in mermaid_blocks:
         _render_mermaid_diagram(_sanitize_mermaid_block(block))
+
+
+def _normalize_chat_response_text(content: str) -> str:
+    if not content:
+        return content
+    normalized = content
+    # Ensure markdown headings have a separating space, e.g. "###1" -> "### 1"
+    normalized = re.sub(r"(^|\n)(#{1,6})(?=\S)", r"\1\2 ", normalized)
+    # Add a blank line before headings if they are glued to previous text.
+    normalized = re.sub(r"([^\n])(\n#{1,6}\s)", r"\1\n\2", normalized)
+    # Remove markdown heading lines in chat answers.
+    lines: list[str] = []
+    in_code_fence = False
+    for line in normalized.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("```"):
+            in_code_fence = not in_code_fence
+            lines.append(line)
+            continue
+        if in_code_fence:
+            lines.append(line)
+            continue
+        match = re.match(r"^(\s*[\ufeff\u200b\u200c\u200d]*)(#{1,6})(\s+.*)$", line)
+        if not match:
+            lines.append(line)
+            continue
+        # Drop markdown headings entirely from chat output.
+        continue
+    normalized = "\n".join(lines)
+    return normalized.strip()
+
+
+def _split_thinking_from_response(content: str) -> tuple[str | None, str]:
+    if not content:
+        return None, content
+
+    working = content
+    thinking_parts: list[str] = []
+    stripped = working.lstrip()
+    if stripped.startswith("think("):
+        start_idx = working.find(stripped)
+        split_candidates = []
+        for token in ("\n\n", "\n##", "##", "\n# ", "# "):
+            idx = working.find(token, start_idx)
+            if idx != -1:
+                split_candidates.append(idx)
+        if not split_candidates:
+            return stripped, ""
+        split_at = min(split_candidates)
+        thinking_parts.append(working[:split_at].strip())
+        working = working[split_at:].lstrip()
+
+    story_match = re.search(
+        r"^##\s*(-?Story\b|Infografik-Story\b)",
+        working,
+        flags=re.MULTILINE,
+    )
+    if story_match:
+        line_end = working.find("\n", story_match.end())
+        if line_end != -1 and line_end + 1 < len(working):
+            preamble = working[: line_end + 1].strip()
+            if preamble:
+                thinking_parts.append(preamble)
+                working = working[line_end + 1 :].lstrip()
+
+    story_lines = list(
+        re.finditer(r"^.*Story.*Quelle.*$", working, flags=re.MULTILINE)
+    )
+    if story_lines:
+        last_story = story_lines[-1]
+        if last_story.start() > 0:
+            preamble = working[: last_story.start()].strip()
+            if preamble:
+                thinking_parts.append(preamble)
+            working = working[last_story.start() :].lstrip()
+
+    if not thinking_parts:
+        thinking_text = None
+    else:
+        thinking_text = "\n\n".join(thinking_parts)
+
+    delegate_lines = []
+    kept_lines = []
+    for line in working.splitlines():
+        if "delegate_task_to_member" in line:
+            delegate_lines.append(line.strip())
+        else:
+            kept_lines.append(line)
+    if delegate_lines:
+        delegate_block = "\n".join(delegate_lines).strip()
+        if delegate_block:
+            thinking_text = (
+                f"{thinking_text}\n\n{delegate_block}"
+                if thinking_text
+                else delegate_block
+            )
+    cleaned_response = "\n".join(kept_lines).strip()
+    if cleaned_response:
+        first_line = next(
+            (line for line in cleaned_response.splitlines() if line.strip()), ""
+        )
+        if first_line:
+            second_idx = cleaned_response.find(first_line, len(first_line))
+            if second_idx != -1:
+                cleaned_response = cleaned_response[second_idx:].lstrip()
+    cleaned_response = _normalize_chat_response_text(cleaned_response)
+    return thinking_text, cleaned_response
 
 
 def _save_uploaded_images(
@@ -1799,110 +1794,110 @@ def render_chat_panel() -> None:
                 if message["role"] == "assistant":
                     trace = message.get("trace") if isinstance(message, dict) else None
                     if trace:
-                        with st.expander("Thinking", expanded=False):
+                        with st.expander("Agent Actions", expanded=False):
                             _render_thinking_trace(trace)
                 if message.get("tool_calls"):
                     st.session_state["persistent_tool_calls"][message_key] = message[
                         "tool_calls"
                     ]
                 if message_key in st.session_state.get("persistent_tool_calls", {}):
-                    _display_tool_calls(
-                        st.container(),
-                        st.session_state["persistent_tool_calls"][message_key],
-                    )
-                _render_chat_markdown(message["content"])
+                    with st.expander("Tool Calls", expanded=False):
+                        _display_tool_calls(
+                            st.container(),
+                            st.session_state["persistent_tool_calls"][message_key],
+                        )
                 message_images = (
                     message.get("images") if isinstance(message, dict) else None
                 )
-                if message_images:
-                    cols = st.columns(2)
-                    for img_idx, image in enumerate(message_images):
-                        image_path = (
-                            image.get("filepath") if isinstance(image, dict) else None
-                        )
-                        if not image_path:
-                            continue
-                        with cols[img_idx % 2]:
-                            st.image(
-                                image_path,
-                                caption=(
-                                    image.get("name")
-                                    if isinstance(image, dict)
-                                    else None
-                                ),
-                                use_container_width=True,
-                            )
                 if message["role"] == "assistant":
+                    thinking, response_body = _split_thinking_from_response(
+                        message["content"]
+                    )
+                    display_content = response_body or message["content"]
+                    if thinking:
+                        with st.expander("Agent Thinking", expanded=False):
+                            st.code(thinking, language="text")
+                    _render_chat_markdown(display_content)
+                    if message_images:
+                        cols = st.columns(2)
+                        for img_idx, image in enumerate(message_images):
+                            image_path = (
+                                image.get("filepath") if isinstance(image, dict) else None
+                            )
+                            if not image_path:
+                                continue
+                            with cols[img_idx % 2]:
+                                st.image(
+                                    image_path,
+                                    caption=(
+                                        image.get("name") if isinstance(image, dict) else None
+                                    ),
+                                    use_container_width=True,
+                                )
                     if st.button("In Notiz speichern", key=f"save_note_{idx}"):
-                        _save_note_from_message(message["content"])
+                        _save_note_from_message(display_content)
+                else:
+                    _render_chat_markdown(message["content"])
+                    if message_images:
+                        cols = st.columns(2)
+                        for img_idx, image in enumerate(message_images):
+                            image_path = (
+                                image.get("filepath")
+                                if isinstance(image, dict)
+                                else None
+                            )
+                            if not image_path:
+                                continue
+                            with cols[img_idx % 2]:
+                                st.image(
+                                    image_path,
+                                    caption=(
+                                        image.get("name")
+                                        if isinstance(image, dict)
+                                        else None
+                                    ),
+                                    use_container_width=True,
+                                )
     pending_prompt = st.session_state.pop("pending_chat_prompt", None)
     pending_images = st.session_state.pop("pending_chat_images", None)
     if pending_prompt:
-        contexts = retrieval.query_similar(pending_prompt)
         agent_config = _get_agent_config("chat")
-        payload = agents.build_chat_payload(
-            pending_prompt,
-            _selected_source_names(),
-            st.session_state["notes"],
-            contexts,
-        )
-        try:
-            agent = agents.build_chat_agent(agent_config, prompt=pending_prompt)
-        except TypeError:
-            st.warning(
-                "Prompt-aware routing is unavailable; using default team selection."
-            )
-            agent = agents.build_chat_agent(agent_config)
         with st.chat_message("assistant"):
             tool_calls_container = st.empty()
             response_container = st.empty()
-            streamed = _stream_agent_response(
-                agent,
-                payload,
-                response_container=response_container,
-                tool_calls_container=tool_calls_container,
+
+            def _on_response(value: str) -> None:
+                rendered = _normalize_chat_response_text(value)
+                with response_container.container():
+                    _render_chat_markdown(rendered)
+
+            def _on_tools(tools: List[object]) -> None:
+                _display_tool_calls(tool_calls_container, tools)
+
+            turn = ChatTurnInput(
+                prompt=pending_prompt,
+                sources=_selected_source_names(),
+                notes=st.session_state["notes"],
+                session_id=st.session_state.get("session_id"),
+                agent_config=agent_config,
                 images=pending_images,
-                stream_events=bool(agent_config.get("stream_events", True)),
+                stream_events=bool(
+                    (agent_config or {}).get("stream_events", True)
+                ),
+                log_stream_events=bool(
+                    st.session_state.get("config", {}).get("log_stream_events")
+                ),
+                on_response=_on_response,
+                on_tools=_on_tools,
             )
-        if streamed is None:
-            try:
-                response = pipelines.generate_chat_reply(
-                    pending_prompt,
-                    _selected_source_names(),
-                    st.session_state["notes"],
-                    contexts,
-                    agent_config,
-                )
-            except TypeError:
-                response = pipelines.generate_chat_reply(
-                    pending_prompt,
-                    _selected_source_names(),
-                    st.session_state["notes"],
-                    contexts,
-                )
-            trace = agents.get_last_trace()
-            _append_chat("assistant", response, trace=trace)
-        else:
-            response = (streamed.get("response") or "").strip()
-            tool_calls = streamed.get("tools")
-            trace = agents.get_last_trace()
-            if not response:
-                try:
-                    response = pipelines.generate_chat_reply(
-                        pending_prompt,
-                        _selected_source_names(),
-                        st.session_state["notes"],
-                        contexts,
-                        agent_config,
-                    )
-                except TypeError:
-                    response = pipelines.generate_chat_reply(
-                        pending_prompt,
-                        _selected_source_names(),
-                        st.session_state["notes"],
-                        contexts,
-                    )
-            _append_chat("assistant", response, trace=trace, tool_calls=tool_calls)
+            result = run_chat_turn(turn)
+
+        _append_chat(
+            "assistant",
+            result.response,
+            trace=result.trace,
+            tool_calls=result.tool_calls,
+        )
         st.toast("Antwort generiert – siehe Chat")
         st.rerun()
     selected_count = len(_selected_source_names())

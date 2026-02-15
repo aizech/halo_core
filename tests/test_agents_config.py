@@ -79,6 +79,36 @@ def test_load_agent_configs_accepts_optional_fields(tmp_path, monkeypatch):
     assert chat.get("memory_scope") == "session"
 
 
+def test_load_agent_configs_normalizes_instruction_lists(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "instructions": ["Schritt 1", "Schritt 2"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    configs = agents_config.load_agent_configs()
+
+    assert configs["chat"]["instructions"] == "Schritt 1\nSchritt 2"
+
+
 def test_load_agent_configs_rejects_invalid_optional_fields(tmp_path, monkeypatch):
     data_dir = tmp_path / "data"
     templates_dir = tmp_path / "templates"
@@ -111,3 +141,90 @@ def test_load_agent_configs_rejects_invalid_optional_fields(tmp_path, monkeypatc
         assert "skills" in str(exc) or "coordination_mode" in str(exc)
     else:
         raise AssertionError("Expected ValueError for invalid skills list")
+
+
+def test_load_agent_configs_rejects_invalid_tools_type(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "tools": ["pubmed", 42],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        agents_config.load_agent_configs()
+    except ValueError as exc:
+        assert "tools" in str(exc)
+        assert "chat.json" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for invalid tools list")
+
+
+def test_load_agent_configs_rejects_invalid_instructions_list_type(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "instructions": ["ok", 123],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        agents_config.load_agent_configs()
+    except ValueError as exc:
+        message = str(exc)
+        assert "instructions" in message
+        assert "chat.json" in message
+    else:
+        raise AssertionError("Expected ValueError for invalid instructions list")
+
+
+def test_load_agent_configs_creates_missing_configs(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    configs = agents_config.load_agent_configs()
+
+    assert "chat" in configs
+    assert (data_dir / "agents" / "chat.json").exists()

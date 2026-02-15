@@ -78,6 +78,7 @@ def render_agent_config_page() -> None:
         "direct_only",
         "delegate_on_complexity",
         "always_delegate",
+        "coordinated_rag",
     ]
     current_mode = str(current.get("coordination_mode", ""))
     if current_mode not in coordination_options:

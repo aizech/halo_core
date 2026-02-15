@@ -9,20 +9,15 @@ from typing import Any, Dict, Iterable, List
 from uuid import uuid4
 
 from agno.agent import Agent
-from agno.models.openai import OpenAIChat
 from agno.team import Team
-from agno.tools.pubmed import PubmedTools
-from agno.tools.wikipedia import WikipediaTools
 from agno.tools.openai import OpenAITools
 
-try:  # Optional Mermaid tool
-    from agno.tools.mermaid import MermaidTools
-except ImportError:  # pragma: no cover - optional dependency
-    MermaidTools = None
-
 from services.agents_config import build_agent_instructions
+from services.agent_factory import build_model, build_tools, normalize_model_id
 from services.halo_team import build_master_team_from_config
 from services.settings import get_settings
+from services.knowledge import get_agent_knowledge
+from services.storage import get_agent_db
 
 _SETTINGS = get_settings()
 _LOGGER = logging.getLogger(__name__)
@@ -49,11 +44,20 @@ def set_logging_preferences(
 def _build_agent(
     instructions: str | None = None,
     name: str = "NotebookLMClone",
+    model_id: object = None,
+    session_id: str | None = None,
+    user_id: str | None = None,
 ) -> Agent | None:
-    api_key = _SETTINGS.openai_api_key
-    if not api_key:
+    normalized_model_id = normalize_model_id(model_id)
+    model = build_model(
+        normalized_model_id,
+        openai_api_key=_SETTINGS.openai_api_key,
+        logger=_LOGGER,
+    )
+    if model is None:
         return None
-    model = OpenAIChat(id="gpt-5.2", api_key=api_key)
+    db = get_agent_db()
+    knowledge = get_agent_knowledge()
     return Agent(
         name=name,
         instructions=(
@@ -62,50 +66,40 @@ def _build_agent(
             "Zitiere Quellen inline im Format [Quelle]."
         ),
         model=model,
+        markdown=True,
+        debug_mode=True,
+        session_id=session_id,
+        user_id=user_id,
+        db=db,
+        add_history_to_context=db is not None,
+        num_history_runs=3 if db is not None else None,
+        enable_user_memories=db is not None,
+        knowledge=knowledge,
+        search_knowledge=knowledge is not None,
     )
 
 
-def _build_tools(
-    tool_ids: object,
-    tool_settings: Dict[str, object] | None = None,
-) -> List[object]:
-    tools: List[object] = []
-    if not isinstance(tool_ids, list):
-        return tools
-    tool_settings = tool_settings or {}
-    for tool_id in tool_ids:
-        if tool_id == "pubmed":
-            pubmed_settings = tool_settings.get("pubmed")
-            if isinstance(pubmed_settings, dict):
-                tools.append(
-                    PubmedTools(
-                        email=pubmed_settings.get("email"),
-                        max_results=pubmed_settings.get("max_results"),
-                        enable_search_pubmed=pubmed_settings.get(
-                            "enable_search_pubmed", True
-                        ),
-                        all=pubmed_settings.get("all", False),
-                    )
-                )
-            else:
-                tools.append(PubmedTools())
-        if tool_id == "wikipedia":
-            tools.append(WikipediaTools())
-        if tool_id == "mermaid":
-            if MermaidTools is None:
-                _LOGGER.warning("Mermaid tool not available")
-            else:
-                tools.append(MermaidTools())
-    return tools
-
-
-def _build_agent_from_config(config: Dict[str, object]) -> Agent | None:
+def _build_agent_from_config(
+    config: Dict[str, object],
+    session_id: str | None = None,
+    user_id: str | None = None,
+) -> Agent | None:
     name = str(config.get("name") or config.get("id") or "Agent")
     instructions = build_agent_instructions(config)
-    agent = _build_agent(instructions, name=name)
+    agent = _build_agent(
+        instructions,
+        name=name,
+        model_id=config.get("model"),
+        session_id=session_id,
+        user_id=user_id,
+    )
     if not agent:
         return None
-    tools = _build_tools(config.get("tools"), config.get("tool_settings"))
+    tools = build_tools(
+        config.get("tools"),
+        config.get("tool_settings"),
+        logger=_LOGGER,
+    )
     if tools:
         agent.tools = tools
     return agent
@@ -231,17 +225,26 @@ def build_chat_payload(
 def build_chat_agent(
     agent_config: Dict[str, object] | None = None,
     prompt: str | None = None,
+    session_id: str | None = None,
+    user_id: str | None = None,
 ) -> Agent | Team | None:
     team_agent: Team | None = None
     if agent_config:
         if agent_config.get("members") or agent_config.get("id") == "chat":
-            team_agent = build_master_team_from_config(agent_config, prompt=prompt)
+            team_agent = build_master_team_from_config(
+                agent_config,
+                prompt=prompt,
+                session_id=session_id,
+                user_id=user_id,
+            )
             if team_agent is None:
                 _LOGGER.warning("Falling back to single agent for chat")
     if team_agent is not None:
         return team_agent
     if agent_config:
-        return _build_agent_from_config(agent_config)
+        return _build_agent_from_config(
+            agent_config, session_id=session_id, user_id=user_id
+        )
     return _AGENT
 
 
@@ -412,15 +415,21 @@ def render_infographic_output(
     except Exception as exc:  # pragma: no cover
         return {"content": f"Fehler beim Infografik-Prompt: {exc}", "image_path": None}
 
+    prompt_block = f"```md\n{image_prompt}\n```"
+
     api_key = _SETTINGS.openai_api_key
     if not api_key:
         return {
-            "content": f"{summary}\n\n**Infografik-Prompt**\n{image_prompt}",
+            "content": f"{summary}\n\n**Infografik-Prompt (Markdown)**\n{prompt_block}",
             "image_path": None,
         }
     image_agent = Agent(
         name="InfographicGenerator",
-        model=OpenAIChat(id="gpt-5.2", api_key=api_key),
+        model=build_model(
+            "openai:gpt-5.2",
+            openai_api_key=api_key,
+            logger=_LOGGER,
+        ),
         tools=[OpenAITools(image_model=image_model)],
         markdown=True,
     )
@@ -428,14 +437,17 @@ def render_infographic_output(
         response = image_agent.run(image_prompt)
     except Exception as exc:  # pragma: no cover
         return {
-            "content": f"{summary}\n\n**Infografik-Prompt**\n{image_prompt}\n\nFehler: {exc}",
+            "content": (
+                f"{summary}\n\n**Infografik-Prompt (Markdown)**\n"
+                f"{prompt_block}\n\nFehler: {exc}"
+            ),
             "image_path": None,
         }
     image_path = None
     images = getattr(response, "images", None) or []
     if images and getattr(images[0], "content", None):
         image_path = _save_image_payload(images[0].content)
-    return {
-        "content": f"{summary}\n\n**Infografik-Prompt**\n{image_prompt}",
-        "image_path": image_path,
-    }
+    content = f"{summary}\n\n**Infografik-Prompt (Markdown)**\n{prompt_block}"
+    if image_path is None:
+        content = f"{content}\n\nHinweis: Kein Bild generiert."
+    return {"content": content, "image_path": image_path}

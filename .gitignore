@@ -19,6 +19,9 @@ venv/
 data/*
 !data/.gitkeep
 
+# Docs internal
+docs_internal/
+
 # OS files
 .DS_Store
 Thumbs.db

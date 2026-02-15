@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List
 
 from services.settings import get_settings
+
+_logger = logging.getLogger(__name__)
 
 _SETTINGS = get_settings()
 _DATA_DIR = Path(_SETTINGS.data_dir)
@@ -107,3 +110,32 @@ def save_connector_cache(cache: Dict[str, Dict[str, List[Dict[str, str]]]]) -> N
     _ensure_data_dir()
     with _CONNECTOR_CACHE_FILE.open("w", encoding="utf-8") as handle:
         json.dump(cache, handle, ensure_ascii=False, indent=2)
+
+
+_AGENT_DB: object | None = None
+_AGENT_DB_INITIALIZED = False
+
+
+def get_agent_db() -> object | None:
+    """Return a shared SqliteDb instance when ``agent_db_file`` is configured.
+
+    Returns ``None`` when no DB path is set (JSON-only fallback) or when
+    the ``agno.db.sqlite`` import fails.
+    """
+    global _AGENT_DB, _AGENT_DB_INITIALIZED
+    if _AGENT_DB_INITIALIZED:
+        return _AGENT_DB
+    _AGENT_DB_INITIALIZED = True
+    db_file = _SETTINGS.agent_db_file
+    if not db_file:
+        _logger.info("No agent DB configured (HALO_AGENT_DB not set); using JSON-only mode.")
+        return None
+    try:
+        from agno.db.sqlite import SqliteDb
+
+        _AGENT_DB = SqliteDb(db_file=db_file)
+        _logger.info("Agno agent DB initialized: %s", db_file)
+    except Exception as exc:  # pragma: no cover
+        _logger.warning("Failed to initialize Agno agent DB at '%s': %s", db_file, exc)
+        _AGENT_DB = None
+    return _AGENT_DB

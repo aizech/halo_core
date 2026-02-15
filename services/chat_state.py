@@ -1,8 +1,78 @@
+"""Session state helpers for chat history, config defaults, and state initialization."""
+
 from __future__ import annotations
 
-from typing import Dict, List, Literal
+from typing import Any, Dict, List, Literal
+from uuid import uuid4
 
 from services import storage
+
+
+# ── Default configuration values (single source of truth) ──────────────
+
+DEFAULT_CONFIG: Dict[str, Any] = {
+    "image_model": "gpt-image-1",
+    "log_agent_payload": False,
+    "log_agent_response": True,
+    "log_agent_errors": True,
+    "log_user_requests": True,
+    "log_stream_events": False,
+    "chat_preset": "Default",
+}
+
+WELCOME_MESSAGE: Dict[str, object] = {
+    "role": "assistant",
+    "content": "Willkommen! Frag mich etwas zu deinen Quellen.",
+    "tool_calls": None,
+}
+
+
+def new_session_id() -> str:
+    """Generate a new unique session identifier."""
+    return uuid4().hex
+
+
+def default_chat_history() -> List[Dict[str, object]]:
+    """Return the default chat history with a welcome message."""
+    return [dict(WELCOME_MESSAGE)]
+
+
+def load_or_default_config(
+    stored_config: Dict[str, Any] | None = None,
+    enabled_connectors: List[str] | None = None,
+) -> Dict[str, Any]:
+    """Merge stored config over defaults, returning a complete config dict."""
+    config = dict(DEFAULT_CONFIG)
+    if enabled_connectors is not None:
+        config["enabled_connectors"] = enabled_connectors
+    if stored_config:
+        config.update(stored_config)
+    return config
+
+
+def load_or_default_chat_history(
+    session_id: str | None,
+) -> List[Dict[str, object]]:
+    """Load persisted chat history or return the default welcome message."""
+    if session_id:
+        stored = storage.load_chat_history(session_id)
+        if stored:
+            return stored
+    return default_chat_history()
+
+
+def ensure_state_key(
+    state: Dict[str, Any],
+    key: str,
+    default_factory: Any,
+) -> None:
+    """Set ``state[key]`` to ``default_factory()`` only if key is missing.
+
+    This is the centralized replacement for scattered ``setdefault`` calls.
+    ``default_factory`` must be a callable (e.g. ``list``, ``dict``, ``lambda: 0``).
+    """
+    if key not in state:
+        state[key] = default_factory()
 
 
 def serialize_tool_calls(tool_calls: object) -> List[Dict[str, object]] | None:

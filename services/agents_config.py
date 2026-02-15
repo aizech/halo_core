@@ -4,11 +4,69 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from services.settings import get_settings
 
 _SETTINGS = get_settings()
+
+
+class AgentConfig(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    name: str = ""
+    description: str = ""
+    role: str = ""
+    instructions: str | List[str] = ""
+    skills: List[str] = Field(default_factory=list)
+    tools: List[str] = Field(default_factory=list)
+    mcp_calls: List[str] = Field(default_factory=list)
+    model: str | None = None
+    coordination_mode: str | None = None
+    stream_events: bool = True
+    memory_scope: str | None = None
+    enabled: bool = True
+    members: List[str] = Field(default_factory=list)
+    tool_settings: Dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("instructions")
+    @classmethod
+    def _validate_instructions(cls, value: str | List[str]) -> str | List[str]:
+        if isinstance(value, str):
+            return value
+        if isinstance(value, list) and all(isinstance(item, str) for item in value):
+            return value
+        raise ValueError("instructions must be a string or list of strings")
+
+    @field_validator("skills", "tools", "mcp_calls", "members")
+    @classmethod
+    def _validate_string_list(cls, value: List[str]) -> List[str]:
+        if all(isinstance(item, str) for item in value):
+            return value
+        raise ValueError("must be a list of strings")
+
+
+def _normalize_instructions(value: object) -> str:
+    if isinstance(value, list):
+        return "\n".join(str(item).strip() for item in value if str(item).strip())
+    return str(value or "").strip()
+
+
+def _validate_agent_config(payload: Dict[str, object], path: Path) -> Dict[str, object]:
+    try:
+        validated = AgentConfig.model_validate(payload)
+    except ValidationError as exc:
+        details = "; ".join(
+            f"{'.'.join(str(part) for part in err['loc'])}: {err['msg']}"
+            for err in exc.errors()
+        )
+        raise ValueError(f"Invalid agent config '{path.name}': {details}") from exc
+    normalized = validated.model_dump(exclude_none=True, exclude_unset=True)
+    normalized["instructions"] = _normalize_instructions(normalized.get("instructions"))
+    return normalized
 
 
 DEFAULT_CHAT_INSTRUCTIONS = (
@@ -19,6 +77,10 @@ DEFAULT_CHAT_INSTRUCTIONS = (
 
 def _agent_dir() -> Path:
     return Path(_SETTINGS.data_dir) / "agents"
+
+
+def _migration_marker() -> Path:
+    return _agent_dir() / ".migrated_v1"
 
 
 def _load_templates() -> List[dict]:
@@ -93,8 +155,16 @@ def ensure_default_agent_configs() -> None:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
 
 
-def load_agent_configs() -> Dict[str, Dict[str, object]]:
+def migrate_agent_configs() -> None:
+    marker = _migration_marker()
+    if marker.exists():
+        return
     ensure_default_agent_configs()
+    marker.write_text("migrated", encoding="utf-8")
+
+
+def load_agent_configs() -> Dict[str, Dict[str, object]]:
+    migrate_agent_configs()
     configs: Dict[str, Dict[str, object]] = {}
     defaults_by_id = {
         str(payload.get("id", "agent")): payload for payload in _default_configs()
@@ -104,30 +174,11 @@ def load_agent_configs() -> Dict[str, Dict[str, object]]:
             payload = json.load(handle)
         agent_id = str(payload.get("id", path.stem))
         payload.setdefault("id", agent_id)
-        skills = payload.get("skills")
-        if skills is not None and (
-            not isinstance(skills, list)
-            or not all(isinstance(skill, str) for skill in skills)
-        ):
-            raise ValueError("Agent skills must be a list of strings.")
-        mcp_calls = payload.get("mcp_calls")
-        if mcp_calls is not None and (
-            not isinstance(mcp_calls, list)
-            or not all(isinstance(call, str) for call in mcp_calls)
-        ):
-            raise ValueError("Agent mcp_calls must be a list of strings.")
-        memory_scope = payload.get("memory_scope")
-        if memory_scope is not None and not isinstance(memory_scope, str):
-            raise ValueError("Agent memory_scope must be a string.")
-        coordination_mode = payload.get("coordination_mode")
-        if coordination_mode is not None and not isinstance(coordination_mode, str):
-            raise ValueError("Agent coordination_mode must be a string.")
-        stream_events = payload.get("stream_events")
-        if stream_events is not None and not isinstance(stream_events, bool):
-            raise ValueError("Agent stream_events must be a boolean.")
+        payload = _validate_agent_config(payload, path)
         defaults = defaults_by_id.get(agent_id)
         if isinstance(defaults, dict):
             merged = {**defaults, **payload, "id": agent_id}
+            merged = _validate_agent_config(merged, path)
             if merged != payload:
                 save_agent_config(agent_id, merged)
             payload = merged

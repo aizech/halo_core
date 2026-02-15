@@ -20,3 +20,7 @@ lancedb>=0.7.0
 numpy>=1.26.0
 pubmed>=0.0.2
 wikipedia>=1.4.0
+streamlit-on-hover-tabs
+sqlalchemy>=2.0.36
+aiosqlite>=0.19.0
+ddgs>=0.1.0
