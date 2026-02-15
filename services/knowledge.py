@@ -58,12 +58,29 @@ def get_agent_knowledge() -> object | None:
             # with WinError 5 (access denied). Prefer pure vector search there.
             search_type = getattr(SearchType, "vector", SearchType.hybrid)
 
-        vector_db = LanceDb(
-            uri=db_uri,
-            table_name="sources",
-            search_type=search_type,
-            embedder=OpenAIEmbedder(id="text-embedding-3-small", api_key=api_key),
-        )
+        vector_search_type = getattr(SearchType, "vector", SearchType.hybrid)
+        embedder = OpenAIEmbedder(id="text-embedding-3-small", api_key=api_key)
+
+        try:
+            vector_db = LanceDb(
+                uri=db_uri,
+                table_name="sources",
+                search_type=search_type,
+                embedder=embedder,
+            )
+        except Exception as exc:
+            if search_type == vector_search_type:
+                raise
+            _logger.warning(
+                "Hybrid LanceDB search unavailable (%s); falling back to vector search.",
+                exc,
+            )
+            vector_db = LanceDb(
+                uri=db_uri,
+                table_name="sources",
+                search_type=vector_search_type,
+                embedder=embedder,
+            )
 
         _KNOWLEDGE = Knowledge(
             name="halo_sources",

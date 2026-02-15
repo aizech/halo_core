@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import types
+
 from services import knowledge, storage, halo_team
 
 
@@ -55,6 +57,57 @@ def test_knowledge_uses_correct_lancedb_path(monkeypatch, tmp_path):
     uri = getattr(vector_db, "uri", None)
     assert uri is not None
     assert "lancedb" in str(uri)
+
+
+def test_get_agent_knowledge_falls_back_to_vector_when_hybrid_fails(
+    monkeypatch, tmp_path
+):
+    """Hybrid LanceDB init failure falls back to vector search instead of disabling knowledge."""
+    monkeypatch.setattr(knowledge, "_KNOWLEDGE_INITIALIZED", False)
+    monkeypatch.setattr(knowledge, "_KNOWLEDGE", None)
+    monkeypatch.setattr(knowledge._SETTINGS, "openai_api_key", "test-key")
+    monkeypatch.setattr(knowledge._SETTINGS, "data_dir", str(tmp_path))
+    monkeypatch.setattr(knowledge, "os", types.SimpleNamespace(name="posix"))
+
+    from agno.knowledge import knowledge as agno_knowledge_module
+    from agno.vectordb import lancedb as lancedb_module
+    from agno.vectordb.lancedb import SearchType
+
+    attempted_search_types = []
+
+    class DummyKnowledge:
+        def __init__(self, name: str, description: str, vector_db) -> None:
+            self.name = name
+            self.description = description
+            self.vector_db = vector_db
+
+    monkeypatch.setattr(agno_knowledge_module, "Knowledge", DummyKnowledge)
+
+    class DummyVectorDb:
+        def __init__(self, uri: str, table_name: str, search_type, embedder) -> None:
+            self.uri = uri
+            self.table_name = table_name
+            self.search_type = search_type
+
+    def fake_lancedb(*, uri: str, table_name: str, search_type, embedder):
+        attempted_search_types.append(search_type)
+        if search_type == SearchType.hybrid:
+            raise RuntimeError("hybrid unavailable")
+        return DummyVectorDb(
+            uri=uri,
+            table_name=table_name,
+            search_type=search_type,
+            embedder=embedder,
+        )
+
+    monkeypatch.setattr(lancedb_module, "LanceDb", fake_lancedb)
+
+    result = knowledge.get_agent_knowledge()
+    assert result is not None
+    assert attempted_search_types[0] == SearchType.hybrid
+    assert attempted_search_types[1] == getattr(SearchType, "vector", SearchType.hybrid)
+    vector_db = getattr(result, "vector_db", None)
+    assert getattr(vector_db, "search_type", None) == attempted_search_types[1]
 
 
 def test_team_gets_knowledge_when_available(monkeypatch, tmp_path):
