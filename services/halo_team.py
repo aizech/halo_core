@@ -24,6 +24,7 @@ except ImportError:  # pragma: no cover - optional dependency
 _SETTINGS = get_settings()
 _LOGGER = logging.getLogger(__name__)
 
+
 def build_agent_from_config(
     config: Dict[str, object],
     model,

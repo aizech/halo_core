@@ -16,6 +16,7 @@ from textwrap import shorten
 
 import streamlit as st
 from agno.media import Image
+
 try:
     from agno.agent import RunEvent
 except ImportError:  # pragma: no cover
@@ -1061,7 +1062,9 @@ def _stream_agent_response(
         stream_events=stream_events,
         run_event=RunEvent,
         logger=_LOGGER,
-        log_stream_events=bool(st.session_state.get("config", {}).get("log_stream_events")),
+        log_stream_events=bool(
+            st.session_state.get("config", {}).get("log_stream_events")
+        ),
         on_response=_update_response,
         on_tools=_update_tools,
     )
@@ -1274,9 +1277,7 @@ def _split_thinking_from_response(content: str) -> tuple[str | None, str]:
                 thinking_parts.append(preamble)
                 working = working[line_end + 1 :].lstrip()
 
-    story_lines = list(
-        re.finditer(r"^.*Story.*Quelle.*$", working, flags=re.MULTILINE)
-    )
+    story_lines = list(re.finditer(r"^.*Story.*Quelle.*$", working, flags=re.MULTILINE))
     if story_lines:
         last_story = story_lines[-1]
         if last_story.start() > 0:
@@ -1822,7 +1823,9 @@ def render_chat_panel() -> None:
                         cols = st.columns(2)
                         for img_idx, image in enumerate(message_images):
                             image_path = (
-                                image.get("filepath") if isinstance(image, dict) else None
+                                image.get("filepath")
+                                if isinstance(image, dict)
+                                else None
                             )
                             if not image_path:
                                 continue
@@ -1830,7 +1833,9 @@ def render_chat_panel() -> None:
                                 st.image(
                                     image_path,
                                     caption=(
-                                        image.get("name") if isinstance(image, dict) else None
+                                        image.get("name")
+                                        if isinstance(image, dict)
+                                        else None
                                     ),
                                     use_container_width=True,
                                 )
@@ -1881,9 +1886,7 @@ def render_chat_panel() -> None:
                 session_id=st.session_state.get("session_id"),
                 agent_config=agent_config,
                 images=pending_images,
-                stream_events=bool(
-                    (agent_config or {}).get("stream_events", True)
-                ),
+                stream_events=bool((agent_config or {}).get("stream_events", True)),
                 log_stream_events=bool(
                     st.session_state.get("config", {}).get("log_stream_events")
                 ),

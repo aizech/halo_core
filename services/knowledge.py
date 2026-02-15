@@ -38,7 +38,9 @@ def get_agent_knowledge() -> object | None:
 
     api_key = _SETTINGS.openai_api_key
     if not api_key:
-        _logger.info("No OpenAI API key; Agno Knowledge disabled (using manual RAG fallback).")
+        _logger.info(
+            "No OpenAI API key; Agno Knowledge disabled (using manual RAG fallback)."
+        )
         return None
 
     try:
@@ -68,7 +70,9 @@ def get_agent_knowledge() -> object | None:
             description="Indexed source documents for grounded chat and studio outputs.",
             vector_db=vector_db,
         )
-        _logger.info("Agno Knowledge initialized (LanceDB at %s, table=sources).", db_uri)
+        _logger.info(
+            "Agno Knowledge initialized (LanceDB at %s, table=sources).", db_uri
+        )
     except Exception as exc:
         _logger.warning("Failed to initialize Agno Knowledge: %s", exc)
         _KNOWLEDGE = None

@@ -51,7 +51,9 @@ def test_select_member_ids_coordinated_rag_returns_all_members() -> None:
     assert selected == ["reports", "infographic"]
 
 
-def test_select_member_ids_delegate_on_complexity_matches_skills_case_insensitive() -> None:
+def test_select_member_ids_delegate_on_complexity_matches_skills_case_insensitive() -> (
+    None
+):
     config = {
         "members": ["reports", "infographic"],
         "coordination_mode": "delegate_on_complexity",

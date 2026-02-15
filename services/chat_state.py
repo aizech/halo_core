@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from services import storage
 
-
 # ── Default configuration values (single source of truth) ──────────────
 
 DEFAULT_CONFIG: Dict[str, Any] = {

@@ -128,7 +128,9 @@ def get_agent_db() -> object | None:
     _AGENT_DB_INITIALIZED = True
     db_file = _SETTINGS.agent_db_file
     if not db_file:
-        _logger.info("No agent DB configured (HALO_AGENT_DB not set); using JSON-only mode.")
+        _logger.info(
+            "No agent DB configured (HALO_AGENT_DB not set); using JSON-only mode."
+        )
         return None
     try:
         from agno.db.sqlite import SqliteDb

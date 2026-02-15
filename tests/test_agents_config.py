@@ -177,7 +177,9 @@ def test_load_agent_configs_rejects_invalid_tools_type(tmp_path, monkeypatch):
         raise AssertionError("Expected ValueError for invalid tools list")
 
 
-def test_load_agent_configs_rejects_invalid_instructions_list_type(tmp_path, monkeypatch):
+def test_load_agent_configs_rejects_invalid_instructions_list_type(
+    tmp_path, monkeypatch
+):
     data_dir = tmp_path / "data"
     templates_dir = tmp_path / "templates"
     data_dir.mkdir()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from services import knowledge, storage, agents_config, halo_team
+from services import knowledge, storage, halo_team
 
 
 def test_get_agent_knowledge_returns_none_without_api_key(monkeypatch):

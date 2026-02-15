@@ -9,8 +9,6 @@ from services.chat_runtime import (
     ChatTurnInput,
     ChatTurnResult,
     run_chat_turn,
-    build_chat_payload,
-    create_chat_agent,
 )
 from services import chat_runtime
 
@@ -29,7 +27,9 @@ class FakeAgent:
 
     name = "FakeAgent"
 
-    def run(self, payload, stream=True, stream_events=True, stream_intermediate_steps=True):
+    def run(
+        self, payload, stream=True, stream_events=True, stream_intermediate_steps=True
+    ):
         return [
             FakeChunk(content="Hello", event="RunContent"),
             FakeChunk(response="Hello World", event="RunCompleted"),
@@ -41,7 +41,9 @@ class FakeEmptyAgent:
 
     name = "FakeEmptyAgent"
 
-    def run(self, payload, stream=True, stream_events=True, stream_intermediate_steps=True):
+    def run(
+        self, payload, stream=True, stream_events=True, stream_intermediate_steps=True
+    ):
         return []
 
 
@@ -104,7 +106,9 @@ def test_run_chat_turn_with_streaming(monkeypatch):
         lambda t: ("fake payload", [{"meta": {"title": "source1", "page": "2"}}]),
     )
     # Mock get_last_trace
-    monkeypatch.setattr(chat_runtime.agents, "get_last_trace", lambda: {"agent_name": "test"})
+    monkeypatch.setattr(
+        chat_runtime.agents, "get_last_trace", lambda: {"agent_name": "test"}
+    )
 
     result = run_chat_turn(turn)
 
@@ -112,7 +116,9 @@ def test_run_chat_turn_with_streaming(monkeypatch):
     assert result.used_fallback is False
     assert result.trace is not None
     assert result.trace.get("agent_name") == "test"
-    telemetry = result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    telemetry = (
+        result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    )
     assert isinstance(telemetry, dict)
     assert telemetry.get("knowledge_hits") == 1
     assert telemetry.get("stream_result") == "ok"
@@ -144,7 +150,9 @@ def test_run_chat_turn_fallback_on_empty_stream(monkeypatch):
     assert result.response == "fallback response\n\n[Quelle: source1, Seite 9]"
     assert result.used_fallback is True
     assert result.trace is not None
-    telemetry = result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    telemetry = (
+        result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    )
     assert isinstance(telemetry, dict)
     assert telemetry.get("stream_result") == "empty"
     assert telemetry.get("used_fallback") is True
@@ -162,9 +170,7 @@ def test_run_chat_turn_fallback_on_none_stream(monkeypatch):
     monkeypatch.setattr(
         chat_runtime, "build_chat_payload", lambda t: ("fake payload", [])
     )
-    monkeypatch.setattr(
-        chat_runtime, "stream_chat_response", lambda a, p, t: None
-    )
+    monkeypatch.setattr(chat_runtime, "stream_chat_response", lambda a, p, t: None)
     monkeypatch.setattr(chat_runtime.agents, "get_last_trace", lambda: None)
     monkeypatch.setattr(
         chat_runtime, "_fallback_reply", lambda t, c: "fallback response"
@@ -175,7 +181,9 @@ def test_run_chat_turn_fallback_on_none_stream(monkeypatch):
     assert result.response == "fallback response"
     assert result.used_fallback is True
     assert result.trace is not None
-    telemetry = result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    telemetry = (
+        result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    )
     assert isinstance(telemetry, dict)
     assert telemetry.get("stream_result") == "none"
     assert telemetry.get("used_fallback") is True
@@ -201,12 +209,16 @@ def test_run_chat_turn_trace_contains_structured_telemetry(monkeypatch):
             ],
         ),
     )
-    monkeypatch.setattr(chat_runtime.agents, "get_last_trace", lambda: {"agent_name": "base"})
+    monkeypatch.setattr(
+        chat_runtime.agents, "get_last_trace", lambda: {"agent_name": "base"}
+    )
 
     result = run_chat_turn(turn)
 
     assert result.trace is not None
-    telemetry = result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    telemetry = (
+        result.trace.get("telemetry") if isinstance(result.trace, dict) else None
+    )
     assert isinstance(telemetry, dict)
     assert telemetry.get("model") == "openai:gpt-5.2"
     assert telemetry.get("selected_members") == ["research", "synthesis"]
@@ -217,8 +229,7 @@ def test_run_chat_turn_trace_contains_structured_telemetry(monkeypatch):
 
 def test_apply_citation_policy_single_source_uses_one_citation_with_page():
     response = (
-        "Antwort mit mehrfachen Zitaten [Quelle].\n"
-        "Noch ein Satz [Source: Some Doc]."
+        "Antwort mit mehrfachen Zitaten [Quelle].\n" "Noch ein Satz [Source: Some Doc]."
     )
     contexts = [{"meta": {"title": "source1", "page_number": "4"}}]
 

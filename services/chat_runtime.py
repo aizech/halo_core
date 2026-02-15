@@ -74,7 +74,9 @@ def _extract_context_references(contexts: List[dict]) -> List[tuple[str, str | N
     return references
 
 
-def _citation_for_source(source: str, references: List[tuple[str, str | None]]) -> str | None:
+def _citation_for_source(
+    source: str, references: List[tuple[str, str | None]]
+) -> str | None:
     source_norm = source.strip().lower()
     for ref_source, page in references:
         if ref_source.strip().lower() == source_norm:
@@ -104,7 +106,9 @@ def _apply_citation_policy(
     if not cleaned:
         return cleaned
 
-    selected_sources = [str(source).strip() for source in sources if str(source).strip()]
+    selected_sources = [
+        str(source).strip() for source in sources if str(source).strip()
+    ]
     references = _extract_context_references(contexts)
 
     if len(selected_sources) <= 1:
@@ -229,7 +233,9 @@ def _compose_run_trace(
                 trace["agent_members_runtime"] = member_names
         selected_members = getattr(agent, "selected_member_ids", None)
         if selected_members:
-            trace["selected_member_ids"] = [str(member_id) for member_id in selected_members]
+            trace["selected_member_ids"] = [
+                str(member_id) for member_id in selected_members
+            ]
 
     stream_result = "none"
     if streamed is not None:
@@ -305,7 +311,9 @@ def create_chat_agent(turn: ChatTurnInput):
             user_id=turn.user_id,
         )
     except TypeError:
-        _LOGGER.warning("Prompt-aware routing unavailable; using default team selection.")
+        _LOGGER.warning(
+            "Prompt-aware routing unavailable; using default team selection."
+        )
         return agents.build_chat_agent(turn.agent_config)
 
 

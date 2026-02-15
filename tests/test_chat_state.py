@@ -119,7 +119,9 @@ class _NonIterableTool:
 
 
 def test_serialize_tool_calls_dict_input_is_wrapped_list():
-    serialized = chat_state.serialize_tool_calls({"name": "search", "args": {"q": "halo"}})
+    serialized = chat_state.serialize_tool_calls(
+        {"name": "search", "args": {"q": "halo"}}
+    )
 
     assert serialized == [{"name": "search", "args": {"q": "halo"}}]
 

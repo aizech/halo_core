@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from typing import Any, Callable, List
+from typing import Callable, List
 
 
 def _normalize_event_name(event: object) -> str | None:
@@ -33,7 +33,11 @@ def _content_allowed(event: object, event_name: str | None, run_event: object) -
         run_content_event = getattr(run_event, "run_content", None)
         run_completed_event = getattr(run_event, "run_completed", None)
         run_content_completed_event = getattr(run_event, "run_content_completed", None)
-        for evt in (run_content_event, run_completed_event, run_content_completed_event):
+        for evt in (
+            run_content_event,
+            run_completed_event,
+            run_content_completed_event,
+        ):
             if evt is not None and event == evt:
                 allowed = True
     if event_name in (
@@ -281,6 +285,8 @@ def stream_agent_response(
         _emit_response()
 
     return {
-        "response": authoritative_response if authoritative_response is not None else response,
+        "response": (
+            authoritative_response if authoritative_response is not None else response
+        ),
         "tools": current_tools,
     }

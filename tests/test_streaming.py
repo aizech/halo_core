@@ -191,7 +191,9 @@ def test_stream_prefers_team_output_after_member_chunks():
 
 
 def test_stream_final_response_event_is_authoritative():
-    result = main._stream_agent_response(FakeNoisyTokensThenFinalResponseAgent(), "payload")
+    result = main._stream_agent_response(
+        FakeNoisyTokensThenFinalResponseAgent(), "payload"
+    )
 
     assert result is not None
     assert result.get("response") == "beschreibt clean, reliable"
