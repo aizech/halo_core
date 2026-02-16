@@ -457,6 +457,31 @@ def _init_state() -> None:
     _ensure(st.session_state, "studio_templates", _load_studio_templates)
     _ensure(st.session_state, "notes", storage.load_notes)
 
+    if "all_sources_summary_content" not in st.session_state:
+        stored_summary = storage.load_all_sources_summary() or {}
+        if isinstance(stored_summary, dict):
+            st.session_state["all_sources_summary_content"] = str(
+                stored_summary.get("content") or ""
+            )
+            st.session_state["all_sources_summary_signature"] = stored_summary.get(
+                "signature"
+            )
+            st.session_state["all_sources_summary_generated_at"] = stored_summary.get(
+                "generated_at"
+            )
+            st.session_state["all_sources_summary_source_count"] = stored_summary.get(
+                "source_count"
+            )
+            st.session_state["all_sources_summary_stale"] = bool(
+                stored_summary.get("stale", False)
+            )
+        else:
+            st.session_state["all_sources_summary_content"] = ""
+            st.session_state["all_sources_summary_signature"] = None
+            st.session_state["all_sources_summary_generated_at"] = None
+            st.session_state["all_sources_summary_source_count"] = 0
+            st.session_state["all_sources_summary_stale"] = False
+
     if "studio_outputs" not in st.session_state:
         st.session_state["studio_outputs"] = storage.load_studio_outputs() or []
     elif isinstance(st.session_state.get("studio_outputs"), dict):
@@ -923,7 +948,23 @@ def _sources_signature(names: List[str]) -> str:
 
 
 def _generate_all_sources_summary() -> str:
+    sources = st.session_state.get("sources", [])
     source_names = _all_source_names()
+    source_blocks: List[str] = []
+    for src in sources:
+        chunk_texts = retrieval.get_source_chunk_texts(
+            source_id=getattr(src, "id", None),
+            title=getattr(src, "name", None),
+        )
+        if chunk_texts:
+            joined = "\n".join(chunk_texts)
+            source_blocks.append(f"### {src.name}\n{joined}")
+        else:
+            source_blocks.append(
+                f"### {getattr(src, 'name', 'Quelle')}\n[MISSING_SOURCE_CONTENT]"
+            )
+    sources_payload = "\n\n".join(source_blocks).strip()
+
     instructions = (
         "Synthesize the sources into a single, coherent summary.\n"
         "Begin with a concise, fitting title (max 8 words).\n"
@@ -935,7 +976,8 @@ def _generate_all_sources_summary() -> str:
         "- Emphasize technological approaches, practical user benefits, and strategic context.\n"
         "- Avoid repetition and do not list the sources individually.\n"
         "After the summary, provide one distilled key message in no more than 20 words.\n"
-        "Sources: [INSERT SOURCES]"
+        "Sources:\n"
+        f"{sources_payload or '[NO_SOURCES]'}"
     )
     try:
         return _generate_studio_output(
@@ -1078,6 +1120,33 @@ def _extract_mermaid_blocks(content: str) -> tuple[str, List[str]]:
 
 def _sanitize_mermaid_block(block: str) -> str:
     sanitized = block.strip()
+
+    def _replace_newlines_in_delimited_text(
+        text: str,
+        open_char: str,
+        close_char: str,
+    ) -> str:
+        output: List[str] = []
+        depth = 0
+        for char in text:
+            if char == open_char:
+                depth += 1
+                output.append(char)
+                continue
+            if char == close_char and depth:
+                depth -= 1
+                output.append(char)
+                continue
+            if char == "\n" and depth:
+                output.append("<br/>")
+                continue
+            output.append(char)
+        return "".join(output)
+
+    sanitized = sanitized.replace("\r\n", "\n").replace("\r", "\n")
+    sanitized = _replace_newlines_in_delimited_text(sanitized, "[", "]")
+    sanitized = _replace_newlines_in_delimited_text(sanitized, "(", ")")
+
     pattern = re.compile(r'"([^"]*)"\s+"([^"]*)"', re.DOTALL)
     while True:
         updated = pattern.sub(
@@ -1755,7 +1824,21 @@ def render_chat_panel() -> None:
                 st.caption("Noch keine Zusammenfassung generiert. Bitte aktualisieren.")
 
             controls = st.columns([0.74, 0.13, 0.13])
-            status_text = f"Quellen in der Bibliothek: {all_source_count}"
+            stored_source_count = st.session_state.get("all_sources_summary_source_count")
+            used_count = (
+                int(stored_source_count)
+                if isinstance(stored_source_count, (int, float, str))
+                and str(stored_source_count).strip() != ""
+                else 0
+            )
+            delta = all_source_count - used_count
+            delta_text = ""
+            if used_count and delta:
+                delta_text = f" · Δ {delta:+d}"
+            status_text = (
+                f"Quellen in der Bibliothek: {all_source_count} · Verwendet: {used_count}"
+                f"{delta_text}"
+            )
             if is_stale:
                 status_text = f"{status_text} · Neue Quellen erkannt"
             controls[0].caption(status_text)
@@ -1775,7 +1858,24 @@ def render_chat_panel() -> None:
                         current_signature
                     )
                     st.session_state["all_sources_summary_generated_at"] = _now_iso()
+                    st.session_state["all_sources_summary_source_count"] = all_source_count
                     st.session_state["all_sources_summary_stale"] = False
+                    storage.save_all_sources_summary(
+                        {
+                            "content": st.session_state.get("all_sources_summary_content")
+                            or "",
+                            "signature": st.session_state.get(
+                                "all_sources_summary_signature"
+                            ),
+                            "generated_at": st.session_state.get(
+                                "all_sources_summary_generated_at"
+                            ),
+                            "source_count": st.session_state.get(
+                                "all_sources_summary_source_count"
+                            ),
+                            "stale": st.session_state.get("all_sources_summary_stale"),
+                        }
+                    )
                     st.rerun()
             with controls[2]:
                 if st.button(
@@ -2639,7 +2739,7 @@ def _render_studio_notes_section() -> None:
             with st.expander(truncated_title, expanded=False):
                 st.caption(meta_label)
                 if content.strip():
-                    st.markdown(content)
+                    _render_chat_markdown(content)
                 else:
                     st.write("Keine Inhalte verfügbar.")
                 source_names = sources or ["Alle Quellen"]

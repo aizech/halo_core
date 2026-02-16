@@ -44,6 +44,13 @@ def get_agent_knowledge() -> object | None:
         return None
 
     try:
+        try:
+            from services import retrieval
+
+            retrieval.ensure_sources_table()
+        except Exception as exc:
+            _logger.warning("Failed to prepare LanceDB sources table: %s", exc)
+
         from agno.knowledge.knowledge import Knowledge
         from agno.vectordb.lancedb import LanceDb, SearchType
         from agno.knowledge.embedder.openai import OpenAIEmbedder

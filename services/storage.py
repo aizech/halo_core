@@ -16,6 +16,7 @@ _DATA_DIR = Path(_SETTINGS.data_dir)
 _SOURCES_FILE = _DATA_DIR / "sources.json"
 _NOTES_FILE = _DATA_DIR / "studio_notes.json"
 _STUDIO_OUTPUTS_FILE = _DATA_DIR / "studio_outputs.json"
+_ALL_SOURCES_SUMMARY_FILE = _DATA_DIR / "all_sources_summary.json"
 _CONFIG_FILE = _DATA_DIR / "config.json"
 _CONNECTOR_CACHE_FILE = _DATA_DIR / "connector_cache.json"
 _CHAT_HISTORY_DIR = _DATA_DIR / "chat_history"
@@ -66,6 +67,20 @@ def save_studio_outputs(outputs: List[Dict[str, object]]) -> None:
     _ensure_data_dir()
     with _STUDIO_OUTPUTS_FILE.open("w", encoding="utf-8") as handle:
         json.dump(outputs, handle, ensure_ascii=False, indent=2)
+
+
+def load_all_sources_summary() -> Dict[str, object]:
+    _ensure_data_dir()
+    if not _ALL_SOURCES_SUMMARY_FILE.exists():
+        return {}
+    with _ALL_SOURCES_SUMMARY_FILE.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def save_all_sources_summary(payload: Dict[str, object]) -> None:
+    _ensure_data_dir()
+    with _ALL_SOURCES_SUMMARY_FILE.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, indent=2)
 
 
 def load_config() -> Dict[str, List[str]]:
