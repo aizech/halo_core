@@ -255,3 +255,32 @@ def test_apply_citation_policy_multiple_sources_appends_markdown_quellen_list():
     assert "### Quellen" in normalized
     assert "[Quelle: A.pdf, Seite 1]" in normalized
     assert "[Quelle: B.pdf, Seite 12]" in normalized
+
+
+def test_create_chat_agent_passes_user_id(monkeypatch):
+    captured: dict[str, object] = {}
+
+    def _fake_build_chat_agent(
+        agent_config, *, prompt=None, session_id=None, user_id=None
+    ):
+        captured["agent_config"] = agent_config
+        captured["prompt"] = prompt
+        captured["session_id"] = session_id
+        captured["user_id"] = user_id
+        return "agent"
+
+    monkeypatch.setattr(chat_runtime.agents, "build_chat_agent", _fake_build_chat_agent)
+
+    turn = ChatTurnInput(
+        prompt="hello",
+        session_id="s1",
+        user_id="u1",
+        agent_config={"id": "chat"},
+    )
+
+    agent = chat_runtime.create_chat_agent(turn)
+
+    assert agent == "agent"
+    assert captured["prompt"] == "hello"
+    assert captured["session_id"] == "s1"
+    assert captured["user_id"] == "u1"

@@ -40,6 +40,7 @@ import services  # noqa: E402
 from services import connectors, ingestion, pipelines, retrieval, storage  # noqa: E402
 from services import chat_state  # noqa: E402
 from services import presets  # noqa: E402
+from services import user_memory  # noqa: E402
 import services.agents as agents  # noqa: E402
 from services import agents_config  # noqa: E402
 from services import exports  # noqa: E402
@@ -496,6 +497,9 @@ def _init_state() -> None:
             enabled_connectors=list(connectors.AVAILABLE_CONNECTORS.keys()),
         ),
     )
+    if not str(st.session_state["config"].get("user_id") or "").strip():
+        st.session_state["config"]["user_id"] = "local-user"
+        storage.save_config(st.session_state["config"])
     _ensure(
         st.session_state,
         "agent_configs",
@@ -1990,6 +1994,7 @@ def render_chat_panel() -> None:
                 sources=_selected_source_names(),
                 notes=st.session_state["notes"],
                 session_id=st.session_state.get("session_id"),
+                user_id=user_memory.resolve_user_id(st.session_state),
                 agent_config=agent_config,
                 images=pending_images,
                 stream_events=bool((agent_config or {}).get("stream_events", True)),
