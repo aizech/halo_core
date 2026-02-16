@@ -1824,7 +1824,9 @@ def render_chat_panel() -> None:
                 st.caption("Noch keine Zusammenfassung generiert. Bitte aktualisieren.")
 
             controls = st.columns([0.74, 0.13, 0.13])
-            stored_source_count = st.session_state.get("all_sources_summary_source_count")
+            stored_source_count = st.session_state.get(
+                "all_sources_summary_source_count"
+            )
             used_count = (
                 int(stored_source_count)
                 if isinstance(stored_source_count, (int, float, str))
@@ -1858,11 +1860,15 @@ def render_chat_panel() -> None:
                         current_signature
                     )
                     st.session_state["all_sources_summary_generated_at"] = _now_iso()
-                    st.session_state["all_sources_summary_source_count"] = all_source_count
+                    st.session_state["all_sources_summary_source_count"] = (
+                        all_source_count
+                    )
                     st.session_state["all_sources_summary_stale"] = False
                     storage.save_all_sources_summary(
                         {
-                            "content": st.session_state.get("all_sources_summary_content")
+                            "content": st.session_state.get(
+                                "all_sources_summary_content"
+                            )
                             or "",
                             "signature": st.session_state.get(
                                 "all_sources_summary_signature"

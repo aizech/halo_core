@@ -95,7 +95,9 @@ def _ensure_sources_table(db: lancedb.LanceDBConnection) -> lancedb.table.LanceT
     schema = _sources_schema(dimensions)
 
     if _TABLE_NAME not in db.table_names():
-        return db.create_table(_TABLE_NAME, schema=schema, mode="overwrite", exist_ok=True)
+        return db.create_table(
+            _TABLE_NAME, schema=schema, mode="overwrite", exist_ok=True
+        )
 
     table = db.open_table(_TABLE_NAME)
     if _table_vector_col_is_valid(table):
