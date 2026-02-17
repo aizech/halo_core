@@ -14,3 +14,5 @@ and day-to-day development.
 - [Data Storage and Retrieval](data-storage-and-retrieval.md)
 - [UI Panels and Pages](ui-panels-and-pages.md)
 - [Development, Testing, and Operations](development-testing-and-operations.md)
+
+Made with ❤️ by Corpus Analytica
