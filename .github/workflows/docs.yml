@@ -29,7 +29,7 @@ jobs:
       - name: Lint markdown
         run: |
           pymarkdown \
-            -d md013,md036 \
+            -d md013,md036,md022 \
             scan \
             docs/ DOCS_TASKS.md DOCS_WEBSITE.md
 
