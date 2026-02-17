@@ -24,3 +24,5 @@ streamlit-on-hover-tabs
 sqlalchemy>=2.0.36
 aiosqlite>=0.19.0
 ddgs>=0.1.0
+mkdocs>=1.6.0
+mkdocs-material>=9.5.0

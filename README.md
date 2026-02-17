@@ -32,6 +32,19 @@ Uploaded sources, studio notes, and chat history are saved as JSON under the `da
 Chat presets (model/tools/team members) are loaded from `presets.json` and can be applied from the sidebar.
 Mermaid diagrams are rendered from fenced ` ```mermaid ` blocks; multiline labels are sanitized for browser rendering.
 
+## Running Docs Locally
+```bash
+mkdocs serve
+```
+
+Then open `http://127.0.0.1:8000`.
+
+For CI-equivalent validation:
+
+```bash
+mkdocs build --strict
+```
+
 ## Runtime configuration knobs
 
 ### Coordination modes (`coordination_mode`)

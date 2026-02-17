@@ -1,0 +1,18 @@
+site_name: HALO Core Docs
+site_description: Documentation for HALO Core
+site_url: https://docs.corpus-analytica.com/
+repo_url: https://github.com/aizech/halo_core
+repo_name: aizech/halo_core
+docs_dir: docs
+strict: true
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Repository Overview: repository-overview.md
+  - Architecture and Runtime: architecture-and-runtime.md
+  - Agent System: agent-system.md
+  - Data Storage and Retrieval: data-storage-and-retrieval.md
+  - UI Panels and Pages: ui-panels-and-pages.md
+  - Development, Testing, and Operations: development-testing-and-operations.md
