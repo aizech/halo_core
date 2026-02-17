@@ -29,7 +29,7 @@ jobs:
       - name: Lint markdown
         run: |
           pymarkdown scan \
-            --disable-rules md013,md036 \
+            -d md013,md036 \
             docs/ DOCS_TASKS.md DOCS_WEBSITE.md
 
   deploy-mkdocs:
