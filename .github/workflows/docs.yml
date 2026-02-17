@@ -16,10 +16,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Lint markdown
-        uses: avto-dev/markdown-lint@v1
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          args: "**/*.md"
+          python-version: "3.11"
+
+      - name: Install markdown linter
+        run: |
+          python -m pip install --upgrade pip
+          pip install pymarkdownlnt
+
+      - name: Lint markdown
+        run: pymarkdown scan .
 
   deploy-mkdocs:
     if: github.event_name == 'push'
