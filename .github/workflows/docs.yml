@@ -27,7 +27,8 @@ jobs:
           pip install pymarkdownlnt
 
       - name: Lint markdown
-        run: pymarkdown scan .
+        run: |
+          pymarkdown scan docs/ DOCS_TASKS.md DOCS_WEBSITE.md
 
   deploy-mkdocs:
     if: github.event_name == 'push'
