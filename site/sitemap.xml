@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>http://docs.corpusanalytica.com/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+    <url>
+         <loc>http://docs.corpusanalytica.com/agent-system/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+    <url>
+         <loc>http://docs.corpusanalytica.com/architecture-and-runtime/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+    <url>
+         <loc>http://docs.corpusanalytica.com/data-storage-and-retrieval/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+    <url>
+         <loc>http://docs.corpusanalytica.com/development-testing-and-operations/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+    <url>
+         <loc>http://docs.corpusanalytica.com/getting-started/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+    <url>
+         <loc>http://docs.corpusanalytica.com/repository-overview/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+    <url>
+         <loc>http://docs.corpusanalytica.com/ui-panels-and-pages/</loc>
+         <lastmod>2026-02-17</lastmod>
+    </url>
+</urlset>

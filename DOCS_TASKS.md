@@ -15,16 +15,16 @@ Goal: Host documentation from this GitHub repo on
 
 ## 2) Add dependencies and verify locally
 
-- [ ] Add/install Python dependencies:
+- [x] Add/install Python dependencies:
   - [x] `mkdocs`
   - [x] `mkdocs-material`
 - [ ] Run locally: `mkdocs serve`
-- [ ] Verify pages render and navigation works
+- [x] Verify pages render and navigation works (`mkdocs build --strict`)
 
 ## 3) Automate deployment from `main` to `gh-pages`
 
 - [x] Create a GitHub Actions workflow that runs on push to `main`
-- [ ] Workflow steps:
+- [x] Workflow steps:
   - [x] Checkout repository
   - [x] Install Python + dependencies
   - [x] Build MkDocs site
@@ -39,7 +39,7 @@ Goal: Host documentation from this GitHub repo on
 ## 5) Configure custom domain + HTTPS
 
 - [ ] DNS provider:
-  - [ ] Add CNAME record: `docs` -> `<org>.github.io`
+  - [ ] Add CNAME record: `docs` -> `aizech.github.io`
 - [ ] Repo -> Settings -> Pages:
   - [ ] Set custom domain to `docs.corpusanalytica.com`
   - [ ] Enable **Enforce HTTPS** (after cert is issued)
