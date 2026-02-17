@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import streamlit as st
 
+from app import main
 from services import user_memory
 
 
 def render_account_page() -> None:
+    main._init_state()
+    main.render_sidebar()
     st.title("Account")
     st.caption("Manage your profile and preferences.")
     user_id = user_memory.resolve_user_id(st.session_state)

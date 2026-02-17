@@ -5,6 +5,7 @@ from typing import Dict, List
 
 import streamlit as st
 
+from app import main
 from services import agents_config
 
 
@@ -29,6 +30,8 @@ def _parse_lines(raw: str) -> List[str]:
 
 
 def render_agent_config_page() -> None:
+    main._init_state()
+    main.render_sidebar()
     st.title("Agent Config")
     st.caption("Manage per-agent configuration files.")
 

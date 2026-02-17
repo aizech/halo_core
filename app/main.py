@@ -39,6 +39,7 @@ sys.path.insert(0, project_root_str)
 import services  # noqa: E402
 from services import connectors, ingestion, pipelines, retrieval, storage  # noqa: E402
 from services import chat_state  # noqa: E402
+from services import menu_settings  # noqa: E402
 from services import presets  # noqa: E402
 from services import user_memory  # noqa: E402
 import services.agents as agents  # noqa: E402
@@ -395,29 +396,267 @@ def configure_page() -> None:
 
 
 def render_sidebar() -> None:
-    st.sidebar.title("HALO")
+    menu_cfg = menu_settings.get_menu_settings(st.session_state.get("config", {}))
+    st.markdown(
+        f"""
+        <style>
+            :root {{
+                --sidebar-bg: {menu_cfg['sidebar_bg']};
+                --sidebar-text: {menu_cfg['sidebar_text_color']};
+                --sidebar-icon: {menu_cfg['sidebar_icon_color']};
+                --sidebar-hover-bg: {menu_cfg['sidebar_hover_bg']};
+                --sidebar-active-bg: {menu_cfg['sidebar_active_bg']};
+                --sidebar-focus-outline: {menu_cfg['sidebar_focus_outline']};
+                --sidebar-separator-color: {menu_cfg.get('sidebar_separator_color', '#6C757D')};
+                --sidebar-font-size: {menu_cfg['sidebar_font_size_px']}px;
+                --sidebar-icon-size: {menu_cfg.get('sidebar_icon_size_px', 22)}px;
+                --sidebar-collapsed-width: {menu_cfg['sidebar_collapsed_width_px']}px;
+                --sidebar-hover-width: {menu_cfg['sidebar_hover_width_px']}px;
+                --sidebar-item-gap: {menu_cfg.get('sidebar_item_gap_px', 8)}px;
+                --sidebar-transition: {menu_cfg['sidebar_transition']};
+            }}
+            section[data-testid='stSidebar'] {{
+                background-color: var(--sidebar-bg);
+                min-width: var(--sidebar-collapsed-width) !important;
+                max-width: var(--sidebar-collapsed-width) !important;
+                width: var(--sidebar-collapsed-width) !important;
+                transition: width var(--sidebar-transition);
+                overflow-x: hidden;
+            }}
+            section[data-testid='stSidebarNav'] {{
+                display: none;
+            }}
+            section[data-testid='stSidebarNavItems'] {{
+                display: none;
+            }}
+            section[data-testid='stSidebar']:hover {{
+                min-width: var(--sidebar-hover-width) !important;
+                max-width: var(--sidebar-hover-width) !important;
+                width: var(--sidebar-hover-width) !important;
+            }}
+            section[data-testid='stSidebar'] * {{
+                color: var(--sidebar-text) !important;
+                font-size: var(--sidebar-font-size) !important;
+            }}
+            section[data-testid='stSidebar'] .stButton > button {{
+                width: 100%;
+                text-align: left;
+                border: none;
+                background: transparent;
+                border-radius: 10px;
+                padding: 10px 12px;
+                color: var(--sidebar-text) !important;
+                font-weight: 600;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a {{
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border-radius: 10px;
+                padding: 10px 12px;
+                text-decoration: none;
+                white-space: nowrap;
+                overflow: hidden;
+                transition: background-color var(--sidebar-transition);
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] {{
+                margin-bottom: var(--sidebar-item-gap);
+            }}
+            section[data-testid='stSidebar'] .halo-menu-separator {{
+                height: 1px;
+                margin: calc(var(--sidebar-item-gap) / 2) 12px;
+                background-color: var(--sidebar-separator-color);
+                opacity: 0.8;
+            }}
+            section[data-testid='stSidebar'] .halo-menu-spacer {{
+                width: 100%;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] > div,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] div {{
+                background-color: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a svg {{
+                fill: var(--sidebar-icon) !important;
+                width: var(--sidebar-icon-size) !important;
+                height: var(--sidebar-icon-size) !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] {{
+                background-color: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'][aria-current='page'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'][aria-selected='true'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'][data-selected='true'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'][data-active='true'] {{
+                background-color: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'] > div:first-child,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'] > div:first-child,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'] > div:first-child,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] > div:first-child {{
+                background-color: transparent !important;
+                width: auto;
+                height: auto;
+                border-radius: 0;
+                display: block;
+                padding: 0;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'] div,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'] div,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'] div,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] div {{
+                background-color: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'] svg,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'] svg,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'] svg,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] svg {{
+                display: block;
+                background-color: var(--sidebar-hover-bg) !important;
+                border-radius: 999px;
+                padding: 6px;
+                box-sizing: content-box;
+            }}
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a {{
+                justify-content: center;
+                padding-left: 8px;
+                padding-right: 8px;
+                border-radius: 0;
+                background-color: transparent !important;
+                box-shadow: none !important;
+            }}
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a:hover,
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[aria-current='page'],
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[aria-selected='true'],
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[data-selected='true'],
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[data-active='true'] {{
+                background-color: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+            }}
+            section[data-testid='stSidebar'] [aria-current='page'],
+            section[data-testid='stSidebar'] [aria-selected='true'],
+            section[data-testid='stSidebar'] [data-selected='true'],
+            section[data-testid='stSidebar'] [data-active='true'] {{
+                background-color: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+            }}
+            section[data-testid='stSidebar'] [aria-current='page']::before,
+            section[data-testid='stSidebar'] [aria-selected='true']::before,
+            section[data-testid='stSidebar'] [data-selected='true']::before,
+            section[data-testid='stSidebar'] [data-active='true']::before,
+            section[data-testid='stSidebar'] [aria-current='page']::after,
+            section[data-testid='stSidebar'] [aria-selected='true']::after,
+            section[data-testid='stSidebar'] [data-selected='true']::after,
+            section[data-testid='stSidebar'] [data-active='true']::after {{
+                background-color: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+            }}
+            section[data-testid='stSidebar'] [aria-current='page'] svg,
+            section[data-testid='stSidebar'] [aria-selected='true'] svg,
+            section[data-testid='stSidebar'] [data-selected='true'] svg,
+            section[data-testid='stSidebar'] [data-active='true'] svg {{
+                display: block;
+                background-color: var(--sidebar-hover-bg) !important;
+                border-radius: 999px;
+                padding: 6px;
+                box-sizing: content-box;
+            }}
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a p {{
+                opacity: 0;
+                max-width: 0;
+                margin: 0;
+                overflow: hidden;
+            }}
+            section[data-testid='stSidebar']:not(:hover) h1,
+            section[data-testid='stSidebar']:not(:hover) h2,
+            section[data-testid='stSidebar']:not(:hover) h3,
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stSidebarUserContent'] > div > div > p,
+            section[data-testid='stSidebar']:not(:hover) .stCaption,
+            section[data-testid='stSidebar']:not(:hover) .stMarkdown p,
+            section[data-testid='stSidebar']:not(:hover) .stButton {{
+                opacity: 0;
+                max-height: 0;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden;
+                pointer-events: none;
+            }}
+            section[data-testid='stSidebar']:hover [data-testid='stPageLink'] a p {{
+                opacity: 1;
+                max-width: 260px;
+                transition: opacity var(--sidebar-transition);
+            }}
+            section[data-testid='stSidebar'] button:hover {{
+                background-color: var(--sidebar-hover-bg) !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover {{
+                background-color: var(--sidebar-hover-bg) !important;
+            }}
+            section[data-testid='stSidebar'] button:focus {{
+                outline-color: var(--sidebar-focus-outline) !important;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    for index, item in enumerate(menu_cfg.get("items", [])):
+        item_kind = str(item.get("kind", "link")).strip().lower()
+        if item_kind == "separator":
+            st.sidebar.markdown(
+                "<div class='halo-menu-separator'></div>",
+                unsafe_allow_html=True,
+            )
+            continue
+        if item_kind == "spacer":
+            try:
+                spacer_px = int(item.get("spacer_px", 16))
+            except (TypeError, ValueError):
+                spacer_px = 16
+            spacer_px = max(4, min(64, spacer_px))
+            st.sidebar.markdown(
+                f"<div class='halo-menu-spacer' style='height: {spacer_px}px;'></div>",
+                unsafe_allow_html=True,
+            )
+            continue
+        label = str(item.get("label", "")).strip()
+        page = str(item.get("page", "")).strip()
+        icon = str(item.get("icon", "")).strip()
+        if not label or not page:
+            continue
+        icon_token = f":material/{icon}:" if icon else None
+        try:
+            st.sidebar.page_link(
+                page,
+                label=label,
+                icon=icon_token,
+                use_container_width=True,
+            )
+            continue
+        except Exception:
+            pass
+
+        nav_key = f"nav_{index}_{label.lower().replace(' ', '_')}"
+        if st.sidebar.button(label, key=nav_key, width="stretch"):
+            try:
+                st.switch_page(page)
+            except Exception:
+                st.sidebar.error(f"{label} navigation requires Streamlit multipage.")
+
     st.sidebar.button("New Notebook", width="stretch", key="new_notebook")
-    st.sidebar.subheader("Pages")
-    if st.sidebar.button("Dashboard", key="nav_dashboard", width="stretch"):
-        try:
-            st.switch_page("pages/Dashboard.py")
-        except Exception:
-            st.sidebar.error("Dashboard navigation requires Streamlit multipage.")
-    if st.sidebar.button("Configuration", key="nav_configuration", width="stretch"):
-        try:
-            st.switch_page("pages/Configuration.py")
-        except Exception:
-            st.sidebar.error("Configuration navigation requires Streamlit multipage.")
-    if st.sidebar.button("Account", key="nav_account", width="stretch"):
-        try:
-            st.switch_page("pages/Account.py")
-        except Exception:
-            st.sidebar.error("Account navigation requires Streamlit multipage.")
-    if st.sidebar.button("Help", key="nav_help", width="stretch"):
-        try:
-            st.switch_page("pages/Help.py")
-        except Exception:
-            st.sidebar.error("Help navigation requires Streamlit multipage.")
     st.sidebar.divider()
     st.sidebar.caption("Need help? Visit AGENTS.md or join the #halo-support channel.")
 
@@ -524,6 +763,62 @@ def _normalize_agent_tools(raw_tools: object) -> List[str]:
     return normalized
 
 
+_MENU_EDITOR_ITEMS_KEY = "menu_editor_items"
+_MENU_EDITOR_SIGNATURE_KEY = "menu_editor_signature"
+
+
+def _normalize_menu_editor_items(items: object) -> List[Dict[str, object]]:
+    if not isinstance(items, list):
+        return []
+    normalized: List[Dict[str, object]] = []
+    for raw_item in items:
+        if not isinstance(raw_item, dict):
+            continue
+        item_kind = str(raw_item.get("kind", "link")).strip().lower()
+        editor_item: Dict[str, object] = {
+            "_editor_id": uuid.uuid4().hex,
+            "kind": (
+                item_kind if item_kind in {"link", "separator", "spacer"} else "link"
+            ),
+        }
+        if editor_item["kind"] == "separator":
+            normalized.append(editor_item)
+            continue
+        if editor_item["kind"] == "spacer":
+            try:
+                spacer_px = int(raw_item.get("spacer_px", 16))
+            except (TypeError, ValueError):
+                spacer_px = 16
+            editor_item["spacer_px"] = max(4, min(64, spacer_px))
+            normalized.append(editor_item)
+            continue
+        editor_item["label"] = str(raw_item.get("label", "")).strip()
+        editor_item["icon"] = str(raw_item.get("icon", "")).strip()
+        editor_item["page"] = str(raw_item.get("page", "")).strip()
+        normalized.append(editor_item)
+    return normalized
+
+
+def _menu_items_signature(items: object) -> str:
+    if not isinstance(items, list):
+        return "[]"
+    serializable = [item for item in items if isinstance(item, dict)]
+    return json.dumps(serializable, sort_keys=True)
+
+
+def _strip_editor_metadata(items: object) -> List[Dict[str, object]]:
+    if not isinstance(items, list):
+        return []
+    cleaned: List[Dict[str, object]] = []
+    for raw_item in items:
+        if not isinstance(raw_item, dict):
+            continue
+        cleaned.append(
+            {key: value for key, value in raw_item.items() if key != "_editor_id"}
+        )
+    return cleaned
+
+
 def _render_configuration_panel(
     container: st.delta_generator.DeltaGenerator | None = None,
 ) -> None:
@@ -564,6 +859,371 @@ def _render_configuration_panel(
         )
         storage.save_config(st.session_state["config"])
         container.success("Connector-Einstellungen aktualisiert")
+
+    container.subheader("Sidebar Menu")
+    current_menu = menu_settings.get_menu_settings(st.session_state["config"])
+    col1, col2 = container.columns(2)
+    with col1:
+        sidebar_bg = st.color_picker(
+            "Sidebar Hintergrund",
+            value=str(current_menu.get("sidebar_bg", "#343A40")),
+            key="menu_sidebar_bg",
+        )
+        sidebar_text = st.color_picker(
+            "Sidebar Textfarbe",
+            value=str(current_menu.get("sidebar_text_color", "#F8F9FA")),
+            key="menu_sidebar_text",
+        )
+        sidebar_hover = st.color_picker(
+            "Hover Farbe",
+            value=str(current_menu.get("sidebar_hover_bg", "#F22222")),
+            key="menu_sidebar_hover",
+        )
+        sidebar_separator = st.color_picker(
+            "Separator Farbe",
+            value=str(current_menu.get("sidebar_separator_color", "#6C757D")),
+            key="menu_sidebar_separator",
+        )
+    with col2:
+        sidebar_icon = st.color_picker(
+            "Icon Farbe",
+            value=str(current_menu.get("sidebar_icon_color", "#F8F9FA")),
+            key="menu_sidebar_icon",
+        )
+        sidebar_active = st.color_picker(
+            "Aktive Farbe",
+            value=str(current_menu.get("sidebar_active_bg", "#CC1E1E")),
+            key="menu_sidebar_active",
+        )
+        sidebar_focus = st.color_picker(
+            "Focus Outline",
+            value=str(current_menu.get("sidebar_focus_outline", "#F22222")),
+            key="menu_sidebar_focus",
+        )
+    sidebar_font_size = container.slider(
+        "Schriftgröße (px)",
+        min_value=12,
+        max_value=24,
+        value=int(current_menu.get("sidebar_font_size_px", 16)),
+        key="menu_sidebar_font_size",
+    )
+    sidebar_icon_size = container.slider(
+        "Icon Größe (px)",
+        min_value=16,
+        max_value=32,
+        value=int(current_menu.get("sidebar_icon_size_px", 22)),
+        key="menu_sidebar_icon_size",
+    )
+    sidebar_collapsed_width = container.slider(
+        "Breite eingeklappt (px)",
+        min_value=56,
+        max_value=120,
+        value=int(current_menu.get("sidebar_collapsed_width_px", 64)),
+        key="menu_sidebar_collapsed_width",
+    )
+    sidebar_hover_width = container.slider(
+        "Breite bei Hover (px)",
+        min_value=180,
+        max_value=360,
+        value=int(current_menu.get("sidebar_hover_width_px", 240)),
+        key="menu_sidebar_hover_width",
+    )
+    sidebar_item_gap = container.slider(
+        "Abstand zwischen Menüpunkten (px)",
+        min_value=0,
+        max_value=32,
+        value=int(current_menu.get("sidebar_item_gap_px", 8)),
+        key="menu_sidebar_item_gap",
+    )
+
+    menu_items = current_menu.get("items", [])
+    menu_items_signature = _menu_items_signature(menu_items)
+    editor_signature = st.session_state.get(_MENU_EDITOR_SIGNATURE_KEY)
+    editor_items = st.session_state.get(_MENU_EDITOR_ITEMS_KEY)
+    if editor_signature != menu_items_signature or not isinstance(editor_items, list):
+        st.session_state[_MENU_EDITOR_ITEMS_KEY] = _normalize_menu_editor_items(
+            menu_items
+        )
+        st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = menu_items_signature
+    editor_items = st.session_state.get(_MENU_EDITOR_ITEMS_KEY, [])
+
+    page_options: List[str] = []
+    page_labels: Dict[str, str] = {}
+    for source_items in (
+        menu_settings.DEFAULT_MENU_SETTINGS.get("items", []),
+        menu_items,
+    ):
+        if not isinstance(source_items, list):
+            continue
+        for source_item in source_items:
+            if not isinstance(source_item, dict):
+                continue
+            if str(source_item.get("kind", "link")).strip().lower() != "link":
+                continue
+            page = str(source_item.get("page", "")).strip()
+            if not page:
+                continue
+            label = str(source_item.get("label", "")).strip()
+            if page not in page_options:
+                page_options.append(page)
+            if label:
+                page_labels[page] = label
+
+    container.caption(
+        "Menüeinträge: mit ↑ / ↓ sortieren, Spacer oder Separator einfügen"
+    )
+    pending_action_name: str | None = None
+    pending_action_index = -1
+
+    for index, item in enumerate(editor_items):
+        if not isinstance(item, dict):
+            continue
+        row_id = str(item.get("_editor_id") or uuid.uuid4().hex)
+        item["_editor_id"] = row_id
+        item_box = container.container(border=True)
+        action_cols = item_box.columns([5, 1, 1, 1])
+        action_cols[0].caption(f"Eintrag {index + 1}")
+        if action_cols[1].button(
+            "↑",
+            key=f"menu_item_up_{row_id}",
+            disabled=index == 0,
+        ):
+            pending_action_name = "up"
+            pending_action_index = index
+        if action_cols[2].button(
+            "↓",
+            key=f"menu_item_down_{row_id}",
+            disabled=index >= len(editor_items) - 1,
+        ):
+            pending_action_name = "down"
+            pending_action_index = index
+        if action_cols[3].button("✕", key=f"menu_item_delete_{row_id}"):
+            pending_action_name = "delete"
+            pending_action_index = index
+
+        kind_options = ["link", "spacer", "separator"]
+        kind_labels = {
+            "link": "Link",
+            "spacer": "Spacer",
+            "separator": "Separator",
+        }
+        current_kind = str(item.get("kind", "link")).strip().lower()
+        if current_kind not in kind_options:
+            current_kind = "link"
+        selected_kind = item_box.selectbox(
+            "Typ",
+            options=kind_options,
+            index=kind_options.index(current_kind),
+            format_func=lambda value: kind_labels.get(value, value),
+            key=f"menu_item_kind_{row_id}",
+        )
+        item["kind"] = selected_kind
+
+        if selected_kind == "link":
+            item["label"] = item_box.text_input(
+                "Label",
+                value=str(item.get("label", "")),
+                key=f"menu_item_label_{row_id}",
+            )
+            item["icon"] = item_box.text_input(
+                "Icon (Material)",
+                value=str(item.get("icon", "")),
+                key=f"menu_item_icon_{row_id}",
+            )
+            page_value = str(item.get("page", "")).strip()
+            if page_value and page_value not in page_options:
+                page_options.append(page_value)
+            if page_options:
+                default_page = (
+                    page_value if page_value in page_options else page_options[0]
+                )
+                item["page"] = item_box.selectbox(
+                    "Seite",
+                    options=page_options,
+                    index=page_options.index(default_page),
+                    format_func=lambda page: f"{page_labels.get(page, page)} ({page})",
+                    key=f"menu_item_page_{row_id}",
+                )
+            else:
+                item["page"] = item_box.text_input(
+                    "Seite",
+                    value=page_value,
+                    key=f"menu_item_page_{row_id}",
+                )
+        elif selected_kind == "spacer":
+            item["spacer_px"] = item_box.slider(
+                "Spacer Höhe (px)",
+                min_value=4,
+                max_value=64,
+                value=int(item.get("spacer_px", 16)),
+                key=f"menu_item_spacer_{row_id}",
+            )
+
+    add_cols = container.columns(3)
+    if add_cols[0].button("+ Link", key="menu_item_add_link"):
+        pending_action_name = "add_link"
+    if add_cols[1].button("+ Spacer", key="menu_item_add_spacer"):
+        pending_action_name = "add_spacer"
+    if add_cols[2].button("+ Separator", key="menu_item_add_separator"):
+        pending_action_name = "add_separator"
+
+    if pending_action_name:
+        next_items = _normalize_menu_editor_items(editor_items)
+        if pending_action_name == "up" and pending_action_index > 0:
+            next_items[pending_action_index - 1], next_items[pending_action_index] = (
+                next_items[pending_action_index],
+                next_items[pending_action_index - 1],
+            )
+        elif (
+            pending_action_name == "down"
+            and 0 <= pending_action_index < len(next_items) - 1
+        ):
+            next_items[pending_action_index + 1], next_items[pending_action_index] = (
+                next_items[pending_action_index],
+                next_items[pending_action_index + 1],
+            )
+        elif pending_action_name == "delete" and 0 <= pending_action_index < len(
+            next_items
+        ):
+            del next_items[pending_action_index]
+        elif pending_action_name == "add_link":
+            default_page = page_options[0] if page_options else "main.py"
+            next_items.append(
+                {
+                    "_editor_id": uuid.uuid4().hex,
+                    "kind": "link",
+                    "label": page_labels.get(default_page, "Neuer Menüpunkt"),
+                    "icon": "chevron_right",
+                    "page": default_page,
+                }
+            )
+        elif pending_action_name == "add_spacer":
+            next_items.append(
+                {
+                    "_editor_id": uuid.uuid4().hex,
+                    "kind": "spacer",
+                    "spacer_px": 16,
+                }
+            )
+        elif pending_action_name == "add_separator":
+            next_items.append(
+                {
+                    "_editor_id": uuid.uuid4().hex,
+                    "kind": "separator",
+                }
+            )
+
+        st.session_state[_MENU_EDITOR_ITEMS_KEY] = next_items
+        st.rerun()
+
+    if container.button("Sidebar Menu speichern", key="save_sidebar_menu"):
+        updated_items: List[Dict[str, object]] = []
+        for item in editor_items:
+            if not isinstance(item, dict):
+                continue
+            row_id = str(item.get("_editor_id") or "")
+            item_kind = (
+                str(
+                    st.session_state.get(
+                        f"menu_item_kind_{row_id}",
+                        item.get("kind", "link"),
+                    )
+                )
+                .strip()
+                .lower()
+            )
+            if item_kind == "separator":
+                updated_items.append({"kind": "separator"})
+                continue
+            if item_kind == "spacer":
+                try:
+                    spacer_px = int(
+                        st.session_state.get(
+                            f"menu_item_spacer_{row_id}",
+                            item.get("spacer_px", 16),
+                        )
+                    )
+                except (TypeError, ValueError):
+                    spacer_px = 16
+                updated_items.append(
+                    {
+                        "kind": "spacer",
+                        "spacer_px": max(4, min(64, spacer_px)),
+                    }
+                )
+                continue
+
+            label = str(
+                st.session_state.get(
+                    f"menu_item_label_{row_id}",
+                    item.get("label", ""),
+                )
+            ).strip()
+            icon = str(
+                st.session_state.get(
+                    f"menu_item_icon_{row_id}",
+                    item.get("icon", ""),
+                )
+            ).strip()
+            page = str(
+                st.session_state.get(
+                    f"menu_item_page_{row_id}",
+                    item.get("page", ""),
+                )
+            ).strip()
+            if not label or not page:
+                continue
+            updated_items.append(
+                {
+                    "kind": "link",
+                    "label": label,
+                    "icon": icon,
+                    "page": page,
+                }
+            )
+
+        updated_menu = menu_settings.save_menu_settings(
+            st.session_state["config"],
+            {
+                "sidebar_bg": sidebar_bg,
+                "sidebar_text_color": sidebar_text,
+                "sidebar_icon_color": sidebar_icon,
+                "sidebar_hover_bg": sidebar_hover,
+                "sidebar_active_bg": sidebar_active,
+                "sidebar_focus_outline": sidebar_focus,
+                "sidebar_separator_color": sidebar_separator,
+                "sidebar_font_size_px": sidebar_font_size,
+                "sidebar_icon_size_px": sidebar_icon_size,
+                "sidebar_collapsed_width_px": sidebar_collapsed_width,
+                "sidebar_hover_width_px": sidebar_hover_width,
+                "sidebar_item_gap_px": sidebar_item_gap,
+                "items": updated_items,
+                "sidebar_transition": str(
+                    current_menu.get("sidebar_transition", "0.3s")
+                ),
+            },
+        )
+        storage.save_config(st.session_state["config"])
+        st.session_state[_MENU_EDITOR_ITEMS_KEY] = _normalize_menu_editor_items(
+            updated_menu.get("items", [])
+        )
+        st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = _menu_items_signature(
+            _strip_editor_metadata(st.session_state[_MENU_EDITOR_ITEMS_KEY])
+        )
+        container.success("Sidebar Menu gespeichert")
+
+    if container.button("Sidebar Menu zurücksetzen", key="reset_sidebar_menu"):
+        reset_menu = menu_settings.save_menu_settings(
+            st.session_state["config"], menu_settings.DEFAULT_MENU_SETTINGS
+        )
+        storage.save_config(st.session_state["config"])
+        st.session_state[_MENU_EDITOR_ITEMS_KEY] = _normalize_menu_editor_items(
+            reset_menu.get("items", [])
+        )
+        st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = _menu_items_signature(
+            _strip_editor_metadata(st.session_state[_MENU_EDITOR_ITEMS_KEY])
+        )
+        container.success("Sidebar Menu auf Standard zurückgesetzt")
 
     container.subheader("Agent-Logging")
     container.checkbox(
@@ -849,7 +1509,10 @@ def _render_configuration_panel(
 
 def _toggle_source(source_id: str) -> None:
     current_value = st.session_state.get(f"src_{source_id}", True)
-    for source in st.session_state["sources"]:
+    sources = st.session_state.get("sources")
+    if not isinstance(sources, list):
+        return
+    for source in sources:
         if source.id == source_id:
             source.selected = current_value
             break

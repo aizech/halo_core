@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import streamlit as st
 
+from app import main
+
 
 def render_help_page() -> None:
+    main._init_state()
+    main.render_sidebar()
     st.title("Help")
     st.caption("Find guidance and support resources.")
     st.markdown("""

@@ -2,6 +2,9 @@
 headless = true
 runOnSave = true
 
+[client]
+showSidebarNavigation = false
+
 [theme]
 primaryColor = "#6750A4"
 backgroundColor = "#F6F4F8"

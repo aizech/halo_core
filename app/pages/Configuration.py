@@ -6,6 +6,8 @@ from app import main
 
 
 def render_configuration_page() -> None:
+    main._init_state()
+    main.render_sidebar()
     st.title("Configuration")
     st.caption("Manage app settings and agent configuration.")
 
