@@ -9,6 +9,7 @@ This repository hosts a Streamlit + Agno implementation of a NotebookLM-style wo
 - OpenAI API key and any other MCP/system API credentials (store in `.streamlit/secrets.toml`)
 
 ## Getting Started
+
 ```bash
 python -m venv .venv
 . .venv/Scripts/activate        # Windows Powershell: .venv\Scripts\Activate.ps1
@@ -17,15 +18,18 @@ pip install -r requirements.txt
 ```
 
 Create `.streamlit/secrets.toml` with entries like:
+
 ```toml
 OPENAI_API_KEY = "sk-..."
 AGNO_TELEMETRY_URL = ""
 ```
 
 ## Running the App
+
 ```bash
 streamlit run app/main.py
 ```
+
 The default layout renders the sidebar (Administration, Configuration, Account, Help) and the three primary panels with Studio templates driven by `/templates/studio_templates.json`. Studio cards use clickable header strips for generation with inline ⋯ menus for configuration and standardized download filenames for exports.
 
 Uploaded sources, studio notes, and chat history are saved as JSON under the `data/` folder. Override the location with `HALO_DATA_DIR` if you want per-environment persistence.
@@ -33,6 +37,7 @@ Chat presets (model/tools/team members) are loaded from `presets.json` and can b
 Mermaid diagrams are rendered from fenced ` ```mermaid ` blocks; multiline labels are sanitized for browser rendering.
 
 ## Running Docs Locally
+
 ```bash
 mkdocs serve
 ```
@@ -101,6 +106,7 @@ Each chat turn trace includes `telemetry` metadata:
 2. Re-run: `python -m pytest tests/test_agents_config.py -q`.
 
 ## Repository Structure
+
 ```
 app/                # Streamlit entrypoints and UI components
 services/           # Backend service wrappers (MCP, storage, orchestration)
@@ -116,9 +122,11 @@ adr/                # Architectural Decision Records
 3. Update PRD/ADR/README whenever requirements shift.
 
 ## Testing
+
 ```bash
 python -m pytest
 ```
+
 Add or update tests alongside code changes. Use fixtures/mocks for external APIs and MCP servers.
 
 ## CI/CD

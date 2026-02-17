@@ -109,6 +109,7 @@ These requirements apply to every file in the repository. Bullets prefixed with 
 - Seek approval for workarounds or behavior changes; if a request increases entropy, call it out.
 
 #### Step 2: Validation
+
 ```bash
 # Run targeted tests first
 pytest tests/<target_test>.py -v
@@ -238,6 +239,7 @@ HALO Core is a NotebookLM-style Streamlit application using the Agno orchestrati
 - Always give clear commit messages that explain what changed and why.
 
 ## Common Commands
+
 ```bash
 black .                          # Auto-format
 ruff check .                     # Lint

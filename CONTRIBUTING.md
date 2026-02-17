@@ -12,46 +12,59 @@ Thanks for helping improve HALO Core. This project focuses on a NotebookLM-style
 
 ### Development Setup
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/aizech/halo_core.git
    cd halo_core
    ```
+
 2. **Create a virtual environment**
-   ```bash
+   
+```bash
    python -m venv .venv
    . .venv/Scripts/activate        # Windows Powershell: .venv\Scripts\Activate.ps1
    ```
+   
 3. **Install dependencies**
+
    ```bash
-   pip install -r requirements.txt
+pip install -r requirements.txt
    ```
+   
 4. **Configure secrets**
-   ```toml
+   
+```toml
    # .streamlit/secrets.toml
-   OPENAI_API_KEY = "sk-..."
+OPENAI_API_KEY = "sk-..."
    ANTHROPIC_API_KEY = "sk-..."
    ```
 
 ## Contribution Workflow
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feature/<issue>-<short-description>
    ```
+
 2. **Make your changes**
    - Keep edits focused.
    - Update documentation (PRD/ADR/README) when requirements change.
    - Add or update tests for new behavior.
 3. **Run checks**
+   
    ```bash
-   pytest
+pytest
    ruff check .
    black --check .
    mypy app services
    ```
+   
 4. **Run the app**
-   ```bash
+   
+```bash
    streamlit run app/main.py
-   ```
+```
+
 5. **Submit a PR**
    - Describe the change, include screenshots for UI updates.
    - Call out any backward-compatibility concerns.
