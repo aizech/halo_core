@@ -1,6 +1,6 @@
 # Tasks: docs website (GitHub + custom domain)
 
-Goal: Host documentation from this GitHub repo on `https://docs.<yourdomain>/` using MkDocs Material.
+Goal: Host documentation from this GitHub repo on `http://docs.corpusanalytica.com/` using MkDocs Material.
 
 ## Checklist
 
@@ -40,12 +40,12 @@ Goal: Host documentation from this GitHub repo on `https://docs.<yourdomain>/` u
 - [ ] DNS provider:
   - [ ] Add CNAME record: `docs` -> `<org>.github.io`
 - [ ] Repo -> Settings -> Pages:
-  - [ ] Set custom domain to `docs.<yourdomain>`
+  - [ ] Set custom domain to `docs.corpusanalytica.com`
   - [ ] Enable **Enforce HTTPS** (after cert is issued)
 
 ## 6) Smoke test
 
-- [ ] Confirm `https://docs.<yourdomain>/` loads
+- [ ] Confirm `http://docs.corpusanalytica.com/` loads
 - [ ] Confirm a change merged to `main` redeploys the site
 
 ## Optional later

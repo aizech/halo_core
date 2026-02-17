@@ -1,13 +1,13 @@
 # Docs website via GitHub (custom domain)
 
-This document describes a simple approach to host user documentation from GitHub on a website at `https://docs.<yourdomain>/`.
+This document describes a simple approach to host user documentation from GitHub on a website at `http://docs.corpusanalytica.com/`.
 
 ## Recommended stack
 
 - **Docs generator**: MkDocs
 - **Theme**: Material for MkDocs
 - **Hosting**: GitHub Pages
-- **Custom domain**: `docs.<yourdomain>`
+- **Custom domain**: `docs.corpusanalytica.com`
 
 ## Why this approach
 
@@ -35,7 +35,7 @@ Recommended hosting mode:
 
 This keeps authoring simple (everything lives in `main`) while hosting remains static and fast.
 
-## Custom domain setup (`docs.<yourdomain>`)
+## Custom domain setup (`docs.corpusanalytica.com`)
 
 ### DNS
 
@@ -54,7 +54,7 @@ In the repo:
 - Settings -> Pages
 - Source: `Deploy from a branch`
 - Branch: `gh-pages` (root)
-- Custom domain: `docs.<yourdomain>`
+- Custom domain: `docs.corpusanalytica.com`
 - Enable: **Enforce HTTPS** (after certificate provisioning completes)
 
 GitHub will automatically provision TLS certificates after DNS is correct (may take minutes to hours).
@@ -100,9 +100,9 @@ Recommended conventions:
 
 Typical resulting URLs:
 
-- `https://docs.<yourdomain>/latest/`
-- `https://docs.<yourdomain>/1.2/`
-- `https://docs.<yourdomain>/2.0/`
+- `http://docs.corpusanalytica.com/latest/`
+- `http://docs.corpusanalytica.com/1.2/`
+- `http://docs.corpusanalytica.com/2.0/`
 
 ## Current decision
 

@@ -235,6 +235,7 @@ HALO Core is a NotebookLM-style Streamlit application using the Agno orchestrati
 - For bug fixes, make sure the new test fails before your fix, then passes after.
 - When committing, base the message on the staged diff and use a title plus bullet body.
 - After committing, double-check with `git show --name-only -1`.
+- Always give clear commit messages that explain what changed and why.
 
 ## Common Commands
 ```bash

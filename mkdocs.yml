@@ -1,6 +1,6 @@
 site_name: HALO Core Docs
 site_description: Documentation for HALO Core
-site_url: https://docs.corpus-analytica.com/
+site_url: http://docs.corpusanalytica.com/
 repo_url: https://github.com/aizech/halo_core
 repo_name: aizech/halo_core
 docs_dir: docs
