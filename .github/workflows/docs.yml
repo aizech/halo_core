@@ -28,8 +28,9 @@ jobs:
 
       - name: Lint markdown
         run: |
-          pymarkdown scan \
+          pymarkdown \
             -d md013,md036 \
+            scan \
             docs/ DOCS_TASKS.md DOCS_WEBSITE.md
 
   deploy-mkdocs:
