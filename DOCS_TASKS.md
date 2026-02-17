@@ -1,6 +1,7 @@
 # Tasks: docs website (GitHub + custom domain)
 
-Goal: Host documentation from this GitHub repo on `http://docs.corpusanalytica.com/` using MkDocs Material.
+Goal: Host documentation from this GitHub repo on
+`http://docs.corpusanalytica.com/` using MkDocs Material.
 
 ## Checklist
 

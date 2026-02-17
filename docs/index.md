@@ -2,7 +2,8 @@
 
 Welcome to the HALO Core documentation site.
 
-This site is the public docs entry point for setup, architecture, and day-to-day development.
+This site is the public docs entry point for setup, architecture,
+and day-to-day development.
 
 ## Start here
 
