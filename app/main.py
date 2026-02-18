@@ -1036,41 +1036,6 @@ def _render_configuration_panel(
 ) -> None:
     if container is None:
         container = st.sidebar
-    container.subheader("Quellen & Connectoren")
-    enabled = container.multiselect(
-        "Aktivierte Connectoren",
-        options=list(connectors.AVAILABLE_CONNECTORS.keys()),
-        default=st.session_state["config"].get("enabled_connectors", []),
-        format_func=lambda key: connectors.AVAILABLE_CONNECTORS[key].name,
-    )
-    container.subheader("Bildgenerierung")
-    image_model = container.selectbox(
-        "Bildmodell",
-        options=["gpt-image-1", "dall-e-3"],
-        index=["gpt-image-1", "dall-e-3"].index(
-            st.session_state["config"].get("image_model", "gpt-image-1")
-        ),
-    )
-    if container.button("Speichern", key="save_connectors"):
-        st.session_state["config"]["enabled_connectors"] = enabled
-        st.session_state["config"]["image_model"] = image_model
-        st.session_state["config"]["log_agent_payload"] = bool(
-            st.session_state.get("log_agent_payload", True)
-        )
-        st.session_state["config"]["log_agent_response"] = bool(
-            st.session_state.get("log_agent_response", True)
-        )
-        st.session_state["config"]["log_agent_errors"] = bool(
-            st.session_state.get("log_agent_errors", True)
-        )
-        st.session_state["config"]["log_user_requests"] = bool(
-            st.session_state.get("log_user_requests", True)
-        )
-        st.session_state["config"]["log_stream_events"] = bool(
-            st.session_state.get("log_stream_events", False)
-        )
-        storage.save_config(st.session_state["config"])
-        container.success("Connector-Einstellungen aktualisiert")
 
     container.subheader("Sidebar Menu")
     current_menu = menu_settings.get_menu_settings(st.session_state["config"])
@@ -1597,127 +1562,6 @@ def _render_configuration_panel(
         )
         container.success("Sidebar Menu auf Standard zurückgesetzt")
 
-    container.subheader("Agent-Logging")
-    container.checkbox(
-        "Agent payload loggen",
-        value=bool(st.session_state["config"].get("log_agent_payload", True)),
-        key="log_agent_payload",
-    )
-    container.checkbox(
-        "Agent response loggen",
-        value=bool(st.session_state["config"].get("log_agent_response", True)),
-        key="log_agent_response",
-    )
-    container.checkbox(
-        "Agent Fehler loggen",
-        value=bool(st.session_state["config"].get("log_agent_errors", True)),
-        key="log_agent_errors",
-    )
-    container.checkbox(
-        "User Requests loggen",
-        value=bool(st.session_state["config"].get("log_user_requests", True)),
-        key="log_user_requests",
-    )
-    container.checkbox(
-        "Stream-Events debug",
-        value=bool(st.session_state["config"].get("log_stream_events", False)),
-        key="log_stream_events",
-    )
-    agents.set_logging_preferences(
-        log_payload=bool(st.session_state.get("log_agent_payload", True)),
-        log_response=bool(st.session_state.get("log_agent_response", True)),
-        log_errors=bool(st.session_state.get("log_agent_errors", True)),
-    )
-
-    container.subheader("Chat Presets")
-    presets_payload = presets.load_presets()
-    preset_names = sorted(presets_payload.keys())
-    if preset_names:
-        current_preset = st.session_state.get("config", {}).get(
-            "chat_preset", "Default"
-        )
-        preset_index = (
-            preset_names.index(current_preset) if current_preset in preset_names else 0
-        )
-        selected_preset = container.selectbox(
-            "Preset",
-            options=preset_names,
-            index=preset_index,
-            key="chat_preset_selector",
-        )
-        if container.button("Preset anwenden", key="apply_chat_preset"):
-            try:
-                updated = presets.apply_preset_to_chat(selected_preset)
-            except ValueError as exc:
-                container.error(str(exc))
-            else:
-                st.session_state["config"]["chat_preset"] = selected_preset
-                storage.save_config(st.session_state["config"])
-                agent_configs = st.session_state.get("agent_configs", {})
-                agent_configs["chat"] = updated
-                st.session_state["agent_configs"] = agent_configs
-                container.success("Chat-Preset angewendet")
-    else:
-        container.caption("Keine Presets gefunden (presets.json fehlt).")
-
-    container.subheader("Chat Modell & Tools")
-    agent_configs = st.session_state.get("agent_configs", {})
-    chat_config = (
-        agent_configs.get("chat", {}) if isinstance(agent_configs, dict) else {}
-    )
-    member_options = [
-        agent_id for agent_id in agent_configs.keys() if agent_id != "chat"
-    ]
-    available_tools = {
-        "pubmed": "PubMed Suche",
-        "wikipedia": "Wikipedia Suche",
-        "mermaid": "Mermaid Diagramme",
-    }
-    chat_model_key = "chat_cfg_model"
-    chat_members_key = "chat_cfg_members"
-    chat_tools_key = "chat_cfg_tools"
-    container.text_input(
-        "Chat Model",
-        value=str(chat_config.get("model", "openai:gpt-5.2")),
-        key=chat_model_key,
-        help="Format: provider:model (z.B. openai:gpt-5.2)",
-    )
-    container.multiselect(
-        "Chat Team",
-        options=member_options,
-        default=(
-            chat_config.get("members", [])
-            if isinstance(chat_config.get("members"), list)
-            else []
-        ),
-        key=chat_members_key,
-    )
-    normalized_chat_tools = _normalize_agent_tools(chat_config.get("tools", []))
-    if chat_tools_key in st.session_state:
-        stored_tools = st.session_state.get(chat_tools_key)
-        if isinstance(stored_tools, list) and any(
-            not isinstance(tool, str) for tool in stored_tools
-        ):
-            st.session_state[chat_tools_key] = normalized_chat_tools
-    container.multiselect(
-        "Chat Tools",
-        options=list(available_tools.keys()),
-        default=normalized_chat_tools,
-        format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
-        key=chat_tools_key,
-    )
-    if container.button("Chat speichern", key="save_chat_config"):
-        updated = {
-            **chat_config,
-            "model": st.session_state.get(chat_model_key, "openai:gpt-5.2"),
-            "members": st.session_state.get(chat_members_key, []),
-            "tools": st.session_state.get(chat_tools_key, []),
-        }
-        agents_config.save_agent_config("chat", updated)
-        agent_configs["chat"] = updated
-        st.session_state["agent_configs"] = agent_configs
-        container.success("Chat-Konfiguration gespeichert")
-
     container.subheader("Agenten")
     agent_configs = st.session_state.get("agent_configs", {})
     agent_ids = sorted(agent_configs.keys())
@@ -1860,23 +1704,217 @@ def _render_configuration_panel(
                 }
             updated = {
                 **selected_agent,
-                "id": selected_agent_id,
-                "enabled": st.session_state.get(enabled_key, True),
+                "enabled": bool(st.session_state.get(enabled_key, True)),
                 "name": st.session_state.get(name_key, ""),
                 "role": st.session_state.get(role_key, ""),
                 "description": st.session_state.get(description_key, ""),
                 "instructions": st.session_state.get(instructions_key, ""),
                 "model": st.session_state.get(model_key, "openai:gpt-5.2"),
                 "members": st.session_state.get(members_key, []),
-                "tools": selected_tools,
+                "tools": st.session_state.get(tools_key, []),
                 "tool_settings": updated_tool_settings,
             }
             agents_config.save_agent_config(selected_agent_id, updated)
             agent_configs[selected_agent_id] = updated
             st.session_state["agent_configs"] = agent_configs
             container.success("Agent-Konfiguration gespeichert")
+
+
+def _render_sources_configuration(
+    container: st.delta_generator.DeltaGenerator,
+) -> None:
+    container.subheader("Quellen & Connectoren")
+    enabled = container.multiselect(
+        "Aktivierte Connectoren",
+        options=list(connectors.AVAILABLE_CONNECTORS.keys()),
+        default=st.session_state["config"].get("enabled_connectors", []),
+        format_func=lambda key: connectors.AVAILABLE_CONNECTORS[key].name,
+    )
+    container.subheader("Bildgenerierung")
+    image_model = container.selectbox(
+        "Bildmodell",
+        options=["gpt-image-1", "dall-e-3"],
+        index=["gpt-image-1", "dall-e-3"].index(
+            st.session_state["config"].get("image_model", "gpt-image-1")
+        ),
+    )
+    if container.button("Speichern", key="save_connectors"):
+        st.session_state["config"]["enabled_connectors"] = enabled
+        st.session_state["config"]["image_model"] = image_model
+        st.session_state["config"]["log_agent_payload"] = bool(
+            st.session_state.get("log_agent_payload", True)
+        )
+        st.session_state["config"]["log_agent_response"] = bool(
+            st.session_state.get("log_agent_response", True)
+        )
+        st.session_state["config"]["log_agent_errors"] = bool(
+            st.session_state.get("log_agent_errors", True)
+        )
+        st.session_state["config"]["log_user_requests"] = bool(
+            st.session_state.get("log_user_requests", True)
+        )
+        st.session_state["config"]["log_stream_events"] = bool(
+            st.session_state.get("log_stream_events", False)
+        )
+        storage.save_config(st.session_state["config"])
+        container.success("Connector-Einstellungen aktualisiert")
+
+
+def _render_chat_memory_configuration(
+    container: st.delta_generator.DeltaGenerator,
+) -> None:
+    payload_key = "cfg_chat_log_agent_payload"
+    response_key = "cfg_chat_log_agent_response"
+    errors_key = "cfg_chat_log_agent_errors"
+    requests_key = "cfg_chat_log_user_requests"
+    stream_events_key = "cfg_chat_log_stream_events"
+
+    container.subheader("Agent-Logging")
+    container.checkbox(
+        "Agent payload loggen",
+        value=bool(st.session_state["config"].get("log_agent_payload", True)),
+        key=payload_key,
+    )
+    container.checkbox(
+        "Agent response loggen",
+        value=bool(st.session_state["config"].get("log_agent_response", True)),
+        key=response_key,
+    )
+    container.checkbox(
+        "Agent Fehler loggen",
+        value=bool(st.session_state["config"].get("log_agent_errors", True)),
+        key=errors_key,
+    )
+    container.checkbox(
+        "User Requests loggen",
+        value=bool(st.session_state["config"].get("log_user_requests", True)),
+        key=requests_key,
+    )
+    container.checkbox(
+        "Stream-Events debug",
+        value=bool(st.session_state["config"].get("log_stream_events", False)),
+        key=stream_events_key,
+    )
+
+    st.session_state["log_agent_payload"] = bool(
+        st.session_state.get(payload_key, True)
+    )
+    st.session_state["log_agent_response"] = bool(
+        st.session_state.get(response_key, True)
+    )
+    st.session_state["log_agent_errors"] = bool(st.session_state.get(errors_key, True))
+    st.session_state["log_user_requests"] = bool(
+        st.session_state.get(requests_key, True)
+    )
+    st.session_state["log_stream_events"] = bool(
+        st.session_state.get(stream_events_key, False)
+    )
+
+    agents.set_logging_preferences(
+        log_payload=bool(st.session_state.get("log_agent_payload", True)),
+        log_response=bool(st.session_state.get("log_agent_response", True)),
+        log_errors=bool(st.session_state.get("log_agent_errors", True)),
+    )
+
+    container.subheader("Chat Presets")
+    presets_payload = presets.load_presets()
+    preset_names = sorted(presets_payload.keys())
+    if preset_names:
+        current_preset = st.session_state.get("config", {}).get(
+            "chat_preset", "Default"
+        )
+        preset_index = (
+            preset_names.index(current_preset) if current_preset in preset_names else 0
+        )
+        selected_preset = container.selectbox(
+            "Preset",
+            options=preset_names,
+            index=preset_index,
+            key="chat_preset_selector",
+        )
+        if container.button("Preset anwenden", key="apply_chat_preset"):
+            try:
+                updated = presets.apply_preset_to_chat(selected_preset)
+            except ValueError as exc:
+                container.error(str(exc))
+            else:
+                st.session_state["config"]["chat_preset"] = selected_preset
+                storage.save_config(st.session_state["config"])
+                agent_configs = st.session_state.get("agent_configs", {})
+                agent_configs["chat"] = updated
+                st.session_state["agent_configs"] = agent_configs
+                container.success("Chat-Preset angewendet")
     else:
-        container.caption("Keine Agenten-Konfigurationen gefunden.")
+        container.caption("Keine Presets gefunden (presets.json fehlt).")
+
+    container.subheader("Chat Modell & Tools")
+    agent_configs = st.session_state.get("agent_configs", {})
+    chat_config = (
+        agent_configs.get("chat", {}) if isinstance(agent_configs, dict) else {}
+    )
+    member_options = [
+        agent_id for agent_id in agent_configs.keys() if agent_id != "chat"
+    ]
+    available_tools = {
+        "pubmed": "PubMed Suche",
+        "wikipedia": "Wikipedia Suche",
+        "mermaid": "Mermaid Diagramme",
+    }
+    chat_model_key = "chat_cfg_model"
+    chat_members_key = "chat_cfg_members"
+    chat_tools_key = "chat_cfg_tools"
+    container.text_input(
+        "Chat Model",
+        value=str(chat_config.get("model", "openai:gpt-5.2")),
+        key=chat_model_key,
+        help="Format: provider:model (z.B. openai:gpt-5.2)",
+    )
+    container.multiselect(
+        "Chat Team",
+        options=member_options,
+        default=(
+            chat_config.get("members", [])
+            if isinstance(chat_config.get("members"), list)
+            else []
+        ),
+        key=chat_members_key,
+    )
+    normalized_chat_tools = _normalize_agent_tools(chat_config.get("tools", []))
+    if chat_tools_key in st.session_state:
+        stored_tools = st.session_state.get(chat_tools_key)
+        if isinstance(stored_tools, list) and any(
+            not isinstance(tool, str) for tool in stored_tools
+        ):
+            st.session_state[chat_tools_key] = normalized_chat_tools
+    container.multiselect(
+        "Chat Tools",
+        options=list(available_tools.keys()),
+        default=normalized_chat_tools,
+        format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
+        key=chat_tools_key,
+    )
+    if container.button("Chat speichern", key="save_chat_config"):
+        updated = {
+            **chat_config,
+            "model": st.session_state.get(chat_model_key, "openai:gpt-5.2"),
+            "members": st.session_state.get(chat_members_key, []),
+            "tools": st.session_state.get(chat_tools_key, []),
+        }
+        agents_config.save_agent_config("chat", updated)
+        agent_configs["chat"] = updated
+        st.session_state["agent_configs"] = agent_configs
+        container.success("Chat-Konfiguration gespeichert")
+
+
+def _add_source(name: str, type_label: str, meta: str, body: str | None = None) -> None:
+    source = SourceItem(name=name, type_label=type_label, meta=meta)
+    st.session_state["sources"].append(source)
+    _persist_sources()
+    ingestion.ingest_source_content(
+        title=name,
+        body=body or "",
+        meta={"type": type_label, "meta": meta, "source_id": source.id},
+    )
 
 
 def _toggle_source(source_id: str) -> None:
@@ -1889,17 +1927,6 @@ def _toggle_source(source_id: str) -> None:
             source.selected = current_value
             break
     _persist_sources()
-
-
-def _add_source(name: str, type_label: str, meta: str, body: str | None = None) -> None:
-    source = SourceItem(name=name, type_label=type_label, meta=meta)
-    st.session_state["sources"].append(source)
-    _persist_sources()
-    ingestion.ingest_source_content(
-        title=name,
-        body=body or "",
-        meta={"type": type_label, "meta": meta, "source_id": source.id},
-    )
 
 
 def _add_document_payload(payload: Dict[str, str], fallback_meta: str) -> None:
