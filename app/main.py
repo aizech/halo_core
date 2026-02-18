@@ -1031,7 +1031,7 @@ def _strip_editor_metadata(items: object) -> List[Dict[str, object]]:
     return cleaned
 
 
-def _render_configuration_panel(
+def _render_app_design_configuration(
     container: st.delta_generator.DeltaGenerator | None = None,
 ) -> None:
     if container is None:
@@ -1562,162 +1562,11 @@ def _render_configuration_panel(
         )
         container.success("Sidebar Menu auf Standard zurückgesetzt")
 
-    container.subheader("Agenten")
-    agent_configs = st.session_state.get("agent_configs", {})
-    agent_ids = sorted(agent_configs.keys())
-    if agent_ids:
-        name_counts: Dict[str, int] = {}
-        for agent_id in agent_ids:
-            label = str(agent_configs.get(agent_id, {}).get("name", agent_id))
-            name_counts[label] = name_counts.get(label, 0) + 1
 
-        def _format_agent_label(agent_id: str) -> str:
-            label = str(agent_configs.get(agent_id, {}).get("name", agent_id))
-            if name_counts.get(label, 0) > 1:
-                return f"{label} ({agent_id})"
-            return label
-
-        selected_agent_id = container.selectbox(
-            "Agent auswählen",
-            options=agent_ids,
-            format_func=_format_agent_label,
-        )
-        selected_agent = agent_configs.get(selected_agent_id, {})
-        key_suffix = selected_agent_id
-        enabled_key = f"agent_cfg_enabled_{key_suffix}"
-        name_key = f"agent_cfg_name_{key_suffix}"
-        role_key = f"agent_cfg_role_{key_suffix}"
-        description_key = f"agent_cfg_description_{key_suffix}"
-        instructions_key = f"agent_cfg_instructions_{key_suffix}"
-        model_key = f"agent_cfg_model_{key_suffix}"
-        members_key = f"agent_cfg_members_{key_suffix}"
-        tools_key = f"agent_cfg_tools_{key_suffix}"
-        pubmed_email_key = f"agent_cfg_pubmed_email_{key_suffix}"
-        pubmed_max_key = f"agent_cfg_pubmed_max_{key_suffix}"
-        pubmed_enable_key = f"agent_cfg_pubmed_enable_{key_suffix}"
-        pubmed_all_key = f"agent_cfg_pubmed_all_{key_suffix}"
-        member_options = [
-            agent_id for agent_id in agent_ids if agent_id != selected_agent_id
-        ]
-        container.checkbox(
-            "Aktiviert",
-            value=bool(selected_agent.get("enabled", True)),
-            key=enabled_key,
-        )
-        container.text_input(
-            "Name",
-            value=str(selected_agent.get("name", "")),
-            key=name_key,
-        )
-        container.text_input(
-            "Rolle",
-            value=str(selected_agent.get("role", "")),
-            key=role_key,
-        )
-        container.text_area(
-            "Beschreibung",
-            value=str(selected_agent.get("description", "")),
-            key=description_key,
-            height=100,
-        )
-        container.text_area(
-            "Anweisungen",
-            value=str(selected_agent.get("instructions", "")),
-            key=instructions_key,
-            height=160,
-        )
-        container.text_input(
-            "Model",
-            value=str(selected_agent.get("model", "openai:gpt-5.2")),
-            key=model_key,
-            help="Format: provider:model (z.B. openai:gpt-5.2)",
-        )
-        available_tools = {
-            "pubmed": "PubMed Suche",
-            "wikipedia": "Wikipedia Suche",
-            "mermaid": "Mermaid Diagramme",
-        }
-        normalized_tools = _normalize_agent_tools(selected_agent.get("tools", []))
-        if tools_key in st.session_state:
-            stored_tools = st.session_state.get(tools_key)
-            if isinstance(stored_tools, list) and any(
-                not isinstance(tool, str) for tool in stored_tools
-            ):
-                st.session_state[tools_key] = normalized_tools
-        selected_tools = container.multiselect(
-            "Tools",
-            options=list(available_tools.keys()),
-            default=normalized_tools,
-            format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
-            key=tools_key,
-        )
-        tool_settings = (
-            selected_agent.get("tool_settings", {})
-            if isinstance(selected_agent.get("tool_settings"), dict)
-            else {}
-        )
-        if "pubmed" in selected_tools:
-            pubmed_settings = tool_settings.get("pubmed", {})
-            container.text_input(
-                "PubMed E-Mail",
-                value=str(pubmed_settings.get("email", "")),
-                key=pubmed_email_key,
-            )
-            container.number_input(
-                "PubMed Max Results",
-                min_value=1,
-                value=int(pubmed_settings.get("max_results") or 5),
-                key=pubmed_max_key,
-            )
-            container.checkbox(
-                "PubMed Suche aktiv",
-                value=bool(pubmed_settings.get("enable_search_pubmed", True)),
-                key=pubmed_enable_key,
-            )
-            container.checkbox(
-                "PubMed Alle Quellen",
-                value=bool(pubmed_settings.get("all", False)),
-                key=pubmed_all_key,
-            )
-        container.multiselect(
-            "Team-Mitglieder",
-            options=member_options,
-            default=(
-                selected_agent.get("members", [])
-                if isinstance(selected_agent.get("members"), list)
-                else []
-            ),
-            key=members_key,
-        )
-        if container.button("Agent speichern", key="save_agent_config"):
-            updated_tool_settings: Dict[str, object] = {}
-            if "pubmed" in selected_tools:
-                email = st.session_state.get(pubmed_email_key, "").strip()
-                max_results = int(st.session_state.get(pubmed_max_key, 5))
-                updated_tool_settings["pubmed"] = {
-                    "email": email or None,
-                    "max_results": max_results,
-                    "enable_search_pubmed": bool(
-                        st.session_state.get(pubmed_enable_key, True)
-                    ),
-                    "all": bool(st.session_state.get(pubmed_all_key, False)),
-                }
-            updated = {
-                **selected_agent,
-                "enabled": bool(st.session_state.get(enabled_key, True)),
-                "name": st.session_state.get(name_key, ""),
-                "role": st.session_state.get(role_key, ""),
-                "description": st.session_state.get(description_key, ""),
-                "instructions": st.session_state.get(instructions_key, ""),
-                "model": st.session_state.get(model_key, "openai:gpt-5.2"),
-                "members": st.session_state.get(members_key, []),
-                "tools": st.session_state.get(tools_key, []),
-                "tool_settings": updated_tool_settings,
-            }
-            agents_config.save_agent_config(selected_agent_id, updated)
-            agent_configs[selected_agent_id] = updated
-            st.session_state["agent_configs"] = agent_configs
-            container.success("Agent-Konfiguration gespeichert")
+def _render_configuration_panel(
+    container: st.delta_generator.DeltaGenerator | None = None,
+) -> None:
+    _render_app_design_configuration(container)
 
 
 def _render_sources_configuration(
@@ -1832,7 +1681,7 @@ def _render_chat_memory_configuration(
             index=preset_index,
             key="chat_preset_selector",
         )
-        if container.button("Preset anwenden", key="apply_chat_preset"):
+        if container.button("Preset anwenden", key="cfg_chat_apply_preset"):
             try:
                 updated = presets.apply_preset_to_chat(selected_preset)
             except ValueError as exc:
@@ -1893,7 +1742,7 @@ def _render_chat_memory_configuration(
         format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
         key=chat_tools_key,
     )
-    if container.button("Chat speichern", key="save_chat_config"):
+    if container.button("Chat speichern", key="cfg_chat_save_config"):
         updated = {
             **chat_config,
             "model": st.session_state.get(chat_model_key, "openai:gpt-5.2"),
@@ -1904,6 +1753,172 @@ def _render_chat_memory_configuration(
         agent_configs["chat"] = updated
         st.session_state["agent_configs"] = agent_configs
         container.success("Chat-Konfiguration gespeichert")
+
+
+def _render_advanced_configuration(
+    container: st.delta_generator.DeltaGenerator,
+) -> None:
+    container.subheader("Agenten")
+    agent_configs = st.session_state.get("agent_configs", {})
+    agent_ids = sorted(agent_configs.keys())
+    if not agent_ids:
+        container.caption("Keine Agenten-Konfigurationen gefunden.")
+        return
+
+    name_counts: Dict[str, int] = {}
+    for agent_id in agent_ids:
+        label = str(agent_configs.get(agent_id, {}).get("name", agent_id))
+        name_counts[label] = name_counts.get(label, 0) + 1
+
+    def _format_agent_label(agent_id: str) -> str:
+        label = str(agent_configs.get(agent_id, {}).get("name", agent_id))
+        if name_counts.get(label, 0) > 1:
+            return f"{label} ({agent_id})"
+        return label
+
+    selected_agent_id = container.selectbox(
+        "Agent auswählen",
+        options=agent_ids,
+        format_func=_format_agent_label,
+    )
+    selected_agent = agent_configs.get(selected_agent_id, {})
+    key_suffix = selected_agent_id
+    enabled_key = f"agent_cfg_enabled_{key_suffix}"
+    name_key = f"agent_cfg_name_{key_suffix}"
+    role_key = f"agent_cfg_role_{key_suffix}"
+    description_key = f"agent_cfg_description_{key_suffix}"
+    instructions_key = f"agent_cfg_instructions_{key_suffix}"
+    model_key = f"agent_cfg_model_{key_suffix}"
+    members_key = f"agent_cfg_members_{key_suffix}"
+    tools_key = f"agent_cfg_tools_{key_suffix}"
+    pubmed_email_key = f"agent_cfg_pubmed_email_{key_suffix}"
+    pubmed_max_key = f"agent_cfg_pubmed_max_{key_suffix}"
+    pubmed_enable_key = f"agent_cfg_pubmed_enable_{key_suffix}"
+    pubmed_all_key = f"agent_cfg_pubmed_all_{key_suffix}"
+    member_options = [
+        agent_id for agent_id in agent_ids if agent_id != selected_agent_id
+    ]
+
+    container.checkbox(
+        "Aktiviert",
+        value=bool(selected_agent.get("enabled", True)),
+        key=enabled_key,
+    )
+    container.text_input(
+        "Name",
+        value=str(selected_agent.get("name", "")),
+        key=name_key,
+    )
+    container.text_input(
+        "Rolle",
+        value=str(selected_agent.get("role", "")),
+        key=role_key,
+    )
+    container.text_area(
+        "Beschreibung",
+        value=str(selected_agent.get("description", "")),
+        key=description_key,
+        height=100,
+    )
+    container.text_area(
+        "Anweisungen",
+        value=str(selected_agent.get("instructions", "")),
+        key=instructions_key,
+        height=160,
+    )
+    container.text_input(
+        "Model",
+        value=str(selected_agent.get("model", "openai:gpt-5.2")),
+        key=model_key,
+        help="Format: provider:model (z.B. openai:gpt-5.2)",
+    )
+
+    available_tools = {
+        "pubmed": "PubMed Suche",
+        "wikipedia": "Wikipedia Suche",
+        "mermaid": "Mermaid Diagramme",
+    }
+    normalized_tools = _normalize_agent_tools(selected_agent.get("tools", []))
+    if tools_key in st.session_state:
+        stored_tools = st.session_state.get(tools_key)
+        if isinstance(stored_tools, list) and any(
+            not isinstance(tool, str) for tool in stored_tools
+        ):
+            st.session_state[tools_key] = normalized_tools
+    selected_tools = container.multiselect(
+        "Tools",
+        options=list(available_tools.keys()),
+        default=normalized_tools,
+        format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
+        key=tools_key,
+    )
+    tool_settings = (
+        selected_agent.get("tool_settings", {})
+        if isinstance(selected_agent.get("tool_settings"), dict)
+        else {}
+    )
+    if "pubmed" in selected_tools:
+        pubmed_settings = tool_settings.get("pubmed", {})
+        container.text_input(
+            "PubMed E-Mail",
+            value=str(pubmed_settings.get("email", "")),
+            key=pubmed_email_key,
+        )
+        container.number_input(
+            "PubMed Max Results",
+            min_value=1,
+            value=int(pubmed_settings.get("max_results") or 5),
+            key=pubmed_max_key,
+        )
+        container.checkbox(
+            "PubMed Suche aktiv",
+            value=bool(pubmed_settings.get("enable_search_pubmed", True)),
+            key=pubmed_enable_key,
+        )
+        container.checkbox(
+            "PubMed Alle Quellen",
+            value=bool(pubmed_settings.get("all", False)),
+            key=pubmed_all_key,
+        )
+    container.multiselect(
+        "Team-Mitglieder",
+        options=member_options,
+        default=(
+            selected_agent.get("members", [])
+            if isinstance(selected_agent.get("members"), list)
+            else []
+        ),
+        key=members_key,
+    )
+    if container.button("Agent speichern", key="cfg_advanced_save_agent_config"):
+        updated_tool_settings: Dict[str, object] = {}
+        if "pubmed" in selected_tools:
+            email = st.session_state.get(pubmed_email_key, "").strip()
+            max_results = int(st.session_state.get(pubmed_max_key, 5))
+            updated_tool_settings["pubmed"] = {
+                "email": email or None,
+                "max_results": max_results,
+                "enable_search_pubmed": bool(
+                    st.session_state.get(pubmed_enable_key, True)
+                ),
+                "all": bool(st.session_state.get(pubmed_all_key, False)),
+            }
+        updated = {
+            **selected_agent,
+            "enabled": bool(st.session_state.get(enabled_key, True)),
+            "name": st.session_state.get(name_key, ""),
+            "role": st.session_state.get(role_key, ""),
+            "description": st.session_state.get(description_key, ""),
+            "instructions": st.session_state.get(instructions_key, ""),
+            "model": st.session_state.get(model_key, "openai:gpt-5.2"),
+            "members": st.session_state.get(members_key, []),
+            "tools": st.session_state.get(tools_key, []),
+            "tool_settings": updated_tool_settings,
+        }
+        agents_config.save_agent_config(selected_agent_id, updated)
+        agent_configs[selected_agent_id] = updated
+        st.session_state["agent_configs"] = agent_configs
+        container.success("Agent-Konfiguration gespeichert")
 
 
 def _add_source(name: str, type_label: str, meta: str, body: str | None = None) -> None:
@@ -3441,6 +3456,17 @@ def _render_studio_template_card(
                 placeholder="z. B. Struktur, Stil, Umfang",
                 height=120,
             )
+
+
+def _render_studio_configuration(
+    container: st.delta_generator.DeltaGenerator,
+) -> None:
+    container.subheader("Studio Vorlagen")
+    templates = st.session_state.get("studio_templates", [])
+    if not isinstance(templates, list) or not templates:
+        container.caption("Keine Studio-Vorlagen verfügbar.")
+        return
+    _render_studio_settings_panel(templates)
 
 
 def _render_studio_settings_panel(templates: List[StudioTemplate]) -> None:

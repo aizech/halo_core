@@ -10,4 +10,4 @@ def render(container: st.delta_generator.DeltaGenerator) -> None:
 
     Initial extraction step: delegates to existing implementation.
     """
-    main._render_configuration_panel(container)
+    main._render_app_design_configuration(container)

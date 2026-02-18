@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from app import main
+
 
 def render(container: st.delta_generator.DeltaGenerator) -> None:
-    container.subheader("Advanced")
-    container.info(
-        "Advanced section scaffolded. Next step: move diagnostics/import-export/reset controls here."
-    )
+    main._render_advanced_configuration(container)

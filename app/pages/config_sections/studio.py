@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from app import main
+
 
 def render(container: st.delta_generator.DeltaGenerator) -> None:
-    container.subheader("Studio")
-    container.info(
-        "Studio section scaffolded. Next step: move action/button controls here."
-    )
+    main._render_studio_configuration(container)

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from services import connectors, storage
+from app.pages.config_sections import shared
+from services import connectors
 
 
 def render(container: st.delta_generator.DeltaGenerator) -> None:
@@ -21,23 +22,17 @@ def render(container: st.delta_generator.DeltaGenerator) -> None:
             st.session_state["config"].get("image_model", "gpt-image-1")
         ),
     )
-    if container.button("Speichern", key="save_connectors"):
-        st.session_state["config"]["enabled_connectors"] = enabled
-        st.session_state["config"]["image_model"] = image_model
-        st.session_state["config"]["log_agent_payload"] = bool(
-            st.session_state.get("log_agent_payload", True)
-        )
-        st.session_state["config"]["log_agent_response"] = bool(
-            st.session_state.get("log_agent_response", True)
-        )
-        st.session_state["config"]["log_agent_errors"] = bool(
-            st.session_state.get("log_agent_errors", True)
-        )
-        st.session_state["config"]["log_user_requests"] = bool(
-            st.session_state.get("log_user_requests", True)
-        )
-        st.session_state["config"]["log_stream_events"] = bool(
-            st.session_state.get("log_stream_events", False)
-        )
-        storage.save_config(st.session_state["config"])
+    if container.button("Speichern", key="cfg_sources_save_connectors"):
+        updates = {
+            "enabled_connectors": enabled,
+            "image_model": image_model,
+            "log_agent_payload": bool(st.session_state.get("log_agent_payload", True)),
+            "log_agent_response": bool(
+                st.session_state.get("log_agent_response", True)
+            ),
+            "log_agent_errors": bool(st.session_state.get("log_agent_errors", True)),
+            "log_user_requests": bool(st.session_state.get("log_user_requests", True)),
+            "log_stream_events": bool(st.session_state.get("log_stream_events", False)),
+        }
+        shared.save_payload(st.session_state["config"], updates)
         container.success("Connector-Einstellungen aktualisiert")
