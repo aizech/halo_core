@@ -7,6 +7,8 @@ import logging
 import sys
 import re
 import uuid
+import base64
+import mimetypes
 from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -40,6 +42,7 @@ import services  # noqa: E402
 from services import connectors, ingestion, pipelines, retrieval, storage  # noqa: E402
 from services import chat_state  # noqa: E402
 from services import menu_settings  # noqa: E402
+from services import theme_presets  # noqa: E402
 from services import presets  # noqa: E402
 from services import user_memory  # noqa: E402
 import services.agents as agents  # noqa: E402
@@ -395,8 +398,146 @@ def configure_page() -> None:
     )
 
 
+def _apply_theme_preset_to_config(
+    config: Dict[str, object], *, preset_name: str
+) -> None:
+    preset = theme_presets.THEME_PRESETS.get(preset_name)
+    if not preset:
+        return
+
+    current = menu_settings.get_menu_settings(config)
+    updated: Dict[str, object] = dict(current)
+    updated["theme_preset_name"] = preset_name
+    for key, value in preset.items():
+        updated[key] = value
+    menu_settings.save_menu_settings(config, updated)
+
+
+def _handle_theme_mode_change(*, config: Dict[str, object], toggle_key: str) -> None:
+    is_dark = bool(st.session_state.get(toggle_key))
+    menu_cfg = menu_settings.get_menu_settings(config)
+    menu_cfg["theme_mode"] = "dark" if is_dark else "light"
+    menu_settings.save_menu_settings(config, menu_cfg)
+
+    preset_name = (
+        str(menu_cfg.get("theme_preset_dark") or "").strip()
+        if is_dark
+        else str(menu_cfg.get("theme_preset_light") or "").strip()
+    )
+    if preset_name:
+        _apply_theme_preset_to_config(config, preset_name=preset_name)
+
+    st.session_state["config"] = dict(config)
+
+
+def _src_to_css_url(src: str) -> str:
+    cleaned = str(src or "").strip()
+    if not cleaned:
+        return ""
+    if cleaned.startswith("http://") or cleaned.startswith("https://"):
+        return cleaned
+
+    candidate = Path(cleaned)
+    if not candidate.is_absolute():
+        candidate = PROJECT_ROOT / cleaned
+    if not candidate.exists() or not candidate.is_file():
+        return ""
+
+    mime, _ = mimetypes.guess_type(str(candidate))
+    if not mime:
+        mime = "application/octet-stream"
+    encoded = base64.b64encode(candidate.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{encoded}"
+
+
 def render_sidebar() -> None:
     menu_cfg = menu_settings.get_menu_settings(st.session_state.get("config", {}))
+
+    theme_mode = str(menu_cfg.get("theme_mode") or "light").strip().lower()
+    if theme_mode not in {"light", "dark"}:
+        theme_mode = "light"
+
+    separator_color = (
+        str(menu_cfg.get("sidebar_separator_color_dark") or "").strip()
+        if theme_mode == "dark"
+        else str(menu_cfg.get("sidebar_separator_color_light") or "").strip()
+    )
+    if not separator_color:
+        separator_color = str(
+            menu_cfg.get("sidebar_separator_color") or "#6C757D"
+        ).strip()
+
+    logo_src = (
+        str(menu_cfg.get("logo_src_dark") or "").strip()
+        if theme_mode == "dark"
+        else str(menu_cfg.get("logo_src_light") or "").strip()
+    )
+    icon_src = (
+        str(menu_cfg.get("icon_src_dark") or "").strip()
+        if theme_mode == "dark"
+        else str(menu_cfg.get("icon_src_light") or "").strip()
+    )
+
+    logo_css_url = _src_to_css_url(logo_src)
+    icon_css_url = _src_to_css_url(icon_src)
+
+    logo_render_height_px = int(menu_cfg.get("logo_render_height_px") or 36)
+    icon_render_height_px = int(menu_cfg.get("icon_render_height_px") or 24)
+    if logo_css_url or icon_css_url:
+        st.sidebar.markdown(
+            """
+            <div class="halo-brand">
+              <div class="halo-brand-icon"></div>
+              <div class="halo-brand-logo"></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
+            <style>
+                section[data-testid='stSidebar'] .halo-brand {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 12px 8px 6px 8px;
+                }
+                section[data-testid='stSidebar'] .halo-brand-icon,
+                section[data-testid='stSidebar'] .halo-brand-logo {
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    background-size: contain;
+                    width: 100%;
+                }
+                section[data-testid='stSidebar']:hover .halo-brand-icon {
+                    display: none;
+                }
+                section[data-testid='stSidebar']:not(:hover) .halo-brand-logo {
+                    display: none;
+                }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        if icon_css_url:
+            st.sidebar.markdown(
+                f"""<style>.halo-brand-icon{{background-image:url('{icon_css_url}');height:{icon_render_height_px}px;width:{icon_render_height_px}px;flex:0 0 {icon_render_height_px}px;}}</style>""",
+                unsafe_allow_html=True,
+            )
+        if logo_css_url:
+            st.sidebar.markdown(
+                f"""<style>.halo-brand-logo{{background-image:url('{logo_css_url}');height:{logo_render_height_px}px;max-width:100%;}}</style>""",
+                unsafe_allow_html=True,
+            )
+
+    logo_height_px = int(menu_cfg.get("logo_height_px") or 0)
+    if (logo_css_url or icon_css_url) and logo_height_px > 0:
+        st.sidebar.markdown(
+            f"<div style='height: {logo_height_px}px;'></div>",
+            unsafe_allow_html=True,
+        )
+
     st.markdown(
         f"""
         <style>
@@ -405,9 +546,10 @@ def render_sidebar() -> None:
                 --sidebar-text: {menu_cfg['sidebar_text_color']};
                 --sidebar-icon: {menu_cfg['sidebar_icon_color']};
                 --sidebar-hover-bg: {menu_cfg['sidebar_hover_bg']};
+                --sidebar-hover-text: {menu_cfg.get('sidebar_hover_text_color', menu_cfg['sidebar_text_color'])};
                 --sidebar-active-bg: {menu_cfg['sidebar_active_bg']};
                 --sidebar-focus-outline: {menu_cfg['sidebar_focus_outline']};
-                --sidebar-separator-color: {menu_cfg.get('sidebar_separator_color', '#6C757D')};
+                --sidebar-separator-color: {separator_color};
                 --sidebar-font-size: {menu_cfg['sidebar_font_size_px']}px;
                 --sidebar-icon-size: {menu_cfg.get('sidebar_icon_size_px', 22)}px;
                 --sidebar-collapsed-width: {menu_cfg['sidebar_collapsed_width_px']}px;
@@ -602,17 +744,56 @@ def render_sidebar() -> None:
             }}
             section[data-testid='stSidebar'] button:hover {{
                 background-color: var(--sidebar-hover-bg) !important;
+                color: var(--sidebar-hover-text) !important;
+            }}
+            section[data-testid='stSidebar'] button:hover svg {{
+                fill: var(--sidebar-hover-text) !important;
+                stroke: var(--sidebar-hover-text) !important;
             }}
             section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover {{
                 background-color: var(--sidebar-hover-bg) !important;
+                color: var(--sidebar-hover-text) !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover svg {{
+                fill: var(--sidebar-hover-text) !important;
+                stroke: var(--sidebar-hover-text) !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover p {{
+                color: var(--sidebar-hover-text) !important;
             }}
             section[data-testid='stSidebar'] button:focus {{
                 outline-color: var(--sidebar-focus-outline) !important;
+            }}
+            section[data-testid='stSidebar'] div[data-testid='stToggle'] {{
+                padding: 6px 12px;
+                margin-bottom: var(--sidebar-item-gap);
+                border-radius: 10px;
+            }}
+            section[data-testid='stSidebar']:not(:hover) div[data-testid='stToggle'] {{
+                display: flex;
+                justify-content: center;
+                padding-left: 8px;
+                padding-right: 8px;
+                border-radius: 0;
+            }}
+            section[data-testid='stSidebar']:not(:hover)
+            div[data-testid='stHorizontalBlock']:has(.halo-theme-toggle-label) {{
+                justify-content: center;
+                gap: 0 !important;
+            }}
+            section[data-testid='stSidebar'] .halo-theme-toggle-label {{
+                display: flex;
+                align-items: center;
+                height: 100%;
+            }}
+            section[data-testid='stSidebar']:not(:hover) .halo-theme-toggle-label {{
+                display: none;
             }}
         </style>
         """,
         unsafe_allow_html=True,
     )
+    render_theme_toggle = False
     for index, item in enumerate(menu_cfg.get("items", [])):
         item_kind = str(item.get("kind", "link")).strip().lower()
         if item_kind == "separator":
@@ -631,6 +812,9 @@ def render_sidebar() -> None:
                 f"<div class='halo-menu-spacer' style='height: {spacer_px}px;'></div>",
                 unsafe_allow_html=True,
             )
+            continue
+        if item_kind == "theme_toggle":
+            render_theme_toggle = True
             continue
         label = str(item.get("label", "")).strip()
         page = str(item.get("page", "")).strip()
@@ -655,6 +839,29 @@ def render_sidebar() -> None:
                 st.switch_page(page)
             except Exception:
                 st.sidebar.error(f"{label} navigation requires Streamlit multipage.")
+
+    if render_theme_toggle:
+        toggle_key = "menu_theme_mode_toggle"
+        if toggle_key not in st.session_state:
+            st.session_state[toggle_key] = (
+                str(menu_cfg.get("theme_mode") or "light") == "dark"
+            )
+        toggle_cols = st.sidebar.columns([1, 3], vertical_alignment="center")
+        toggle_cols[0].toggle(
+            "Dark mode",
+            key=toggle_key,
+            on_change=_handle_theme_mode_change,
+            kwargs={
+                "config": st.session_state.get("config", {}),
+                "toggle_key": toggle_key,
+            },
+            help="Dark mode",
+            label_visibility="collapsed",
+        )
+        toggle_cols[1].markdown(
+            "<div class='halo-theme-toggle-label'>Dark mode</div>",
+            unsafe_allow_html=True,
+        )
 
     st.sidebar.button("New Notebook", width="stretch", key="new_notebook")
     st.sidebar.divider()
@@ -778,7 +985,9 @@ def _normalize_menu_editor_items(items: object) -> List[Dict[str, object]]:
         editor_item: Dict[str, object] = {
             "_editor_id": uuid.uuid4().hex,
             "kind": (
-                item_kind if item_kind in {"link", "separator", "spacer"} else "link"
+                item_kind
+                if item_kind in {"link", "separator", "spacer", "theme_toggle"}
+                else "link"
             ),
         }
         if editor_item["kind"] == "separator":
@@ -790,6 +999,9 @@ def _normalize_menu_editor_items(items: object) -> List[Dict[str, object]]:
             except (TypeError, ValueError):
                 spacer_px = 16
             editor_item["spacer_px"] = max(4, min(64, spacer_px))
+            normalized.append(editor_item)
+            continue
+        if editor_item["kind"] == "theme_toggle":
             normalized.append(editor_item)
             continue
         editor_item["label"] = str(raw_item.get("label", "")).strip()
@@ -862,8 +1074,44 @@ def _render_configuration_panel(
 
     container.subheader("Sidebar Menu")
     current_menu = menu_settings.get_menu_settings(st.session_state["config"])
-    col1, col2 = container.columns(2)
-    with col1:
+    container.caption("Farben, Größen und Theme-Einstellungen für das Sidebar-Menü.")
+
+    theme_mode_value = str(current_menu.get("theme_mode", "dark")).strip().lower()
+    if theme_mode_value not in {"light", "dark"}:
+        theme_mode_value = "dark"
+    theme_box = container.container(border=True)
+    theme_box.markdown("**Theme & Presets**")
+    theme_mode = theme_box.selectbox(
+        "Theme Modus (default)",
+        options=["light", "dark"],
+        index=0 if theme_mode_value == "light" else 1,
+        key="menu_theme_mode_selector",
+    )
+
+    preset_names = sorted(theme_presets.THEME_PRESETS.keys())
+    theme_light_default = str(current_menu.get("theme_preset_light") or "").strip()
+    theme_dark_default = str(current_menu.get("theme_preset_dark") or "").strip()
+    if theme_light_default not in preset_names and preset_names:
+        theme_light_default = preset_names[0]
+    if theme_dark_default not in preset_names and preset_names:
+        theme_dark_default = preset_names[-1]
+    theme_preset_light = theme_box.selectbox(
+        "Theme Preset (Light)",
+        options=preset_names,
+        index=preset_names.index(theme_light_default) if preset_names else None,
+        key="menu_theme_preset_light",
+    )
+    theme_preset_dark = theme_box.selectbox(
+        "Theme Preset (Dark)",
+        options=preset_names,
+        index=preset_names.index(theme_dark_default) if preset_names else None,
+        key="menu_theme_preset_dark",
+    )
+
+    color_box = container.container(border=True)
+    color_box.markdown("**Farben**")
+    color_left, color_right = color_box.columns(2)
+    with color_left:
         sidebar_bg = st.color_picker(
             "Sidebar Hintergrund",
             value=str(current_menu.get("sidebar_bg", "#343A40")),
@@ -879,12 +1127,22 @@ def _render_configuration_panel(
             value=str(current_menu.get("sidebar_hover_bg", "#F22222")),
             key="menu_sidebar_hover",
         )
+        sidebar_hover_text = st.color_picker(
+            "Hover Textfarbe",
+            value=str(
+                current_menu.get(
+                    "sidebar_hover_text_color",
+                    current_menu.get("sidebar_text_color", "#F8F9FA"),
+                )
+            ),
+            key="menu_sidebar_hover_text",
+        )
         sidebar_separator = st.color_picker(
             "Separator Farbe",
             value=str(current_menu.get("sidebar_separator_color", "#6C757D")),
             key="menu_sidebar_separator",
         )
-    with col2:
+    with color_right:
         sidebar_icon = st.color_picker(
             "Icon Farbe",
             value=str(current_menu.get("sidebar_icon_color", "#F8F9FA")),
@@ -900,40 +1158,114 @@ def _render_configuration_panel(
             value=str(current_menu.get("sidebar_focus_outline", "#F22222")),
             key="menu_sidebar_focus",
         )
-    sidebar_font_size = container.slider(
-        "Schriftgröße (px)",
-        min_value=12,
-        max_value=24,
-        value=int(current_menu.get("sidebar_font_size_px", 16)),
-        key="menu_sidebar_font_size",
+        sidebar_separator_light = st.color_picker(
+            "Separator Farbe (Light)",
+            value=str(
+                current_menu.get(
+                    "sidebar_separator_color_light",
+                    current_menu.get("sidebar_separator_color", "#D0D0D0"),
+                )
+            ),
+            key="menu_sidebar_separator_light",
+        )
+        sidebar_separator_dark = st.color_picker(
+            "Separator Farbe (Dark)",
+            value=str(
+                current_menu.get(
+                    "sidebar_separator_color_dark",
+                    current_menu.get("sidebar_separator_color", "#6C757D"),
+                )
+            ),
+            key="menu_sidebar_separator_dark",
+        )
+
+    sizing_box = container.container(border=True)
+    sizing_box.markdown("**Größen & Layout**")
+    sizing_left, sizing_right = sizing_box.columns(2)
+    with sizing_left:
+        sidebar_font_size = st.slider(
+            "Schriftgröße (px)",
+            min_value=12,
+            max_value=24,
+            value=int(current_menu.get("sidebar_font_size_px", 16)),
+            key="menu_sidebar_font_size",
+        )
+        sidebar_icon_size = st.slider(
+            "Icon Größe (px)",
+            min_value=16,
+            max_value=32,
+            value=int(current_menu.get("sidebar_icon_size_px", 22)),
+            key="menu_sidebar_icon_size",
+        )
+        sidebar_item_gap = st.slider(
+            "Abstand zwischen Menüpunkten (px)",
+            min_value=0,
+            max_value=32,
+            value=int(current_menu.get("sidebar_item_gap_px", 8)),
+            key="menu_sidebar_item_gap",
+        )
+    with sizing_right:
+        sidebar_collapsed_width = st.slider(
+            "Breite eingeklappt (px)",
+            min_value=56,
+            max_value=120,
+            value=int(current_menu.get("sidebar_collapsed_width_px", 64)),
+            key="menu_sidebar_collapsed_width",
+        )
+        sidebar_hover_width = st.slider(
+            "Breite bei Hover (px)",
+            min_value=180,
+            max_value=360,
+            value=int(current_menu.get("sidebar_hover_width_px", 240)),
+            key="menu_sidebar_hover_width",
+        )
+
+    branding_box = container.container(border=True)
+    branding_box.markdown("**Branding (Logo & Icon)**")
+    branding_col_1, branding_col_2 = branding_box.columns(2)
+    with branding_col_1:
+        logo_src_light = st.text_input(
+            "Logo Quelle (Light)",
+            value=str(current_menu.get("logo_src_light", "")),
+            key="menu_logo_src_light",
+        )
+        icon_src_light = st.text_input(
+            "Icon Quelle (Light)",
+            value=str(current_menu.get("icon_src_light", "")),
+            key="menu_icon_src_light",
+        )
+    with branding_col_2:
+        logo_src_dark = st.text_input(
+            "Logo Quelle (Dark)",
+            value=str(current_menu.get("logo_src_dark", "")),
+            key="menu_logo_src_dark",
+        )
+        icon_src_dark = st.text_input(
+            "Icon Quelle (Dark)",
+            value=str(current_menu.get("icon_src_dark", "")),
+            key="menu_icon_src_dark",
+        )
+
+    logo_height_px = branding_box.slider(
+        "Logo Platzhöhe (px)",
+        min_value=24,
+        max_value=128,
+        value=int(current_menu.get("logo_height_px", 44)),
+        key="menu_logo_height",
     )
-    sidebar_icon_size = container.slider(
-        "Icon Größe (px)",
+    logo_render_height_px = branding_box.slider(
+        "Logo Renderhöhe (px)",
+        min_value=20,
+        max_value=96,
+        value=int(current_menu.get("logo_render_height_px", 36)),
+        key="menu_logo_render_height",
+    )
+    icon_render_height_px = branding_box.slider(
+        "Icon Renderhöhe (px)",
         min_value=16,
-        max_value=32,
-        value=int(current_menu.get("sidebar_icon_size_px", 22)),
-        key="menu_sidebar_icon_size",
-    )
-    sidebar_collapsed_width = container.slider(
-        "Breite eingeklappt (px)",
-        min_value=56,
-        max_value=120,
-        value=int(current_menu.get("sidebar_collapsed_width_px", 64)),
-        key="menu_sidebar_collapsed_width",
-    )
-    sidebar_hover_width = container.slider(
-        "Breite bei Hover (px)",
-        min_value=180,
-        max_value=360,
-        value=int(current_menu.get("sidebar_hover_width_px", 240)),
-        key="menu_sidebar_hover_width",
-    )
-    sidebar_item_gap = container.slider(
-        "Abstand zwischen Menüpunkten (px)",
-        min_value=0,
-        max_value=32,
-        value=int(current_menu.get("sidebar_item_gap_px", 8)),
-        key="menu_sidebar_item_gap",
+        max_value=64,
+        value=int(current_menu.get("icon_render_height_px", 24)),
+        key="menu_icon_render_height",
     )
 
     menu_items = current_menu.get("items", [])
@@ -969,8 +1301,13 @@ def _render_configuration_panel(
             if label:
                 page_labels[page] = label
 
-    container.caption(
-        "Menüeinträge: mit ↑ / ↓ sortieren, Spacer oder Separator einfügen"
+    menu_caption_cols = container.columns([4, 2])
+    menu_caption_cols[0].caption(
+        "Menüeinträge: mit ↑ / ↓ sortieren, Spacer / Separator / Theme Toggle einfügen"
+    )
+    menu_caption_cols[1].markdown(
+        "[Google Material Icons](https://fonts.google.com/icons)",
+        help="Icon-Namen für das Feld 'Icon (Material)'",
     )
     pending_action_name: str | None = None
     pending_action_index = -1
@@ -981,51 +1318,58 @@ def _render_configuration_panel(
         row_id = str(item.get("_editor_id") or uuid.uuid4().hex)
         item["_editor_id"] = row_id
         item_box = container.container(border=True)
-        action_cols = item_box.columns([5, 1, 1, 1])
-        action_cols[0].caption(f"Eintrag {index + 1}")
-        if action_cols[1].button(
+
+        kind_options = ["link", "spacer", "separator", "theme_toggle"]
+        kind_labels = {
+            "link": "Link",
+            "spacer": "Spacer",
+            "separator": "Separator",
+            "theme_toggle": "Theme Toggle",
+        }
+        current_kind = str(item.get("kind", "link")).strip().lower()
+        if current_kind not in kind_options:
+            current_kind = "link"
+        header_cols = item_box.columns([2.4, 6.2, 0.6, 0.6, 0.6])
+        header_cols[0].markdown(
+            f"<div style='font-weight: 700; font-size: 1.05rem;'>Eintrag {index + 1}</div>",
+            unsafe_allow_html=True,
+        )
+        selected_kind = header_cols[1].selectbox(
+            "Typ",
+            options=kind_options,
+            index=kind_options.index(current_kind),
+            format_func=lambda value: kind_labels.get(value, value),
+            key=f"menu_item_kind_{row_id}",
+            label_visibility="collapsed",
+        )
+        item["kind"] = selected_kind
+
+        if header_cols[2].button(
             "↑",
             key=f"menu_item_up_{row_id}",
             disabled=index == 0,
         ):
             pending_action_name = "up"
             pending_action_index = index
-        if action_cols[2].button(
+        if header_cols[3].button(
             "↓",
             key=f"menu_item_down_{row_id}",
             disabled=index >= len(editor_items) - 1,
         ):
             pending_action_name = "down"
             pending_action_index = index
-        if action_cols[3].button("✕", key=f"menu_item_delete_{row_id}"):
+        if header_cols[4].button("✕", key=f"menu_item_delete_{row_id}"):
             pending_action_name = "delete"
             pending_action_index = index
 
-        kind_options = ["link", "spacer", "separator"]
-        kind_labels = {
-            "link": "Link",
-            "spacer": "Spacer",
-            "separator": "Separator",
-        }
-        current_kind = str(item.get("kind", "link")).strip().lower()
-        if current_kind not in kind_options:
-            current_kind = "link"
-        selected_kind = item_box.selectbox(
-            "Typ",
-            options=kind_options,
-            index=kind_options.index(current_kind),
-            format_func=lambda value: kind_labels.get(value, value),
-            key=f"menu_item_kind_{row_id}",
-        )
-        item["kind"] = selected_kind
-
         if selected_kind == "link":
-            item["label"] = item_box.text_input(
+            link_cols = item_box.columns([2.2, 1.6, 3.2])
+            item["label"] = link_cols[0].text_input(
                 "Label",
                 value=str(item.get("label", "")),
                 key=f"menu_item_label_{row_id}",
             )
-            item["icon"] = item_box.text_input(
+            item["icon"] = link_cols[1].text_input(
                 "Icon (Material)",
                 value=str(item.get("icon", "")),
                 key=f"menu_item_icon_{row_id}",
@@ -1037,7 +1381,7 @@ def _render_configuration_panel(
                 default_page = (
                     page_value if page_value in page_options else page_options[0]
                 )
-                item["page"] = item_box.selectbox(
+                item["page"] = link_cols[2].selectbox(
                     "Seite",
                     options=page_options,
                     index=page_options.index(default_page),
@@ -1045,7 +1389,7 @@ def _render_configuration_panel(
                     key=f"menu_item_page_{row_id}",
                 )
             else:
-                item["page"] = item_box.text_input(
+                item["page"] = link_cols[2].text_input(
                     "Seite",
                     value=page_value,
                     key=f"menu_item_page_{row_id}",
@@ -1059,13 +1403,15 @@ def _render_configuration_panel(
                 key=f"menu_item_spacer_{row_id}",
             )
 
-    add_cols = container.columns(3)
+    add_cols = container.columns(4)
     if add_cols[0].button("+ Link", key="menu_item_add_link"):
         pending_action_name = "add_link"
     if add_cols[1].button("+ Spacer", key="menu_item_add_spacer"):
         pending_action_name = "add_spacer"
     if add_cols[2].button("+ Separator", key="menu_item_add_separator"):
         pending_action_name = "add_separator"
+    if add_cols[3].button("+ Theme Toggle", key="menu_item_add_theme_toggle"):
+        pending_action_name = "add_theme_toggle"
 
     if pending_action_name:
         next_items = _normalize_menu_editor_items(editor_items)
@@ -1112,6 +1458,13 @@ def _render_configuration_panel(
                     "kind": "separator",
                 }
             )
+        elif pending_action_name == "add_theme_toggle":
+            next_items.append(
+                {
+                    "_editor_id": uuid.uuid4().hex,
+                    "kind": "theme_toggle",
+                }
+            )
 
         st.session_state[_MENU_EDITOR_ITEMS_KEY] = next_items
         st.rerun()
@@ -1152,6 +1505,9 @@ def _render_configuration_panel(
                     }
                 )
                 continue
+            if item_kind == "theme_toggle":
+                updated_items.append({"kind": "theme_toggle"})
+                continue
 
             label = str(
                 st.session_state.get(
@@ -1189,14 +1545,30 @@ def _render_configuration_panel(
                 "sidebar_text_color": sidebar_text,
                 "sidebar_icon_color": sidebar_icon,
                 "sidebar_hover_bg": sidebar_hover,
+                "sidebar_hover_text_color": sidebar_hover_text,
                 "sidebar_active_bg": sidebar_active,
                 "sidebar_focus_outline": sidebar_focus,
                 "sidebar_separator_color": sidebar_separator,
+                "sidebar_separator_color_light": sidebar_separator_light,
+                "sidebar_separator_color_dark": sidebar_separator_dark,
                 "sidebar_font_size_px": sidebar_font_size,
                 "sidebar_icon_size_px": sidebar_icon_size,
                 "sidebar_collapsed_width_px": sidebar_collapsed_width,
                 "sidebar_hover_width_px": sidebar_hover_width,
                 "sidebar_item_gap_px": sidebar_item_gap,
+                "theme_mode": theme_mode,
+                "theme_preset_light": theme_preset_light,
+                "theme_preset_dark": theme_preset_dark,
+                "theme_preset_name": (
+                    theme_preset_dark if theme_mode == "dark" else theme_preset_light
+                ),
+                "logo_src_light": logo_src_light,
+                "logo_src_dark": logo_src_dark,
+                "icon_src_light": icon_src_light,
+                "icon_src_dark": icon_src_dark,
+                "logo_height_px": logo_height_px,
+                "logo_render_height_px": logo_render_height_px,
+                "icon_render_height_px": icon_render_height_px,
                 "items": updated_items,
                 "sidebar_transition": str(
                     current_menu.get("sidebar_transition", "0.3s")

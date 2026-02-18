@@ -15,9 +15,24 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
     "sidebar_text_color": "#F8F9FA",
     "sidebar_icon_color": "#F8F9FA",
     "sidebar_hover_bg": "#F22222",
+    "sidebar_hover_text_color": "#F8F9FA",
     "sidebar_active_bg": "#CC1E1E",
     "sidebar_focus_outline": "#F22222",
     "sidebar_separator_color": "#6C757D",
+    "sidebar_separator_color_light": "#D0D0D0",
+    "sidebar_separator_color_dark": "#6C757D",
+    "theme_mode": "dark",
+    "theme_preset_light": "Black & White (Light)",
+    "theme_preset_dark": "Black & White (Dark)",
+    "theme_preset_name": "Black & White (Dark)",
+    "logo_src": "assets/logo_dark.png",
+    "logo_src_light": "assets/logo_light.png",
+    "logo_src_dark": "assets/logo_dark.png",
+    "icon_src_light": "assets/icon_light.png",
+    "icon_src_dark": "assets/icon_dark.png",
+    "logo_height_px": 44,
+    "logo_render_height_px": 36,
+    "icon_render_height_px": 36,
     "sidebar_font_size_px": 16,
     "sidebar_icon_size_px": 22,
     "sidebar_collapsed_width_px": 64,
@@ -45,6 +60,8 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
             "page": "pages/Account.py",
         },
         {"kind": "link", "label": "Help", "icon": "help", "page": "pages/Help.py"},
+        {"kind": "separator"},
+        {"kind": "theme_toggle"},
     ],
 }
 
@@ -63,7 +80,7 @@ def _as_int(value: Any, *, default: int, minimum: int, maximum: int) -> int:
 
 def _normalize_item_kind(value: Any) -> str:
     item_kind = str(value or "link").strip().lower()
-    if item_kind in {"link", "separator", "spacer"}:
+    if item_kind in {"link", "separator", "spacer", "theme_toggle"}:
         return item_kind
     return "link"
 
@@ -88,10 +105,13 @@ def _normalize_items(value: Any) -> List[Dict[str, Any]]:
                         raw.get("spacer_px"),
                         default=16,
                         minimum=4,
-                        maximum=64,
+                        maximum=250,
                     ),
                 }
             )
+            continue
+        if item_kind == "theme_toggle":
+            cleaned.append({"kind": "theme_toggle"})
             continue
         label = str(raw.get("label") or "").strip()
         icon = str(raw.get("icon") or "").strip()
@@ -107,6 +127,12 @@ def _normalize_items(value: Any) -> List[Dict[str, Any]]:
             }
         )
 
+    if not any(
+        str(item.get("kind") or "").strip().lower() == "theme_toggle"
+        for item in cleaned
+    ):
+        cleaned.append({"kind": "theme_toggle"})
+
     return cleaned or defaults
 
 
@@ -115,18 +141,47 @@ def normalize_menu_settings(raw: Any) -> Dict[str, Any]:
     if not isinstance(raw, dict):
         return defaults
 
+    preset_name = raw.get("theme_preset_name")
+    if isinstance(preset_name, str):
+        defaults["theme_preset_name"] = preset_name.strip()
+
+    theme_mode = str(raw.get("theme_mode") or "").strip().lower()
+    if theme_mode in {"light", "dark"}:
+        defaults["theme_mode"] = theme_mode
+
+    for key in (
+        "theme_preset_light",
+        "theme_preset_dark",
+        "logo_src",
+        "logo_src_light",
+        "logo_src_dark",
+        "icon_src_light",
+        "icon_src_dark",
+    ):
+        value = raw.get(key)
+        if isinstance(value, str):
+            defaults[key] = value.strip()
+
     for key in (
         "sidebar_bg",
         "sidebar_text_color",
         "sidebar_icon_color",
         "sidebar_hover_bg",
+        "sidebar_hover_text_color",
         "sidebar_active_bg",
         "sidebar_focus_outline",
         "sidebar_separator_color",
+        "sidebar_separator_color_light",
+        "sidebar_separator_color_dark",
     ):
         value = raw.get(key)
         if _valid_hex(value):
             defaults[key] = str(value).strip()
+
+    if not defaults.get("sidebar_separator_color_light"):
+        defaults["sidebar_separator_color_light"] = defaults["sidebar_separator_color"]
+    if not defaults.get("sidebar_separator_color_dark"):
+        defaults["sidebar_separator_color_dark"] = defaults["sidebar_separator_color"]
 
     defaults["sidebar_font_size_px"] = _as_int(
         raw.get("sidebar_font_size_px"),
@@ -157,6 +212,24 @@ def normalize_menu_settings(raw: Any) -> Dict[str, Any]:
         default=int(DEFAULT_MENU_SETTINGS["sidebar_item_gap_px"]),
         minimum=0,
         maximum=32,
+    )
+    defaults["logo_height_px"] = _as_int(
+        raw.get("logo_height_px"),
+        default=int(DEFAULT_MENU_SETTINGS["logo_height_px"]),
+        minimum=24,
+        maximum=128,
+    )
+    defaults["logo_render_height_px"] = _as_int(
+        raw.get("logo_render_height_px"),
+        default=int(DEFAULT_MENU_SETTINGS["logo_render_height_px"]),
+        minimum=20,
+        maximum=96,
+    )
+    defaults["icon_render_height_px"] = _as_int(
+        raw.get("icon_render_height_px"),
+        default=int(DEFAULT_MENU_SETTINGS["icon_render_height_px"]),
+        minimum=16,
+        maximum=64,
     )
 
     transition = str(raw.get("sidebar_transition") or "").strip()
