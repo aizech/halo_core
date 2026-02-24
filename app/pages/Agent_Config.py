@@ -211,6 +211,59 @@ def render_agent_config_page() -> None:
             "DuckDuckGo SSL verifizieren",
             value=bool(duckduckgo_settings.get("verify_ssl", True)),
         )
+    if "arxiv" in selected_tools:
+        arxiv_settings = (
+            tool_settings.get("arxiv", {})
+            if isinstance(tool_settings.get("arxiv"), dict)
+            else {}
+        )
+        arxiv_max_results = int(
+            st.number_input(
+                "arXiv Max Results",
+                min_value=1,
+                max_value=50,
+                value=int(arxiv_settings.get("max_results") or 5),
+            )
+        )
+        arxiv_sort_options = ["", "submittedDate", "lastUpdatedDate", "relevance"]
+        arxiv_sort_default = str(arxiv_settings.get("sort_by", ""))
+        if arxiv_sort_default not in arxiv_sort_options:
+            arxiv_sort_default = ""
+        arxiv_sort_by = st.selectbox(
+            "arXiv Sortierung",
+            options=arxiv_sort_options,
+            index=arxiv_sort_options.index(arxiv_sort_default),
+        )
+    if "website" in selected_tools:
+        website_settings = (
+            tool_settings.get("website", {})
+            if isinstance(tool_settings.get("website"), dict)
+            else {}
+        )
+        website_max_pages = int(
+            st.number_input(
+                "Website Max Pages",
+                min_value=1,
+                max_value=20,
+                value=max(1, min(20, int(website_settings.get("max_pages") or 5))),
+            )
+        )
+        website_timeout = int(
+            st.number_input(
+                "Website Timeout (Sek)",
+                min_value=1,
+                max_value=120,
+                value=max(1, min(120, int(website_settings.get("timeout") or 10))),
+            )
+        )
+        website_allowed_domains_raw = st.text_area(
+            "Website erlaubte Domains (eine pro Zeile)",
+            value="\n".join(
+                str(domain).strip()
+                for domain in website_settings.get("allowed_domains", [])
+                if str(domain).strip()
+            ),
+        )
     if "hackernews" in selected_tools:
         hackernews_settings = (
             tool_settings.get("hackernews", {})
@@ -297,6 +350,17 @@ def render_agent_config_page() -> None:
                 "fixed_max_results": duckduckgo_fixed_max_results,
                 "timeout": duckduckgo_timeout,
                 "verify_ssl": duckduckgo_verify_ssl,
+            }
+        if "arxiv" in selected_tools:
+            updated_tool_settings["arxiv"] = {
+                "max_results": arxiv_max_results,
+                "sort_by": arxiv_sort_by.strip() or None,
+            }
+        if "website" in selected_tools:
+            updated_tool_settings["website"] = {
+                "max_pages": website_max_pages,
+                "timeout": website_timeout,
+                "allowed_domains": _parse_lines(website_allowed_domains_raw),
             }
         if "hackernews" in selected_tools:
             updated_tool_settings["hackernews"] = {

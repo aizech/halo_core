@@ -115,6 +115,26 @@ def test_build_tools_includes_arxiv_tool(monkeypatch):
     assert isinstance(tools[0], DummyArxivTools)
 
 
+def test_build_tools_includes_arxiv_tool_with_settings(monkeypatch):
+    class DummyArxivTools:
+        def __init__(self, max_results=5, sort_by=None):
+            self.max_results = max_results
+            self.sort_by = sort_by
+
+    monkeypatch.setattr(agent_factory, "ArxivTools", DummyArxivTools)
+
+    tools = agent_factory.build_tools(
+        ["arxiv"],
+        {"arxiv": {"max_results": 12, "sort_by": "relevance"}},
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyArxivTools)
+    assert tools[0].max_results == 12
+    assert tools[0].sort_by == "relevance"
+
+
 def test_build_tools_includes_website_tool(monkeypatch):
     class DummyWebsiteTools:
         pass
@@ -129,6 +149,50 @@ def test_build_tools_includes_website_tool(monkeypatch):
 
     assert len(tools) == 1
     assert isinstance(tools[0], DummyWebsiteTools)
+
+
+def test_build_tools_includes_website_tool_with_guardrails(monkeypatch):
+    class DummyWebsiteTools:
+        def __init__(self, max_pages=5, timeout=10, allowed_domains=None):
+            self.max_pages = max_pages
+            self.timeout = timeout
+            self.allowed_domains = allowed_domains or []
+
+    monkeypatch.setattr(agent_factory, "WebsiteTools", DummyWebsiteTools)
+
+    tools = agent_factory.build_tools(
+        ["website"],
+        {
+            "website": {
+                "max_pages": 99,
+                "timeout": 999,
+                "allowed_domains": ["example.com", "", " docs.example.com "],
+            }
+        },
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyWebsiteTools)
+    assert tools[0].max_pages == 20
+    assert tools[0].timeout == 120
+    assert tools[0].allowed_domains == ["example.com", "docs.example.com"]
+
+
+def test_build_tools_ignores_shell_by_default(monkeypatch):
+    class DummyCalculatorTools:
+        pass
+
+    monkeypatch.setattr(agent_factory, "CalculatorTools", DummyCalculatorTools)
+
+    tools = agent_factory.build_tools(
+        ["shell", "calculator"],
+        {},
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyCalculatorTools)
 
 
 def test_build_tools_includes_hackernews_with_settings(monkeypatch):

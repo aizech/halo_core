@@ -26,3 +26,4 @@ aiosqlite>=0.19.0
 ddgs>=0.1.0
 mkdocs>=1.6.0
 mkdocs-material>=9.5.0
+youtube_transcript_api>=0.5.0

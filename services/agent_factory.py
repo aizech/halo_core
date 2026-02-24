@@ -108,6 +108,9 @@ def build_tools(
         return tools
     tool_settings = tool_settings or {}
     for tool_id in tool_ids:
+        if tool_id == "shell":
+            logger.warning("Shell tool is disabled by default")
+            continue
         if tool_id == "pubmed":
             pubmed_settings = tool_settings.get("pubmed")
             if isinstance(pubmed_settings, dict):
@@ -173,12 +176,57 @@ def build_tools(
             if ArxivTools is None:
                 logger.warning("Arxiv tool not available")
             else:
-                tools.append(ArxivTools())
+                arxiv_settings = tool_settings.get("arxiv")
+                if isinstance(arxiv_settings, dict):
+                    arxiv_kwargs = {
+                        "max_results": int(arxiv_settings.get("max_results") or 5),
+                        "sort_by": arxiv_settings.get("sort_by") or None,
+                    }
+                    try:
+                        tools.append(ArxivTools(**arxiv_kwargs))
+                    except TypeError:
+                        logger.warning(
+                            "Arxiv tool does not support configured settings; using defaults"
+                        )
+                        tools.append(ArxivTools())
+                else:
+                    tools.append(ArxivTools())
         if tool_id == "website":
             if WebsiteTools is None:
                 logger.warning("Website tool not available")
             else:
-                tools.append(WebsiteTools())
+                website_settings = tool_settings.get("website")
+                if isinstance(website_settings, dict):
+                    allowed_domains_raw = website_settings.get("allowed_domains", [])
+                    allowed_domains = (
+                        [
+                            str(domain).strip()
+                            for domain in allowed_domains_raw
+                            if str(domain).strip()
+                        ]
+                        if isinstance(allowed_domains_raw, list)
+                        else []
+                    )
+                    website_kwargs = {
+                        "max_pages": max(
+                            1,
+                            min(20, int(website_settings.get("max_pages") or 5)),
+                        ),
+                        "timeout": max(
+                            1,
+                            min(120, int(website_settings.get("timeout") or 10)),
+                        ),
+                        "allowed_domains": allowed_domains,
+                    }
+                    try:
+                        tools.append(WebsiteTools(**website_kwargs))
+                    except TypeError:
+                        logger.warning(
+                            "Website tool does not support configured settings; using defaults"
+                        )
+                        tools.append(WebsiteTools())
+                else:
+                    tools.append(WebsiteTools())
         if tool_id == "hackernews":
             if HackerNewsTools is None:
                 logger.warning("HackerNews tool not available")

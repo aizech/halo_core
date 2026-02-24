@@ -1815,6 +1815,11 @@ def _render_advanced_configuration(
     duckduckgo_results_key = f"agent_cfg_duckduckgo_results_{key_suffix}"
     duckduckgo_timeout_key = f"agent_cfg_duckduckgo_timeout_{key_suffix}"
     duckduckgo_ssl_key = f"agent_cfg_duckduckgo_ssl_{key_suffix}"
+    arxiv_max_results_key = f"agent_cfg_arxiv_max_results_{key_suffix}"
+    arxiv_sort_by_key = f"agent_cfg_arxiv_sort_by_{key_suffix}"
+    website_max_pages_key = f"agent_cfg_website_max_pages_{key_suffix}"
+    website_timeout_key = f"agent_cfg_website_timeout_{key_suffix}"
+    website_domains_key = f"agent_cfg_website_domains_{key_suffix}"
     hackernews_top_key = f"agent_cfg_hackernews_top_{key_suffix}"
     hackernews_user_key = f"agent_cfg_hackernews_user_{key_suffix}"
     hackernews_all_key = f"agent_cfg_hackernews_all_{key_suffix}"
@@ -1978,6 +1983,58 @@ def _render_advanced_configuration(
             value=bool(duckduckgo_settings.get("verify_ssl", True)),
             key=duckduckgo_ssl_key,
         )
+    if "arxiv" in selected_tools:
+        arxiv_settings = (
+            tool_settings.get("arxiv", {})
+            if isinstance(tool_settings.get("arxiv"), dict)
+            else {}
+        )
+        arxiv_sort_options = ["", "submittedDate", "lastUpdatedDate", "relevance"]
+        arxiv_sort_default = str(arxiv_settings.get("sort_by", ""))
+        if arxiv_sort_default not in arxiv_sort_options:
+            arxiv_sort_default = ""
+        container.number_input(
+            "arXiv Max Results",
+            min_value=1,
+            max_value=50,
+            value=int(arxiv_settings.get("max_results") or 5),
+            key=arxiv_max_results_key,
+        )
+        container.selectbox(
+            "arXiv Sortierung",
+            options=arxiv_sort_options,
+            index=arxiv_sort_options.index(arxiv_sort_default),
+            key=arxiv_sort_by_key,
+        )
+    if "website" in selected_tools:
+        website_settings = (
+            tool_settings.get("website", {})
+            if isinstance(tool_settings.get("website"), dict)
+            else {}
+        )
+        container.number_input(
+            "Website Max Pages",
+            min_value=1,
+            max_value=20,
+            value=max(1, min(20, int(website_settings.get("max_pages") or 5))),
+            key=website_max_pages_key,
+        )
+        container.number_input(
+            "Website Timeout (Sek)",
+            min_value=1,
+            max_value=120,
+            value=max(1, min(120, int(website_settings.get("timeout") or 10))),
+            key=website_timeout_key,
+        )
+        container.text_area(
+            "Website erlaubte Domains (eine pro Zeile)",
+            value="\n".join(
+                str(domain).strip()
+                for domain in website_settings.get("allowed_domains", [])
+                if str(domain).strip()
+            ),
+            key=website_domains_key,
+        )
     if "hackernews" in selected_tools:
         hackernews_settings = tool_settings.get("hackernews", {})
         container.checkbox(
@@ -2059,6 +2116,21 @@ def _render_advanced_configuration(
                 ),
                 "timeout": int(st.session_state.get(duckduckgo_timeout_key, 10)),
                 "verify_ssl": bool(st.session_state.get(duckduckgo_ssl_key, True)),
+            }
+        if "arxiv" in selected_tools:
+            sort_by = str(st.session_state.get(arxiv_sort_by_key, "")).strip()
+            updated_tool_settings["arxiv"] = {
+                "max_results": int(st.session_state.get(arxiv_max_results_key, 5)),
+                "sort_by": sort_by or None,
+            }
+        if "website" in selected_tools:
+            raw_domains = str(st.session_state.get(website_domains_key, ""))
+            updated_tool_settings["website"] = {
+                "max_pages": int(st.session_state.get(website_max_pages_key, 5)),
+                "timeout": int(st.session_state.get(website_timeout_key, 10)),
+                "allowed_domains": [
+                    line.strip() for line in raw_domains.splitlines() if line.strip()
+                ],
             }
         if "hackernews" in selected_tools:
             updated_tool_settings["hackernews"] = {
