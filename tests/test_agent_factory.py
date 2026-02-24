@@ -25,6 +25,26 @@ def test_build_tools_includes_websearch_with_settings(monkeypatch):
     assert tools[0].num_results == 5
 
 
+def test_build_tools_websearch_falls_back_when_settings_unsupported(monkeypatch):
+    class DummyWebSearchTools:
+        def __init__(self, backend=None, num_results=None):
+            if backend is not None or num_results is not None:
+                raise TypeError("unexpected keyword")
+            self.used_defaults = True
+
+    monkeypatch.setattr(agent_factory, "WebSearchTools", DummyWebSearchTools)
+
+    tools = agent_factory.build_tools(
+        ["websearch"],
+        {"websearch": {"backend": "duckduckgo", "num_results": 5}},
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyWebSearchTools)
+    assert tools[0].used_defaults is True
+
+
 def test_build_tools_includes_youtube_with_settings(monkeypatch):
     class DummyYouTubeTools:
         def __init__(
@@ -193,6 +213,57 @@ def test_build_tools_ignores_shell_by_default(monkeypatch):
 
     assert len(tools) == 1
     assert isinstance(tools[0], DummyCalculatorTools)
+
+
+def test_build_mcp_tools_includes_streamable_http_server(monkeypatch):
+    class DummyMCPTools:
+        def __init__(self, transport=None, url=None, tools=None):
+            self.transport = transport
+            self.url = url
+            self.tools = tools
+
+    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+
+    tools = agent_factory.build_mcp_tools(
+        [
+            {
+                "name": "docs",
+                "transport": "streamable-http",
+                "url": "https://docs.example.com/mcp",
+                "allowed_tools": ["search_docs"],
+            }
+        ],
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyMCPTools)
+    assert tools[0].transport == "streamable-http"
+    assert tools[0].url == "https://docs.example.com/mcp"
+    assert tools[0].tools == ["search_docs"]
+
+
+def test_build_mcp_tools_skips_unsupported_transport(monkeypatch):
+    class DummyMCPTools:
+        def __init__(self, transport=None, url=None, tools=None):
+            self.transport = transport
+            self.url = url
+            self.tools = tools
+
+    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+
+    tools = agent_factory.build_mcp_tools(
+        [
+            {
+                "name": "stdio_server",
+                "transport": "stdio",
+                "url": "http://ignored.example",
+            }
+        ],
+        logger=logging.getLogger(__name__),
+    )
+
+    assert tools == []
 
 
 def test_build_tools_includes_hackernews_with_settings(monkeypatch):

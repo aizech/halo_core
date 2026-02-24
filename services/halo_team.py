@@ -9,7 +9,12 @@ from agno.agent import Agent
 from agno.team import Team
 
 from services.agents_config import build_agent_instructions
-from services.agent_factory import build_model, build_tools, normalize_model_id
+from services.agent_factory import (
+    build_mcp_tools,
+    build_model,
+    build_tools,
+    normalize_model_id,
+)
 from services.routing_policy import select_member_ids
 from services.settings import get_settings
 from services.knowledge import get_agent_knowledge
@@ -55,6 +60,7 @@ def build_agent_from_config(
         config.get("tool_settings"),
         logger=_LOGGER,
     )
+    tools.extend(build_mcp_tools(config.get("mcp_servers"), logger=_LOGGER))
     if tools:
         agent.tools = tools
     return agent
@@ -124,6 +130,7 @@ def build_master_team_from_config(
         master_config.get("tool_settings"),
         logger=_LOGGER,
     )
+    tools.extend(build_mcp_tools(master_config.get("mcp_servers"), logger=_LOGGER))
     if ReasoningTools is not None:
         tools = [ReasoningTools(add_instructions=True), *tools]
 

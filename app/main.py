@@ -1820,6 +1820,8 @@ def _render_advanced_configuration(
     website_max_pages_key = f"agent_cfg_website_max_pages_{key_suffix}"
     website_timeout_key = f"agent_cfg_website_timeout_{key_suffix}"
     website_domains_key = f"agent_cfg_website_domains_{key_suffix}"
+    mcp_calls_key = f"agent_cfg_mcp_calls_{key_suffix}"
+    mcp_servers_key = f"agent_cfg_mcp_servers_{key_suffix}"
     hackernews_top_key = f"agent_cfg_hackernews_top_{key_suffix}"
     hackernews_user_key = f"agent_cfg_hackernews_user_{key_suffix}"
     hackernews_all_key = f"agent_cfg_hackernews_all_{key_suffix}"
@@ -2074,7 +2076,62 @@ def _render_advanced_configuration(
         ),
         key=members_key,
     )
+    container.text_area(
+        "MCP calls (eine pro Zeile)",
+        value="\n".join(
+            str(call).strip()
+            for call in selected_agent.get("mcp_calls", [])
+            if str(call).strip()
+        ),
+        key=mcp_calls_key,
+        height=120,
+    )
+    if mcp_servers_key not in st.session_state:
+        st.session_state[mcp_servers_key] = json.dumps(
+            selected_agent.get("mcp_servers", []), indent=2
+        )
+    if container.button("➕ Add Agno Docs MCP", key=f"{mcp_servers_key}_add_agno"):
+        try:
+            mcp_servers_payload = json.loads(
+                str(st.session_state.get(mcp_servers_key, "[]")) or "[]"
+            )
+        except json.JSONDecodeError:
+            mcp_servers_payload = []
+        if not isinstance(mcp_servers_payload, list):
+            mcp_servers_payload = []
+        if not any(
+            isinstance(item, dict) and str(item.get("name", "")).strip() == "agno-docs"
+            for item in mcp_servers_payload
+        ):
+            mcp_servers_payload.append(
+                {
+                    "name": "agno-docs",
+                    "enabled": False,
+                    "transport": "streamable-http",
+                    "url": "https://docs.agno.com/mcp",
+                    "allowed_tools": [],
+                }
+            )
+            st.session_state[mcp_servers_key] = json.dumps(
+                mcp_servers_payload, indent=2
+            )
+    container.text_area(
+        "MCP servers (JSON)",
+        key=mcp_servers_key,
+        height=160,
+    )
     if container.button("Agent speichern", key="cfg_advanced_save_agent_config"):
+        try:
+            parsed_mcp_servers = json.loads(
+                str(st.session_state.get(mcp_servers_key, "[]")) or "[]"
+            )
+        except json.JSONDecodeError as exc:
+            container.error(f"MCP servers JSON ist ungültig: {exc}")
+            return
+        if not isinstance(parsed_mcp_servers, list):
+            container.error("MCP servers muss ein JSON-Array sein.")
+            return
+
         updated_tool_settings: Dict[str, object] = {}
         if "pubmed" in selected_tools:
             email = st.session_state.get(pubmed_email_key, "").strip()
@@ -2160,6 +2217,12 @@ def _render_advanced_configuration(
             "members": st.session_state.get(members_key, []),
             "tools": st.session_state.get(tools_key, []),
             "tool_settings": updated_tool_settings,
+            "mcp_calls": [
+                line.strip()
+                for line in str(st.session_state.get(mcp_calls_key, "")).splitlines()
+                if line.strip()
+            ],
+            "mcp_servers": parsed_mcp_servers,
         }
         agents_config.save_agent_config(selected_agent_id, updated)
         agent_configs[selected_agent_id] = updated

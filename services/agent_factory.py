@@ -11,6 +11,11 @@ from agno.tools.websearch import WebSearchTools
 from agno.tools.youtube import YouTubeTools
 from agno.tools.wikipedia import WikipediaTools
 
+try:  # Optional MCP tool kit
+    from agno.tools.mcp import MCPTools
+except ImportError:  # pragma: no cover - optional dependency
+    MCPTools = None
+
 try:  # Optional tool kit
     from agno.tools.arxiv import ArxivTools
 except ImportError:  # pragma: no cover - optional dependency
@@ -129,26 +134,34 @@ def build_tools(
         if tool_id == "websearch":
             websearch_settings = tool_settings.get("websearch")
             if isinstance(websearch_settings, dict):
-                tools.append(
-                    WebSearchTools(
-                        backend=websearch_settings.get("backend"),
-                        num_results=websearch_settings.get("num_results"),
+                websearch_kwargs = {
+                    "backend": websearch_settings.get("backend"),
+                    "num_results": websearch_settings.get("num_results"),
+                }
+                try:
+                    tools.append(WebSearchTools(**websearch_kwargs))
+                except TypeError:
+                    logger.warning(
+                        "WebSearch tool does not support configured settings; using defaults"
                     )
-                )
+                    tools.append(WebSearchTools())
             else:
                 tools.append(WebSearchTools())
         if tool_id == "youtube":
             youtube_settings = tool_settings.get("youtube")
             if isinstance(youtube_settings, dict):
-                tools.append(
-                    YouTubeTools(
-                        fetch_captions=youtube_settings.get("fetch_captions", True),
-                        fetch_video_info=youtube_settings.get("fetch_video_info", True),
-                        fetch_timestamps=youtube_settings.get(
-                            "fetch_timestamps", False
-                        ),
+                youtube_kwargs = {
+                    "fetch_captions": youtube_settings.get("fetch_captions", True),
+                    "fetch_video_info": youtube_settings.get("fetch_video_info", True),
+                    "fetch_timestamps": youtube_settings.get("fetch_timestamps", False),
+                }
+                try:
+                    tools.append(YouTubeTools(**youtube_kwargs))
+                except TypeError:
+                    logger.warning(
+                        "YouTube tool does not support configured settings; using defaults"
                     )
-                )
+                    tools.append(YouTubeTools())
             else:
                 tools.append(YouTubeTools())
         if tool_id == "duckduckgo":
@@ -274,4 +287,86 @@ def build_tools(
                 logger.warning("Mermaid tool not available")
             else:
                 tools.append(MermaidTools())
+    return tools
+
+
+def build_mcp_tools(
+    mcp_servers: object,
+    *,
+    logger: logging.Logger,
+) -> List[object]:
+    tools: List[object] = []
+    if MCPTools is None:
+        return tools
+    if not isinstance(mcp_servers, list):
+        return tools
+
+    for item in mcp_servers:
+        if not isinstance(item, dict):
+            continue
+        server_name = str(item.get("name") or "mcp-server").strip() or "mcp-server"
+        if item.get("enabled", True) is False:
+            logger.info("MCP server '%s' is disabled; skipping", server_name)
+            continue
+
+        transport_raw = str(item.get("transport") or "streamable-http").strip().lower()
+        transport = (
+            "streamable-http"
+            if transport_raw in {"", "http", "streamable-http"}
+            else transport_raw
+        )
+        if transport != "streamable-http":
+            logger.warning(
+                "MCP server '%s' skipped: unsupported transport for phase-1: %s",
+                server_name,
+                transport,
+            )
+            continue
+
+        url = str(item.get("url") or "").strip()
+        if not url:
+            logger.warning("MCP server '%s' skipped: missing url", server_name)
+            continue
+
+        allowed_tools_raw = item.get("allowed_tools", [])
+        allowed_tools = (
+            [
+                str(tool_name).strip()
+                for tool_name in allowed_tools_raw
+                if str(tool_name).strip()
+            ]
+            if isinstance(allowed_tools_raw, list)
+            else []
+        )
+
+        kwargs = {
+            "transport": transport,
+            "url": url,
+        }
+        if allowed_tools:
+            kwargs["tools"] = allowed_tools
+
+        try:
+            tools.append(MCPTools(**kwargs))
+            logger.info(
+                "MCP server '%s' attached (transport=%s, url=%s)",
+                server_name,
+                transport,
+                url,
+            )
+        except TypeError:
+            logger.warning("MCPTools signature mismatch; retrying without tool filter")
+            try:
+                tools.append(MCPTools(transport=transport, url=url))
+                logger.info(
+                    "MCP server '%s' attached without tool filter (transport=%s, url=%s)",
+                    server_name,
+                    transport,
+                    url,
+                )
+            except Exception:
+                logger.exception("Failed to build MCPTools for url=%s", url)
+        except Exception:
+            logger.exception("Failed to build MCPTools for url=%s", url)
+
     return tools

@@ -13,7 +13,12 @@ from agno.team import Team
 from agno.tools.openai import OpenAITools
 
 from services.agents_config import build_agent_instructions
-from services.agent_factory import build_model, build_tools, normalize_model_id
+from services.agent_factory import (
+    build_mcp_tools,
+    build_model,
+    build_tools,
+    normalize_model_id,
+)
 from services.halo_team import build_master_team_from_config
 from services.settings import get_settings
 from services.knowledge import get_agent_knowledge
@@ -100,6 +105,7 @@ def _build_agent_from_config(
         config.get("tool_settings"),
         logger=_LOGGER,
     )
+    tools.extend(build_mcp_tools(config.get("mcp_servers"), logger=_LOGGER))
     if tools:
         agent.tools = tools
     return agent

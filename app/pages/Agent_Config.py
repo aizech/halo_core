@@ -102,6 +102,118 @@ def render_agent_config_page() -> None:
         "MCP calls (one per line)", value=_as_text_lines(current.get("mcp_calls"))
     )
 
+    # MCP Servers UI with enable/disable toggles
+    st.subheader("MCP Servers")
+    st.caption("Model Context Protocol servers for extended tool capabilities.")
+
+    mcp_servers = list(current.get("mcp_servers", []))
+    if not isinstance(mcp_servers, list):
+        mcp_servers = []
+
+    # Initialize session state for MCP servers if not present
+    mcp_key = f"mcp_servers_{selected_id}"
+    if mcp_key not in st.session_state:
+        st.session_state[mcp_key] = mcp_servers.copy()
+
+    # Sync with current config if changed
+    if st.session_state[mcp_key] != mcp_servers:
+        st.session_state[mcp_key] = mcp_servers.copy()
+
+    servers_to_edit = st.session_state[mcp_key]
+
+    # Render each server
+    servers_to_remove = []
+    for idx, server in enumerate(servers_to_edit):
+        if not isinstance(server, dict):
+            continue
+
+        with st.container():
+            col_name, col_enabled, col_remove = st.columns([3, 1, 1])
+
+            server_name = str(server.get("name", f"server-{idx}"))
+            with col_name:
+                st.text_input(
+                    "Name",
+                    value=server_name,
+                    key=f"mcp_name_{idx}_{selected_id}",
+                    disabled=True,
+                )
+
+            with col_enabled:
+                enabled = st.checkbox(
+                    "Enabled",
+                    value=bool(server.get("enabled", False)),
+                    key=f"mcp_enabled_{idx}_{selected_id}",
+                )
+                servers_to_edit[idx]["enabled"] = enabled
+
+            with col_remove:
+                if st.button(
+                    "🗑️", key=f"mcp_remove_{idx}_{selected_id}", help="Remove server"
+                ):
+                    servers_to_remove.append(idx)
+
+            # URL field
+            url_val = str(server.get("url", ""))
+            new_url = st.text_input(
+                "URL (streamable-http)",
+                value=url_val,
+                key=f"mcp_url_{idx}_{selected_id}",
+                placeholder="https://docs.agno.com/mcp",
+                help="HTTP endpoint for MCP server (phase-1 supports streamable-http only)",
+            )
+            servers_to_edit[idx]["url"] = new_url
+
+            # Command field (for reference, not used in phase-1)
+            cmd_val = str(server.get("command", ""))
+            st.text_input(
+                "Command (stdio, not yet supported)",
+                value=cmd_val,
+                key=f"mcp_cmd_{idx}_{selected_id}",
+                disabled=True,
+                help="Command for stdio-based MCP servers (phase-2 feature)",
+            )
+
+            st.divider()
+
+    # Remove marked servers
+    for idx in sorted(servers_to_remove, reverse=True):
+        if 0 <= idx < len(servers_to_edit):
+            servers_to_edit.pop(idx)
+
+    # Add server button
+    col_add, col_example = st.columns([1, 2])
+    with col_add:
+        if st.button("➕ Add MCP Server", key=f"mcp_add_{selected_id}"):
+            servers_to_edit.append(
+                {
+                    "name": f"server-{len(servers_to_edit) + 1}",
+                    "enabled": False,
+                    "transport": "streamable-http",
+                    "url": "",
+                    "command": "",
+                }
+            )
+
+    with col_example:
+        if st.button(
+            "➕ Add Agno Docs MCP",
+            key=f"mcp_add_agno_{selected_id}",
+            help="Add public Agno documentation MCP server",
+        ):
+            servers_to_edit.append(
+                {
+                    "name": "agno-docs",
+                    "enabled": False,
+                    "transport": "streamable-http",
+                    "url": "https://docs.agno.com/mcp",
+                    "command": "",
+                }
+            )
+
+    # Update session state
+    st.session_state[mcp_key] = servers_to_edit
+
     tool_settings = (
         current.get("tool_settings", {})
         if isinstance(current.get("tool_settings"), dict)
@@ -323,6 +435,11 @@ def render_agent_config_page() -> None:
     )
 
     if st.button("Save configuration", type="primary"):
+        # Get MCP servers from session state
+        mcp_servers_to_save = st.session_state.get(mcp_key, [])
+        if not isinstance(mcp_servers_to_save, list):
+            mcp_servers_to_save = []
+
         combined_tools = selected_tools + _parse_lines(extra_tools_raw)
         updated_tool_settings: Dict[str, object] = {}
         if "pubmed" in selected_tools:
@@ -383,6 +500,7 @@ def render_agent_config_page() -> None:
             "tools": combined_tools,
             "tool_settings": updated_tool_settings,
             "mcp_calls": _parse_lines(mcp_raw),
+            "mcp_servers": mcp_servers_to_save,
             "model": model.strip() or None,
             "memory_scope": memory_scope.strip() or None,
             "coordination_mode": coordination_mode.strip() or None,

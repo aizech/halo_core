@@ -24,6 +24,7 @@ class AgentConfig(BaseModel):
     skills: List[str] = Field(default_factory=list)
     tools: List[str] = Field(default_factory=list)
     mcp_calls: List[str] = Field(default_factory=list)
+    mcp_servers: List[Dict[str, Any]] = Field(default_factory=list)
     model: str | None = None
     coordination_mode: str | None = None
     stream_events: bool = True
@@ -47,6 +48,72 @@ class AgentConfig(BaseModel):
         if all(isinstance(item, str) for item in value):
             return value
         raise ValueError("must be a list of strings")
+
+    @field_validator("mcp_servers", mode="before")
+    @classmethod
+    def _validate_mcp_servers(cls, value: object) -> List[Dict[str, Any]]:
+        if not isinstance(value, list):
+            raise ValueError("must be a list")
+
+        seen_names: set[str] = set()
+        validated: List[Dict[str, Any]] = []
+        for index, item in enumerate(value, start=1):
+            if isinstance(item, str):
+                command = item.strip()
+                if not command:
+                    continue
+                item = {
+                    "name": f"command-{index}",
+                    "enabled": False,
+                    "transport": "streamable-http",
+                    "url": "",
+                    "command": command,
+                }
+            if not isinstance(item, dict):
+                raise ValueError("mcp_servers entries must be objects")
+
+            normalized = dict(item)
+            name = str(normalized.get("name") or "").strip()
+            if not name:
+                raise ValueError("mcp_servers.name is required")
+            lowered = name.lower()
+            if lowered in seen_names:
+                raise ValueError(f"duplicate mcp server name: {name}")
+            seen_names.add(lowered)
+
+            enabled = bool(normalized.get("enabled", True))
+            normalized["enabled"] = enabled
+
+            transport_raw = str(
+                normalized.get("transport") or "streamable-http"
+            ).strip()
+            transport = (
+                "streamable-http"
+                if transport_raw.lower() in {"", "http", "streamable-http"}
+                else transport_raw
+            )
+            if transport != "streamable-http":
+                raise ValueError("mcp_servers.transport must be streamable-http")
+            normalized["transport"] = transport
+
+            url = str(normalized.get("url") or "").strip()
+            if enabled and not url:
+                # Auto-disable servers without URL instead of failing
+                normalized["enabled"] = False
+            normalized["url"] = url
+
+            allowed_tools = normalized.get("allowed_tools", [])
+            if not isinstance(allowed_tools, list) or any(
+                not isinstance(tool, str) for tool in allowed_tools
+            ):
+                raise ValueError("mcp_servers.allowed_tools must be a list of strings")
+            normalized["allowed_tools"] = [
+                tool.strip() for tool in allowed_tools if tool.strip()
+            ]
+
+            validated.append(normalized)
+
+        return validated
 
 
 def _normalize_instructions(value: object) -> str:
@@ -73,6 +140,16 @@ DEFAULT_CHAT_INSTRUCTIONS = (
     "Du bist ein Assistent, der Fragen nur mit den bereitgestellten Quellen beantwortet. "
     "Zitiere Quellen inline im Format [Quelle]."
 )
+
+DEFAULT_MCP_SERVERS = [
+    {
+        "name": "airbnb",
+        "enabled": False,
+        "transport": "streamable-http",
+        "url": "",
+        "command": "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt",
+    }
+]
 
 
 def _agent_dir() -> Path:
@@ -101,6 +178,7 @@ def _default_chat_config() -> Dict[str, object]:
         "instructions": DEFAULT_CHAT_INSTRUCTIONS,
         "members": ["reports", "infographic"],
         "tools": [],
+        "mcp_servers": list(DEFAULT_MCP_SERVERS),
         "model": "openai:gpt-5.2",
         "stream_events": True,
         "enabled": True,
