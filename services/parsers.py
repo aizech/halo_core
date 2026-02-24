@@ -15,10 +15,14 @@ from agno.knowledge.reader.csv_reader import CSVReader
 from agno.knowledge.reader.pptx_reader import PPTXReader
 from agno.knowledge.reader.excel_reader import ExcelReader
 from agno.models.openai import OpenAIChat
-from agno.tools.moviepy_video import MoviePyVideoTools
 from agno.tools.openai import OpenAITools
 from docx import Document
 from pypdf import PdfReader
+
+try:  # Optional dependency: moviepy + ffmpeg stack
+    from agno.tools.moviepy_video import MoviePyVideoTools
+except ImportError:  # pragma: no cover - optional dependency
+    MoviePyVideoTools = None
 
 from services.settings import get_settings
 
@@ -166,7 +170,7 @@ def _transcribe_audio(data: bytes, filename: str, suffix: str) -> str:
 
 def _transcribe_video(data: bytes, filename: str, suffix: str) -> str:
     tools = _openai_tools()
-    if not tools:
+    if not tools or MoviePyVideoTools is None:
         return f"Video-Datei: {filename}"
     with NamedTemporaryFile(suffix=suffix, delete=False) as handle:
         handle.write(data)

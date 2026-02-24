@@ -122,11 +122,15 @@ ruff check .
 
 # Type-check (when enabled)
 mypy app services
+
+# Audit dependencies
+pip-audit -r requirements.txt
 ```
 
 After each meaningful tool call or code edit, validate the result and proceed or self-correct if validation fails.
 
 - After each change, run `black . && ruff check .` plus the most relevant focused tests. Do not proceed if any required command fails.
+- If dependencies are added, removed, or version-pinned during implementation, update `requirements.txt` in the same change.
 
 ### 🔴 PROHIBITED PRACTICES
 - Ending your work without minimal validation when applicable (running relevant tests selectively)
@@ -230,13 +234,13 @@ HALO Core is a NotebookLM-style Streamlit application using the Agno orchestrati
 ## Git Practices
 - Use git to review diffs and status before and after changes.
 - Read the full `git diff` and `git diff --staged` outputs to understand the repository state and verify your previous work before planning new changes or committing.
+- After code changes, give clear commit messages that explain what changed and why.
 - Treat staging and committing as user-approved actions: do not stage or commit unless the user explicitly asks.
 - Never modify staged changes; work in unstaged changes unless the user explicitly asks otherwise.
 - Use non-interactive git defaults to avoid editor prompts (e.g., set `GIT_EDITOR=true`).
 - For bug fixes, make sure the new test fails before your fix, then passes after.
 - When committing, base the message on the staged diff and use a title plus bullet body.
 - After committing, double-check with `git show --name-only -1`.
-- Always give clear commit messages that explain what changed and why.
 
 ## Common Commands
 
@@ -247,6 +251,7 @@ mypy app services                # Type-check
 pytest                           # Run all tests
 pytest tests/<target>.py -v      # Run targeted tests
 pip-audit -r requirements.txt    # Audit dependencies
+# Always update requirements.txt in the same change when dependencies are added, removed, or version-changed
 streamlit run app/main.py        # Run the app
 ```
 
