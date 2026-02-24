@@ -107,8 +107,36 @@ def _default_chat_config() -> Dict[str, object]:
     }
 
 
+def _default_web_research_config() -> Dict[str, object]:
+    return {
+        "id": "web_research",
+        "name": "Web Research Agent",
+        "description": "Recherchiert im Web, in arXiv und auf Websites ohne API-Key.",
+        "role": "research_agent",
+        "instructions": (
+            "Nutze DuckDuckGo, arXiv und Website-Quellen für die Recherche. "
+            "Antworte prägnant und nenne immer die Quelle mit Link."
+        ),
+        "tools": ["duckduckgo", "arxiv", "website"],
+        "tool_settings": {
+            "duckduckgo": {
+                "enable_search": True,
+                "enable_news": True,
+                "fixed_max_results": 5,
+                "timeout": 10,
+                "verify_ssl": True,
+            }
+        },
+        "enabled": True,
+    }
+
+
 def _default_configs() -> List[Dict[str, object]]:
-    defaults = [_default_chat_config(), _default_pubmed_config()]
+    defaults = [
+        _default_chat_config(),
+        _default_pubmed_config(),
+        _default_web_research_config(),
+    ]
     for template in _load_templates():
         defaults.append(_default_template_config(template))
     return defaults

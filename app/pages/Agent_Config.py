@@ -65,12 +65,185 @@ def render_agent_config_page() -> None:
     skills_raw = st.text_area(
         "Skills (one per line)", value=_as_text_lines(current.get("skills"))
     )
-    tools_raw = st.text_area(
-        "Tools (one per line)", value=_as_text_lines(current.get("tools"))
+    available_tools = {
+        "pubmed": "PubMed Suche",
+        "websearch": "Web Search",
+        "youtube": "YouTube",
+        "duckduckgo": "DuckDuckGo Suche",
+        "arxiv": "arXiv Papers",
+        "website": "Website Inhalte",
+        "hackernews": "Hacker News",
+        "yfinance": "Yahoo Finance",
+        "calculator": "Calculator",
+        "wikipedia": "Wikipedia Suche",
+        "mermaid": "Mermaid Diagramme",
+    }
+    configured_tools = [
+        str(tool)
+        for tool in current.get("tools", [])
+        if isinstance(current.get("tools"), list)
+        for tool in [tool]
+        if isinstance(tool, str)
+    ]
+    selected_tools = st.multiselect(
+        "Tools",
+        options=list(available_tools.keys()),
+        default=[tool for tool in configured_tools if tool in available_tools],
+        format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
+    )
+    extra_tools_raw = st.text_area(
+        "Additional tools (one per line)",
+        value="\n".join(
+            tool for tool in configured_tools if tool not in available_tools
+        ),
+        help="Optional: define custom tool ids directly.",
     )
     mcp_raw = st.text_area(
         "MCP calls (one per line)", value=_as_text_lines(current.get("mcp_calls"))
     )
+
+    tool_settings = (
+        current.get("tool_settings", {})
+        if isinstance(current.get("tool_settings"), dict)
+        else {}
+    )
+    st.subheader("Tool Settings")
+    if "pubmed" in selected_tools:
+        pubmed_settings = (
+            tool_settings.get("pubmed", {})
+            if isinstance(tool_settings.get("pubmed"), dict)
+            else {}
+        )
+        pubmed_email = st.text_input(
+            "PubMed E-Mail", value=str(pubmed_settings.get("email", ""))
+        )
+        pubmed_max_results = int(
+            st.number_input(
+                "PubMed Max Results",
+                min_value=1,
+                value=int(pubmed_settings.get("max_results") or 5),
+            )
+        )
+        pubmed_enable = st.checkbox(
+            "PubMed Suche aktiv",
+            value=bool(pubmed_settings.get("enable_search_pubmed", True)),
+        )
+        pubmed_all = st.checkbox(
+            "PubMed Alle Quellen",
+            value=bool(pubmed_settings.get("all", False)),
+        )
+    if "websearch" in selected_tools:
+        websearch_settings = (
+            tool_settings.get("websearch", {})
+            if isinstance(tool_settings.get("websearch"), dict)
+            else {}
+        )
+        websearch_backend_options = [
+            "",
+            "duckduckgo",
+            "google",
+            "bing",
+            "brave",
+            "yandex",
+        ]
+        websearch_backend_default = str(websearch_settings.get("backend", ""))
+        if websearch_backend_default not in websearch_backend_options:
+            websearch_backend_default = ""
+        websearch_backend = st.selectbox(
+            "WebSearch Backend",
+            options=websearch_backend_options,
+            index=websearch_backend_options.index(websearch_backend_default),
+        )
+        websearch_num_results = int(
+            st.number_input(
+                "WebSearch Max Results",
+                min_value=1,
+                value=int(websearch_settings.get("num_results") or 5),
+            )
+        )
+    if "youtube" in selected_tools:
+        youtube_settings = (
+            tool_settings.get("youtube", {})
+            if isinstance(tool_settings.get("youtube"), dict)
+            else {}
+        )
+        youtube_fetch_captions = st.checkbox(
+            "YouTube Captions aktiv",
+            value=bool(youtube_settings.get("fetch_captions", True)),
+        )
+        youtube_fetch_video_info = st.checkbox(
+            "YouTube Video-Infos aktiv",
+            value=bool(youtube_settings.get("fetch_video_info", True)),
+        )
+        youtube_fetch_timestamps = st.checkbox(
+            "YouTube Timestamps aktiv",
+            value=bool(youtube_settings.get("fetch_timestamps", False)),
+        )
+    if "duckduckgo" in selected_tools:
+        duckduckgo_settings = (
+            tool_settings.get("duckduckgo", {})
+            if isinstance(tool_settings.get("duckduckgo"), dict)
+            else {}
+        )
+        duckduckgo_enable_search = st.checkbox(
+            "DuckDuckGo Suche aktiv",
+            value=bool(duckduckgo_settings.get("enable_search", True)),
+        )
+        duckduckgo_enable_news = st.checkbox(
+            "DuckDuckGo News aktiv",
+            value=bool(duckduckgo_settings.get("enable_news", True)),
+        )
+        duckduckgo_fixed_max_results = int(
+            st.number_input(
+                "DuckDuckGo Max Results",
+                min_value=1,
+                value=int(duckduckgo_settings.get("fixed_max_results") or 5),
+            )
+        )
+        duckduckgo_timeout = int(
+            st.number_input(
+                "DuckDuckGo Timeout (Sek)",
+                min_value=1,
+                value=int(duckduckgo_settings.get("timeout") or 10),
+            )
+        )
+        duckduckgo_verify_ssl = st.checkbox(
+            "DuckDuckGo SSL verifizieren",
+            value=bool(duckduckgo_settings.get("verify_ssl", True)),
+        )
+    if "hackernews" in selected_tools:
+        hackernews_settings = (
+            tool_settings.get("hackernews", {})
+            if isinstance(tool_settings.get("hackernews"), dict)
+            else {}
+        )
+        hackernews_enable_top_stories = st.checkbox(
+            "HackerNews Top Stories aktiv",
+            value=bool(hackernews_settings.get("enable_get_top_stories", True)),
+        )
+        hackernews_enable_user_details = st.checkbox(
+            "HackerNews User-Details aktiv",
+            value=bool(hackernews_settings.get("enable_get_user_details", True)),
+        )
+        hackernews_all = st.checkbox(
+            "HackerNews Alle Funktionen",
+            value=bool(hackernews_settings.get("all", False)),
+        )
+    if "yfinance" in selected_tools:
+        yfinance_settings = (
+            tool_settings.get("yfinance", {})
+            if isinstance(tool_settings.get("yfinance"), dict)
+            else {}
+        )
+        yfinance_stock_price = st.checkbox(
+            "YFinance Aktienkurs aktiv",
+            value=bool(yfinance_settings.get("stock_price", True)),
+        )
+        yfinance_analyst_recommendations = st.checkbox(
+            "YFinance Analystenempfehlungen aktiv",
+            value=bool(yfinance_settings.get("analyst_recommendations", True)),
+        )
+
     st.subheader("Routing & Runtime")
     model = st.text_input("Model override", value=str(current.get("model", "")))
     memory_scope = st.text_input(
@@ -97,6 +270,45 @@ def render_agent_config_page() -> None:
     )
 
     if st.button("Save configuration", type="primary"):
+        combined_tools = selected_tools + _parse_lines(extra_tools_raw)
+        updated_tool_settings: Dict[str, object] = {}
+        if "pubmed" in selected_tools:
+            updated_tool_settings["pubmed"] = {
+                "email": pubmed_email.strip() or None,
+                "max_results": pubmed_max_results,
+                "enable_search_pubmed": pubmed_enable,
+                "all": pubmed_all,
+            }
+        if "websearch" in selected_tools:
+            updated_tool_settings["websearch"] = {
+                "backend": websearch_backend.strip() or None,
+                "num_results": websearch_num_results,
+            }
+        if "youtube" in selected_tools:
+            updated_tool_settings["youtube"] = {
+                "fetch_captions": youtube_fetch_captions,
+                "fetch_video_info": youtube_fetch_video_info,
+                "fetch_timestamps": youtube_fetch_timestamps,
+            }
+        if "duckduckgo" in selected_tools:
+            updated_tool_settings["duckduckgo"] = {
+                "enable_search": duckduckgo_enable_search,
+                "enable_news": duckduckgo_enable_news,
+                "fixed_max_results": duckduckgo_fixed_max_results,
+                "timeout": duckduckgo_timeout,
+                "verify_ssl": duckduckgo_verify_ssl,
+            }
+        if "hackernews" in selected_tools:
+            updated_tool_settings["hackernews"] = {
+                "enable_get_top_stories": hackernews_enable_top_stories,
+                "enable_get_user_details": hackernews_enable_user_details,
+                "all": hackernews_all,
+            }
+        if "yfinance" in selected_tools:
+            updated_tool_settings["yfinance"] = {
+                "stock_price": yfinance_stock_price,
+                "analyst_recommendations": yfinance_analyst_recommendations,
+            }
         updated = {
             **current,
             "name": name.strip(),
@@ -104,7 +316,8 @@ def render_agent_config_page() -> None:
             "role": role.strip(),
             "instructions": instructions.strip(),
             "skills": _parse_lines(skills_raw),
-            "tools": _parse_lines(tools_raw),
+            "tools": combined_tools,
+            "tool_settings": updated_tool_settings,
             "mcp_calls": _parse_lines(mcp_raw),
             "model": model.strip() or None,
             "memory_scope": memory_scope.strip() or None,

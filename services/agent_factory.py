@@ -7,7 +7,39 @@ from typing import Dict, List
 
 from agno.models.openai import OpenAIChat
 from agno.tools.pubmed import PubmedTools
+from agno.tools.websearch import WebSearchTools
+from agno.tools.youtube import YouTubeTools
 from agno.tools.wikipedia import WikipediaTools
+
+try:  # Optional tool kit
+    from agno.tools.arxiv import ArxivTools
+except ImportError:  # pragma: no cover - optional dependency
+    ArxivTools = None
+
+try:  # Optional tool kit
+    from agno.tools.duckduckgo import DuckDuckGoTools
+except ImportError:  # pragma: no cover - optional dependency
+    DuckDuckGoTools = None
+
+try:  # Optional tool kit
+    from agno.tools.website import WebsiteTools
+except ImportError:  # pragma: no cover - optional dependency
+    WebsiteTools = None
+
+try:  # Optional tool kit
+    from agno.tools.hackernews import HackerNewsTools
+except ImportError:  # pragma: no cover - optional dependency
+    HackerNewsTools = None
+
+try:  # Optional tool kit
+    from agno.tools.yfinance import YFinanceTools
+except ImportError:  # pragma: no cover - optional dependency
+    YFinanceTools = None
+
+try:  # Optional tool kit
+    from agno.tools.calculator import CalculatorTools
+except ImportError:  # pragma: no cover - optional dependency
+    CalculatorTools = None
 
 try:  # Optional Mermaid tool
     from agno.tools.mermaid import MermaidTools
@@ -91,6 +123,102 @@ def build_tools(
                 )
             else:
                 tools.append(PubmedTools())
+        if tool_id == "websearch":
+            websearch_settings = tool_settings.get("websearch")
+            if isinstance(websearch_settings, dict):
+                tools.append(
+                    WebSearchTools(
+                        backend=websearch_settings.get("backend"),
+                        num_results=websearch_settings.get("num_results"),
+                    )
+                )
+            else:
+                tools.append(WebSearchTools())
+        if tool_id == "youtube":
+            youtube_settings = tool_settings.get("youtube")
+            if isinstance(youtube_settings, dict):
+                tools.append(
+                    YouTubeTools(
+                        fetch_captions=youtube_settings.get("fetch_captions", True),
+                        fetch_video_info=youtube_settings.get("fetch_video_info", True),
+                        fetch_timestamps=youtube_settings.get(
+                            "fetch_timestamps", False
+                        ),
+                    )
+                )
+            else:
+                tools.append(YouTubeTools())
+        if tool_id == "duckduckgo":
+            if DuckDuckGoTools is None:
+                logger.warning("DuckDuckGo tool not available")
+            else:
+                duckduckgo_settings = tool_settings.get("duckduckgo")
+                if isinstance(duckduckgo_settings, dict):
+                    tools.append(
+                        DuckDuckGoTools(
+                            enable_search=duckduckgo_settings.get(
+                                "enable_search", True
+                            ),
+                            enable_news=duckduckgo_settings.get("enable_news", True),
+                            fixed_max_results=duckduckgo_settings.get(
+                                "fixed_max_results"
+                            ),
+                            timeout=duckduckgo_settings.get("timeout", 10),
+                            verify_ssl=duckduckgo_settings.get("verify_ssl", True),
+                        )
+                    )
+                else:
+                    tools.append(DuckDuckGoTools())
+        if tool_id == "arxiv":
+            if ArxivTools is None:
+                logger.warning("Arxiv tool not available")
+            else:
+                tools.append(ArxivTools())
+        if tool_id == "website":
+            if WebsiteTools is None:
+                logger.warning("Website tool not available")
+            else:
+                tools.append(WebsiteTools())
+        if tool_id == "hackernews":
+            if HackerNewsTools is None:
+                logger.warning("HackerNews tool not available")
+            else:
+                hackernews_settings = tool_settings.get("hackernews")
+                if isinstance(hackernews_settings, dict):
+                    tools.append(
+                        HackerNewsTools(
+                            enable_get_top_stories=hackernews_settings.get(
+                                "enable_get_top_stories", True
+                            ),
+                            enable_get_user_details=hackernews_settings.get(
+                                "enable_get_user_details", True
+                            ),
+                            all=hackernews_settings.get("all", False),
+                        )
+                    )
+                else:
+                    tools.append(HackerNewsTools())
+        if tool_id == "yfinance":
+            if YFinanceTools is None:
+                logger.warning("YFinance tool not available")
+            else:
+                yfinance_settings = tool_settings.get("yfinance")
+                if isinstance(yfinance_settings, dict):
+                    tools.append(
+                        YFinanceTools(
+                            stock_price=yfinance_settings.get("stock_price", True),
+                            analyst_recommendations=yfinance_settings.get(
+                                "analyst_recommendations", True
+                            ),
+                        )
+                    )
+                else:
+                    tools.append(YFinanceTools())
+        if tool_id == "calculator":
+            if CalculatorTools is None:
+                logger.warning("Calculator tool not available")
+            else:
+                tools.append(CalculatorTools())
         if tool_id == "wikipedia":
             tools.append(WikipediaTools())
         if tool_id == "mermaid":

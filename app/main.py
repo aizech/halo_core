@@ -1706,6 +1706,14 @@ def _render_chat_memory_configuration(
     ]
     available_tools = {
         "pubmed": "PubMed Suche",
+        "websearch": "Web Search",
+        "youtube": "YouTube",
+        "duckduckgo": "DuckDuckGo Suche",
+        "arxiv": "arXiv Papers",
+        "website": "Website Inhalte",
+        "hackernews": "Hacker News",
+        "yfinance": "Yahoo Finance",
+        "calculator": "Calculator",
         "wikipedia": "Wikipedia Suche",
         "mermaid": "Mermaid Diagramme",
     }
@@ -1738,7 +1746,9 @@ def _render_chat_memory_configuration(
     container.multiselect(
         "Chat Tools",
         options=list(available_tools.keys()),
-        default=normalized_chat_tools,
+        default=[
+            tool_id for tool_id in normalized_chat_tools if tool_id in available_tools
+        ],
         format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
         key=chat_tools_key,
     )
@@ -1795,6 +1805,21 @@ def _render_advanced_configuration(
     pubmed_max_key = f"agent_cfg_pubmed_max_{key_suffix}"
     pubmed_enable_key = f"agent_cfg_pubmed_enable_{key_suffix}"
     pubmed_all_key = f"agent_cfg_pubmed_all_{key_suffix}"
+    websearch_backend_key = f"agent_cfg_websearch_backend_{key_suffix}"
+    websearch_results_key = f"agent_cfg_websearch_results_{key_suffix}"
+    youtube_captions_key = f"agent_cfg_youtube_captions_{key_suffix}"
+    youtube_video_info_key = f"agent_cfg_youtube_video_info_{key_suffix}"
+    youtube_timestamps_key = f"agent_cfg_youtube_timestamps_{key_suffix}"
+    duckduckgo_search_key = f"agent_cfg_duckduckgo_search_{key_suffix}"
+    duckduckgo_news_key = f"agent_cfg_duckduckgo_news_{key_suffix}"
+    duckduckgo_results_key = f"agent_cfg_duckduckgo_results_{key_suffix}"
+    duckduckgo_timeout_key = f"agent_cfg_duckduckgo_timeout_{key_suffix}"
+    duckduckgo_ssl_key = f"agent_cfg_duckduckgo_ssl_{key_suffix}"
+    hackernews_top_key = f"agent_cfg_hackernews_top_{key_suffix}"
+    hackernews_user_key = f"agent_cfg_hackernews_user_{key_suffix}"
+    hackernews_all_key = f"agent_cfg_hackernews_all_{key_suffix}"
+    yfinance_price_key = f"agent_cfg_yfinance_price_{key_suffix}"
+    yfinance_analyst_key = f"agent_cfg_yfinance_analyst_{key_suffix}"
     member_options = [
         agent_id for agent_id in agent_ids if agent_id != selected_agent_id
     ]
@@ -1835,6 +1860,14 @@ def _render_advanced_configuration(
 
     available_tools = {
         "pubmed": "PubMed Suche",
+        "websearch": "Web Search",
+        "youtube": "YouTube",
+        "duckduckgo": "DuckDuckGo Suche",
+        "arxiv": "arXiv Papers",
+        "website": "Website Inhalte",
+        "hackernews": "Hacker News",
+        "yfinance": "Yahoo Finance",
+        "calculator": "Calculator",
         "wikipedia": "Wikipedia Suche",
         "mermaid": "Mermaid Diagramme",
     }
@@ -1848,7 +1881,7 @@ def _render_advanced_configuration(
     selected_tools = container.multiselect(
         "Tools",
         options=list(available_tools.keys()),
-        default=normalized_tools,
+        default=[tool_id for tool_id in normalized_tools if tool_id in available_tools],
         format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
         key=tools_key,
     )
@@ -1880,6 +1913,100 @@ def _render_advanced_configuration(
             value=bool(pubmed_settings.get("all", False)),
             key=pubmed_all_key,
         )
+    if "websearch" in selected_tools:
+        websearch_settings = tool_settings.get("websearch", {})
+        container.selectbox(
+            "WebSearch Backend",
+            options=["", "duckduckgo", "google", "bing", "brave", "yandex"],
+            index=["", "duckduckgo", "google", "bing", "brave", "yandex"].index(
+                str(websearch_settings.get("backend", ""))
+                if str(websearch_settings.get("backend", ""))
+                in ["", "duckduckgo", "google", "bing", "brave", "yandex"]
+                else ""
+            ),
+            key=websearch_backend_key,
+        )
+        container.number_input(
+            "WebSearch Max Results",
+            min_value=1,
+            value=int(websearch_settings.get("num_results") or 5),
+            key=websearch_results_key,
+        )
+    if "youtube" in selected_tools:
+        youtube_settings = tool_settings.get("youtube", {})
+        container.checkbox(
+            "YouTube Captions aktiv",
+            value=bool(youtube_settings.get("fetch_captions", True)),
+            key=youtube_captions_key,
+        )
+        container.checkbox(
+            "YouTube Video-Infos aktiv",
+            value=bool(youtube_settings.get("fetch_video_info", True)),
+            key=youtube_video_info_key,
+        )
+        container.checkbox(
+            "YouTube Timestamps aktiv",
+            value=bool(youtube_settings.get("fetch_timestamps", False)),
+            key=youtube_timestamps_key,
+        )
+    if "duckduckgo" in selected_tools:
+        duckduckgo_settings = tool_settings.get("duckduckgo", {})
+        container.checkbox(
+            "DuckDuckGo Suche aktiv",
+            value=bool(duckduckgo_settings.get("enable_search", True)),
+            key=duckduckgo_search_key,
+        )
+        container.checkbox(
+            "DuckDuckGo News aktiv",
+            value=bool(duckduckgo_settings.get("enable_news", True)),
+            key=duckduckgo_news_key,
+        )
+        container.number_input(
+            "DuckDuckGo Max Results",
+            min_value=1,
+            value=int(duckduckgo_settings.get("fixed_max_results") or 5),
+            key=duckduckgo_results_key,
+        )
+        container.number_input(
+            "DuckDuckGo Timeout (Sek)",
+            min_value=1,
+            value=int(duckduckgo_settings.get("timeout") or 10),
+            key=duckduckgo_timeout_key,
+        )
+        container.checkbox(
+            "DuckDuckGo SSL verifizieren",
+            value=bool(duckduckgo_settings.get("verify_ssl", True)),
+            key=duckduckgo_ssl_key,
+        )
+    if "hackernews" in selected_tools:
+        hackernews_settings = tool_settings.get("hackernews", {})
+        container.checkbox(
+            "HackerNews Top Stories aktiv",
+            value=bool(hackernews_settings.get("enable_get_top_stories", True)),
+            key=hackernews_top_key,
+        )
+        container.checkbox(
+            "HackerNews User-Details aktiv",
+            value=bool(hackernews_settings.get("enable_get_user_details", True)),
+            key=hackernews_user_key,
+        )
+        container.checkbox(
+            "HackerNews Alle Funktionen",
+            value=bool(hackernews_settings.get("all", False)),
+            key=hackernews_all_key,
+        )
+    if "yfinance" in selected_tools:
+        yfinance_settings = tool_settings.get("yfinance", {})
+        container.checkbox(
+            "YFinance Aktienkurs aktiv",
+            value=bool(yfinance_settings.get("stock_price", True)),
+            key=yfinance_price_key,
+        )
+        container.checkbox(
+            "YFinance Analystenempfehlungen aktiv",
+            value=bool(yfinance_settings.get("analyst_recommendations", True)),
+            key=yfinance_analyst_key,
+        )
     container.multiselect(
         "Team-Mitglieder",
         options=member_options,
@@ -1902,6 +2029,53 @@ def _render_advanced_configuration(
                     st.session_state.get(pubmed_enable_key, True)
                 ),
                 "all": bool(st.session_state.get(pubmed_all_key, False)),
+            }
+        if "websearch" in selected_tools:
+            backend = st.session_state.get(websearch_backend_key, "").strip()
+            updated_tool_settings["websearch"] = {
+                "backend": backend or None,
+                "num_results": int(st.session_state.get(websearch_results_key, 5)),
+            }
+        if "youtube" in selected_tools:
+            updated_tool_settings["youtube"] = {
+                "fetch_captions": bool(
+                    st.session_state.get(youtube_captions_key, True)
+                ),
+                "fetch_video_info": bool(
+                    st.session_state.get(youtube_video_info_key, True)
+                ),
+                "fetch_timestamps": bool(
+                    st.session_state.get(youtube_timestamps_key, False)
+                ),
+            }
+        if "duckduckgo" in selected_tools:
+            updated_tool_settings["duckduckgo"] = {
+                "enable_search": bool(
+                    st.session_state.get(duckduckgo_search_key, True)
+                ),
+                "enable_news": bool(st.session_state.get(duckduckgo_news_key, True)),
+                "fixed_max_results": int(
+                    st.session_state.get(duckduckgo_results_key, 5)
+                ),
+                "timeout": int(st.session_state.get(duckduckgo_timeout_key, 10)),
+                "verify_ssl": bool(st.session_state.get(duckduckgo_ssl_key, True)),
+            }
+        if "hackernews" in selected_tools:
+            updated_tool_settings["hackernews"] = {
+                "enable_get_top_stories": bool(
+                    st.session_state.get(hackernews_top_key, True)
+                ),
+                "enable_get_user_details": bool(
+                    st.session_state.get(hackernews_user_key, True)
+                ),
+                "all": bool(st.session_state.get(hackernews_all_key, False)),
+            }
+        if "yfinance" in selected_tools:
+            updated_tool_settings["yfinance"] = {
+                "stock_price": bool(st.session_state.get(yfinance_price_key, True)),
+                "analyst_recommendations": bool(
+                    st.session_state.get(yfinance_analyst_key, True)
+                ),
             }
         updated = {
             **selected_agent,
