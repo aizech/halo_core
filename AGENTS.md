@@ -246,6 +246,7 @@ ruff check .                     # Lint
 mypy app services                # Type-check
 pytest                           # Run all tests
 pytest tests/<target>.py -v      # Run targeted tests
+pip-audit -r requirements.txt    # Audit dependencies
 streamlit run app/main.py        # Run the app
 ```
 
