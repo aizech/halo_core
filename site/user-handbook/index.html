@@ -1,0 +1,3536 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for HALO Core">
+      
+      
+      
+        <link rel="canonical" href="http://docs.corpusanalytica.com/user-handbook/">
+      
+      
+        <link rel="prev" href="../getting-started/">
+      
+      
+        <link rel="next" href="../repository-overview/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>User Handbook - HALO Core Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#halo-core-user-handbook" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="HALO Core Docs" class="md-header__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            HALO Core Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User Handbook
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aizech/halo_core" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aizech/halo_core
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="HALO Core Docs" class="md-nav__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    HALO Core Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aizech/halo_core" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aizech/halo_core
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Handbook
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Handbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#halo-signature-features-extraordinary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HALO Signature Features (Extraordinary)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HALO Signature Features (Extraordinary)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-halo-concept-and-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) HALO concept and identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-team-based-ai-collaboration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Team-based AI collaboration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-smart-delegation-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Smart delegation strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-complexity-behind-glass-transparency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) "Complexity behind glass" transparency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-memory-management-layer-tied-to-chat-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Memory Management layer tied to chat identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-multimodal-understanding-in-one-chat-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Multimodal understanding in one chat flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-source-grounded-citations-with-fallback-resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Source-grounded citations with fallback resilience
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-live-source-awareness-and-quick-synthesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Live source-awareness and quick synthesis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-studio-pipeline-from-insight-to-artifact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Studio pipeline from insight to artifact
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-this-application-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this application is
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#who-it-is-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who it is for
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-problem-it-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core problem it solves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-level-architecture-non-technical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-level architecture (non-technical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installation-and-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation and setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#account-creationlogin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account creation/login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-first-use-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic first-use flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Core Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-sources-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Sources Library
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A. Sources Library">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b-connector-based-source-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. Connector-Based Source Collection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="B. Connector-Based Source Collection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-chat-with-source-grounding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Chat with Source Grounding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C. Chat with Source Grounding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-summary-of-all-sources-in-chat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. “Summary of All Sources” in Chat
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="D. “Summary of All Sources” in Chat">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#e-studio-templates-content-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E. Studio Templates (Content Generation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="E. Studio Templates (Content Generation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#f-notes-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F. Notes Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="F. Notes Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#g-configuration-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G. Configuration Hub
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="G. Configuration Hub">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#h-account-memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        H. Account Memory Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="H. Account Memory Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#i-agent-configuration-power-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I. Agent Configuration (Power Feature)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="I. Agent Configuration (Power Feature)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-workflows-common-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Workflows / Common Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Workflows / Common Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-1-ask-grounded-questions-on-uploaded-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 1: Ask grounded questions on uploaded documents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-2-build-a-report-draft-from-collected-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 2: Build a report draft from collected evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-3-convert-insights-into-presentation-ready-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 3: Convert insights into presentation-ready structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-4-manage-long-running-project-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 4: Manage long-running project memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-interface-explanation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Interface Explanation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Interface Explanation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#main-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Main layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sidebar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sidebar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-controls-you-will-use-often" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key controls you will use often
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-page-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important page summaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Advanced Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-theme-and-navigation-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Theme and navigation customization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-chat-presets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. Chat presets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-tool-and-coordination-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Tool and coordination tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-storage-and-runtime-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. Storage and runtime environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-i-get-weak-or-generic-answers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “I get weak or generic answers”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-my-uploaded-file-fails-to-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “My uploaded file fails to import”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-account-page-says-memory-backend-disabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “Account page says memory backend disabled”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-preset-list-is-empty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “Preset list is empty”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-share-action-does-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “Share action does nothing”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-no-studio-outputs-generated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “No studio outputs generated”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. FAQ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q1-do-i-need-an-account-to-use-halo-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q1: Do I need an account to use HALO Core?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q2-where-is-my-data-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q2: Where is my data stored?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q3-can-i-use-only-one-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q3: Can I use only one source?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q4-can-i-change-the-ai-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q4: Can I change the AI model?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q5-can-i-control-which-tools-an-agent-uses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q5: Can I control which tools an agent uses?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q6-can-i-export-generated-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q6: Can I export generated outputs?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q7-is-every-connector-production-ready" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q7: Is every connector production-ready?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q8-can-i-use-images-and-audio-in-chat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q8: Can I use images and audio in chat?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q9-what-if-chat-streaming-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q9: What if chat streaming fails?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q10-how-do-i-reset-menusidebar-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q10: How do I reset menu/sidebar customization?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Glossary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assumptions-and-scope-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assumptions and Scope Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../repository-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Repository Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-and-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-storage-and-retrieval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Storage and Retrieval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui-panels-and-pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Panels and Pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-testing-and-operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development, Testing, and Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#halo-signature-features-extraordinary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HALO Signature Features (Extraordinary)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HALO Signature Features (Extraordinary)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-halo-concept-and-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) HALO concept and identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-team-based-ai-collaboration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Team-based AI collaboration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-smart-delegation-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Smart delegation strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-complexity-behind-glass-transparency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) "Complexity behind glass" transparency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-memory-management-layer-tied-to-chat-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Memory Management layer tied to chat identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-multimodal-understanding-in-one-chat-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Multimodal understanding in one chat flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-source-grounded-citations-with-fallback-resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Source-grounded citations with fallback resilience
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-live-source-awareness-and-quick-synthesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Live source-awareness and quick synthesis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-studio-pipeline-from-insight-to-artifact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Studio pipeline from insight to artifact
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-this-application-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this application is
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#who-it-is-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who it is for
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-problem-it-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core problem it solves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-level-architecture-non-technical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-level architecture (non-technical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installation-and-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation and setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#account-creationlogin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account creation/login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-first-use-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic first-use flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-core-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Core Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-sources-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Sources Library
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A. Sources Library">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b-connector-based-source-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. Connector-Based Source Collection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="B. Connector-Based Source Collection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-chat-with-source-grounding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Chat with Source Grounding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C. Chat with Source Grounding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-summary-of-all-sources-in-chat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. “Summary of All Sources” in Chat
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="D. “Summary of All Sources” in Chat">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#e-studio-templates-content-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E. Studio Templates (Content Generation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="E. Studio Templates (Content Generation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#f-notes-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F. Notes Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="F. Notes Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#g-configuration-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G. Configuration Hub
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="G. Configuration Hub">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#h-account-memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        H. Account Memory Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="H. Account Memory Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#i-agent-configuration-power-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I. Agent Configuration (Power Feature)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="I. Agent Configuration (Power Feature)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-does_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why it matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to use it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-results_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-workflows-common-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Workflows / Common Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Workflows / Common Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-1-ask-grounded-questions-on-uploaded-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 1: Ask grounded questions on uploaded documents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-2-build-a-report-draft-from-collected-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 2: Build a report draft from collected evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-3-convert-insights-into-presentation-ready-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 3: Convert insights into presentation-ready structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-4-manage-long-running-project-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow 4: Manage long-running project memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-interface-explanation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Interface Explanation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Interface Explanation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#main-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Main layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sidebar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sidebar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-controls-you-will-use-often" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key controls you will use often
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-page-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important page summaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Advanced Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-theme-and-navigation-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Theme and navigation customization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-chat-presets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. Chat presets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-tool-and-coordination-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Tool and coordination tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-storage-and-runtime-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. Storage and runtime environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-i-get-weak-or-generic-answers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “I get weak or generic answers”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-my-uploaded-file-fails-to-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “My uploaded file fails to import”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-account-page-says-memory-backend-disabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “Account page says memory backend disabled”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-preset-list-is-empty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “Preset list is empty”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-share-action-does-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “Share action does nothing”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-no-studio-outputs-generated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Problem: “No studio outputs generated”
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. FAQ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q1-do-i-need-an-account-to-use-halo-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q1: Do I need an account to use HALO Core?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q2-where-is-my-data-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q2: Where is my data stored?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q3-can-i-use-only-one-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q3: Can I use only one source?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q4-can-i-change-the-ai-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q4: Can I change the AI model?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q5-can-i-control-which-tools-an-agent-uses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q5: Can I control which tools an agent uses?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q6-can-i-export-generated-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q6: Can I export generated outputs?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q7-is-every-connector-production-ready" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q7: Is every connector production-ready?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q8-can-i-use-images-and-audio-in-chat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q8: Can I use images and audio in chat?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q9-what-if-chat-streaming-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q9: What if chat streaming fails?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q10-how-do-i-reset-menusidebar-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q10: How do I reset menu/sidebar customization?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Glossary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assumptions-and-scope-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assumptions and Scope Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="halo-core-user-handbook">HALO Core User Handbook</h1>
+<h2 id="halo-signature-features-extraordinary">HALO Signature Features (Extraordinary)</h2>
+<p>This section highlights the standout capabilities that make HALO different from a basic chat app.</p>
+<h3 id="1-halo-concept-and-identity">1) HALO concept and identity</h3>
+<ul>
+<li><strong>HALO</strong> = <strong>Holistic Agent Logical Orchestrator</strong>.</li>
+<li>The product is designed as an orchestrated intelligence workspace, not only as a single assistant chat.</li>
+</ul>
+<h3 id="2-team-based-ai-collaboration">2) Team-based AI collaboration</h3>
+<ul>
+<li>HALO can run with a <strong>team of specialized agents</strong>.</li>
+<li>Each agent can have its own role, instructions, tools, and settings.</li>
+<li>This allows different expert perspectives (for example research-focused, report-focused, or tool-focused behavior).</li>
+</ul>
+<h3 id="3-smart-delegation-strategies">3) Smart delegation strategies</h3>
+<ul>
+<li>HALO supports multiple delegation modes such as:</li>
+<li><code>direct_only</code></li>
+<li><code>delegate_on_complexity</code></li>
+<li><code>always_delegate</code></li>
+<li><code>coordinated_rag</code></li>
+<li>In practical terms: HALO can decide when to answer directly and when to involve specialist agents.</li>
+</ul>
+<h3 id="4-complexity-behind-glass-transparency">4) "Complexity behind glass" transparency</h3>
+<ul>
+<li>Users can inspect what happened during generation via expandable sections like:</li>
+<li><strong>Agent Actions</strong></li>
+<li><strong>Tool Calls</strong></li>
+<li><strong>Agent Thinking</strong></li>
+<li>This gives visibility into reasoning flow and orchestration behavior without exposing raw system internals.</li>
+</ul>
+<h3 id="5-memory-management-layer-tied-to-chat-identity">5) Memory Management layer tied to chat identity</h3>
+<ul>
+<li>HALO supports a memory layer linked to the active <code>user_id</code>.</li>
+<li>When memory backend is enabled, user memory can persist across interactions and be managed in the <strong>Account</strong> page.</li>
+<li>This enables more personalized continuity across chat sessions.</li>
+</ul>
+<h3 id="6-multimodal-understanding-in-one-chat-flow">6) Multimodal understanding in one chat flow</h3>
+<ul>
+<li>Users can combine:</li>
+<li>text prompts</li>
+<li>image uploads</li>
+<li>audio input (with transcription)</li>
+<li>This supports richer real-world workflows (for example "analyze this image and include my spoken notes").</li>
+</ul>
+<h3 id="7-source-grounded-citations-with-fallback-resilience">7) Source-grounded citations with fallback resilience</h3>
+<ul>
+<li>HALO is built to answer using selected sources.</li>
+<li>It applies citation-aware response handling and can fall back to alternate generation paths when streaming output is empty.</li>
+</ul>
+<h3 id="8-live-source-awareness-and-quick-synthesis">8) Live source-awareness and quick synthesis</h3>
+<ul>
+<li>The chat area includes a dynamic <strong>summary of all sources</strong>.</li>
+<li>HALO tracks whether this summary is stale when source inventory changes, so users can refresh at the right moment.</li>
+</ul>
+<h3 id="9-studio-pipeline-from-insight-to-artifact">9) Studio pipeline from insight to artifact</h3>
+<ul>
+<li>HALO turns research context directly into production-style outputs (report, infographic, podcast, presentation, etc.).</li>
+<li>Outputs are persisted, revisitable, and exportable from the same workspace.</li>
+</ul>
+<hr />
+<h2 id="1-overview">1. Overview</h2>
+<h3 id="what-this-application-is">What this application is</h3>
+<p>HALO Core is a workspace app for research and content creation. It helps you:
+- collect sources (files, web findings, connector results)
+- ask questions in a source-grounded AI chat
+- generate ready-to-use outputs (for example reports, infographics, podcast scripts, and presentations)
+- save important chat results as reusable notes</p>
+<p>In short: HALO Core combines a document library, an AI assistant, and a content studio in one interface.</p>
+<h3 id="who-it-is-for">Who it is for</h3>
+<p>HALO Core is designed for people who need to turn information into useful outputs quickly, such as:
+- analysts and consultants
+- medical or scientific researchers
+- content teams and editors
+- product and strategy teams
+- anyone preparing summaries, presentations, or evidence-based answers</p>
+<h3 id="core-problem-it-solves">Core problem it solves</h3>
+<p>Without HALO Core, users often jump between many tools (storage, search, AI chat, notes, export tools). This creates friction and lost context.</p>
+<p>HALO Core solves this by keeping the full workflow in one place:
+1. add sources
+2. chat with context
+3. convert answers into structured outputs
+4. save/share/export results</p>
+<h3 id="key-benefits">Key benefits</h3>
+<ul>
+<li><strong>Faster research cycles</strong>: fewer app switches</li>
+<li><strong>More reliable answers</strong>: chat is grounded in selected sources</li>
+<li><strong>Reusable knowledge</strong>: notes and outputs persist locally</li>
+<li><strong>Flexible setup</strong>: configurable models, tools, presets, and sidebar layout</li>
+<li><strong>Practical output formats</strong>: markdown, PDF-like export, and slide-style CSV export</li>
+</ul>
+<h3 id="high-level-architecture-non-technical">High-level architecture (non-technical)</h3>
+<p>At a high level, HALO Core has three visible work areas and several support pages:
+- <strong>Sources</strong>: your library and ingestion area
+- <strong>Chat</strong>: your AI conversation and source summary area
+- <strong>Studio</strong>: output generation and artifact management
+- <strong>Sidebar pages</strong>: Configuration, Account, Help, Agent Config, Dashboard</p>
+<p>Data is saved in local files by default, so your session can continue later.</p>
+<hr />
+<h2 id="2-getting-started">2. Getting Started</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<p>Before running HALO Core, make sure you have:
+- Python 3.10+
+- required Python packages from <code>requirements.txt</code>
+- (recommended) an OpenAI API key for full AI features
+- FFmpeg if you plan to transcribe audio/video</p>
+<h3 id="installation-and-setup">Installation and setup</h3>
+<ol>
+<li>Create and activate a virtual environment.</li>
+<li>Install dependencies:</li>
+<li><code>pip install -r requirements.txt</code></li>
+<li>Create <code>.streamlit/secrets.toml</code> and add keys (for example <code>OPENAI_API_KEY</code>).</li>
+<li>Start the app:</li>
+<li><code>streamlit run app/main.py</code></li>
+</ol>
+<h3 id="account-creationlogin">Account creation/login</h3>
+<p>There is no mandatory account sign-up in the UI.
+- By default, the app uses a local user identity (<code>local-user</code>).
+- Advanced users can set a custom <code>user_id</code> in configuration.</p>
+<h3 id="basic-first-use-flow">Basic first-use flow</h3>
+<ol>
+<li>Open HALO Core.</li>
+<li>Add at least one source in <strong>Sources</strong>.</li>
+<li>Select your source(s).</li>
+<li>Ask a question in <strong>Chat</strong>.</li>
+<li>Save valuable responses as notes.</li>
+<li>Generate a structured output in <strong>Studio</strong>.</li>
+</ol>
+<p>Expected result: you can move from raw files to a publishable draft in one session.</p>
+<hr />
+<h2 id="3-core-features">3. Core Features</h2>
+<h2 id="a-sources-library">A. Sources Library</h2>
+<h3 id="what-it-does">What it does</h3>
+<p>Lets you import, manage, select, and remove sources used by chat and studio generation.</p>
+<h3 id="why-it-matters">Why it matters</h3>
+<p>Source selection controls what the AI can use for grounded responses.</p>
+<h3 id="how-to-use-it">How to use it</h3>
+<ol>
+<li>In <strong>Sources</strong>, click <strong>+ Quellen hinzufügen</strong>.</li>
+<li>Upload one or more files (PDF, DOCX, TXT, MD, CSV, XLSX, PPTX, images, audio, video).</li>
+<li>Optionally run web search suggestions and import results.</li>
+<li>Mark sources via checkboxes (or use “select all”).</li>
+<li>Use per-source menu actions to rename, download, or delete.</li>
+</ol>
+<h3 id="expected-results">Expected results</h3>
+<ul>
+<li>Imported items appear in the source list with type and timestamp.</li>
+<li>Selected sources are used by chat/studio.</li>
+<li>Deleted items are removed from local project state.</li>
+</ul>
+<hr />
+<h2 id="b-connector-based-source-collection">B. Connector-Based Source Collection</h2>
+<h3 id="what-it-does_1">What it does</h3>
+<p>Allows fetching source suggestions from connected systems (for example Drive/Notion connectors in current build).</p>
+<h3 id="why-it-matters_1">Why it matters</h3>
+<p>Helps collect source candidates faster than manual uploads.</p>
+<h3 id="how-to-use-it_1">How to use it</h3>
+<ol>
+<li>In Sources, choose one or more connectors.</li>
+<li>Click <strong>Quellen abrufen</strong>.</li>
+<li>Review listed results.</li>
+<li>Click <strong>Importieren</strong> for the items you want.</li>
+</ol>
+<h3 id="expected-results_1">Expected results</h3>
+<p>Imported connector items appear in your source list and can be selected for chat/studio.</p>
+<blockquote>
+<p>Assumption: Connector behavior is partly MVP/mock-backed in this repository version. Treat it as a guided ingestion layer that can be extended in production.</p>
+</blockquote>
+<hr />
+<h2 id="c-chat-with-source-grounding">C. Chat with Source Grounding</h2>
+<h3 id="what-it-does_2">What it does</h3>
+<p>Lets you ask text questions, attach images, and capture audio-to-text prompts. Answers are generated using selected sources.</p>
+<h3 id="why-it-matters_2">Why it matters</h3>
+<p>Improves trustworthiness by grounding responses in your source set.</p>
+<h3 id="how-to-use-it_2">How to use it</h3>
+<ol>
+<li>Select sources in <strong>Sources</strong> panel.</li>
+<li>In <strong>Chat</strong>, enter a prompt (optional: add image/audio input).</li>
+<li>Send your prompt.</li>
+<li>Review answer, tool calls, and optional agent trace sections.</li>
+<li>Save useful responses as notes.</li>
+</ol>
+<h3 id="expected-results_2">Expected results</h3>
+<ul>
+<li>You receive a response with source-aware behavior.</li>
+<li>If multiple sources are selected, responses can include a source section.</li>
+<li>Agent actions/tool call details can appear in expandable sections.</li>
+</ul>
+<hr />
+<h2 id="d-summary-of-all-sources-in-chat">D. “Summary of All Sources” in Chat</h2>
+<h3 id="what-it-does_3">What it does</h3>
+<p>Creates and stores a unified summary of all sources in the library.</p>
+<h3 id="why-it-matters_3">Why it matters</h3>
+<p>Gives fast orientation before deep questioning.</p>
+<h3 id="how-to-use-it_3">How to use it</h3>
+<ol>
+<li>In the chat panel, open <strong>Zusammenfassung aller Quellen</strong>.</li>
+<li>Click refresh icon to generate/update summary.</li>
+<li>Optionally pin the summary to notes.</li>
+</ol>
+<h3 id="expected-results_3">Expected results</h3>
+<ul>
+<li>Summary content is displayed.</li>
+<li>Stale indicator appears when source set changed.</li>
+<li>You can save summary as a note for later reuse.</li>
+</ul>
+<hr />
+<h2 id="e-studio-templates-content-generation">E. Studio Templates (Content Generation)</h2>
+<h3 id="what-it-does_4">What it does</h3>
+<p>Generates structured deliverables from your current context via template cards.</p>
+<p>Current template set includes:
+- Bericht (Report)
+- Infografik
+- Podcast
+- Videoübersicht
+- Präsentation
+- Datentabelle</p>
+<h3 id="why-it-matters_4">Why it matters</h3>
+<p>Transforms chat/research context into actionable artifacts quickly.</p>
+<h3 id="how-to-use-it_4">How to use it</h3>
+<ol>
+<li>Open <strong>Studio</strong>.</li>
+<li>Pick a template card.</li>
+<li>(Optional) open card menu to set language, tone, and extra prompt.</li>
+<li>Click template generate button.</li>
+<li>Review saved output in <strong>Studio-Ergebnisse</strong>.</li>
+</ol>
+<h3 id="expected-results_4">Expected results</h3>
+<ul>
+<li>A new output artifact appears in Studio results.</li>
+<li>Output includes generation timestamp and linked source context.</li>
+<li>You can expand, review, and export/delete outputs.</li>
+</ul>
+<hr />
+<h2 id="f-notes-management">F. Notes Management</h2>
+<h3 id="what-it-does_5">What it does</h3>
+<p>Stores reusable notes captured from chat, summaries, or manual entry.</p>
+<h3 id="why-it-matters_5">Why it matters</h3>
+<p>Preserves key findings and allows reusing them as sources.</p>
+<h3 id="how-to-use-it_5">How to use it</h3>
+<ol>
+<li>Save a chat response or source summary as note.</li>
+<li>In notes section, expand a note to read content and source info.</li>
+<li>Use menu actions to rename, download, delete, or convert note into a source.</li>
+<li>Add manual notes with <strong>Notiz hinzufügen</strong>.</li>
+</ol>
+<h3 id="expected-results_5">Expected results</h3>
+<ul>
+<li>Notes persist across sessions.</li>
+<li>Converted notes appear as selectable sources.</li>
+</ul>
+<hr />
+<h2 id="g-configuration-hub">G. Configuration Hub</h2>
+<h3 id="what-it-does_6">What it does</h3>
+<p>Central place for app setup, split into tabs:
+- <strong>App</strong> (design/menu/theme/sidebar behavior)
+- <strong>Sources</strong> (connectors, image model)
+- <strong>Chat</strong> (logging, presets, model/tools/team)
+- <strong>Studio</strong> (template settings)
+- <strong>Advanced</strong> (agent-level controls)</p>
+<h3 id="why-it-matters_6">Why it matters</h3>
+<p>Lets you tailor workflow and appearance to your team’s needs.</p>
+<h3 id="how-to-use-it_6">How to use it</h3>
+<ol>
+<li>Open <strong>Configuration</strong> from sidebar.</li>
+<li>Navigate to relevant tab.</li>
+<li>Change values.</li>
+<li>Save in-section settings.</li>
+</ol>
+<h3 id="expected-results_6">Expected results</h3>
+<p>Updated configuration persists and affects runtime behavior.</p>
+<hr />
+<h2 id="h-account-memory-management">H. Account Memory Management</h2>
+<h3 id="what-it-does_7">What it does</h3>
+<p>Displays and manages user memory entries when memory DB backend is enabled.</p>
+<h3 id="why-it-matters_7">Why it matters</h3>
+<p>Lets users clean up or reset saved memory traces.</p>
+<h3 id="how-to-use-it_7">How to use it</h3>
+<ol>
+<li>Open <strong>Account</strong> page.</li>
+<li>If enabled, review memory rows.</li>
+<li>Select entries and delete selected, or clear all.</li>
+</ol>
+<h3 id="expected-results_7">Expected results</h3>
+<ul>
+<li>Selected memory entries are removed.</li>
+<li>If backend is disabled, page informs you clearly.</li>
+</ul>
+<hr />
+<h2 id="i-agent-configuration-power-feature">I. Agent Configuration (Power Feature)</h2>
+<h3 id="what-it-does_8">What it does</h3>
+<p>Provides deep control of per-agent settings, including tools, MCP servers, role instructions, and coordination mode.</p>
+<h3 id="why-it-matters_8">Why it matters</h3>
+<p>Enables advanced workflow specialization by role/use case.</p>
+<h3 id="how-to-use-it_8">How to use it</h3>
+<ol>
+<li>Open <strong>Configuration</strong> → <strong>Open Agent Config</strong>.</li>
+<li>Select an agent.</li>
+<li>Edit fields (name, role, instructions, tool list, runtime settings).</li>
+<li>Save configuration.</li>
+</ol>
+<h3 id="expected-results_8">Expected results</h3>
+<p>Selected agent behavior updates for subsequent runs.</p>
+<hr />
+<h2 id="4-workflows-common-tasks">4. Workflows / Common Tasks</h2>
+<h3 id="workflow-1-ask-grounded-questions-on-uploaded-documents">Workflow 1: Ask grounded questions on uploaded documents</h3>
+<ol>
+<li>Upload PDFs/DOCX files in Sources.</li>
+<li>Select them with checkboxes.</li>
+<li>Ask a focused question in Chat.</li>
+<li>Save the best answer as note.</li>
+</ol>
+<p>Result: you get a traceable answer tied to selected material.</p>
+<h3 id="workflow-2-build-a-report-draft-from-collected-evidence">Workflow 2: Build a report draft from collected evidence</h3>
+<ol>
+<li>Import sources (uploads + connectors).</li>
+<li>Generate/update all-sources summary.</li>
+<li>Open Studio and choose <strong>Bericht</strong>.</li>
+<li>Set language/tone and add optional prompt.</li>
+<li>Generate and export.</li>
+</ol>
+<p>Result: report-style draft you can refine externally.</p>
+<h3 id="workflow-3-convert-insights-into-presentation-ready-structure">Workflow 3: Convert insights into presentation-ready structure</h3>
+<ol>
+<li>Prepare source set and chat findings.</li>
+<li>Save key findings as notes.</li>
+<li>Use <strong>Präsentation</strong> template.</li>
+<li>Export output as needed.</li>
+</ol>
+<p>Result: rapid first draft of slide flow.</p>
+<h3 id="workflow-4-manage-long-running-project-memory">Workflow 4: Manage long-running project memory</h3>
+<ol>
+<li>Use Account page to review memory items.</li>
+<li>Delete outdated entries.</li>
+<li>Keep only useful context.</li>
+</ol>
+<p>Result: cleaner assistant behavior and reduced noise.</p>
+<hr />
+<h2 id="5-interface-explanation">5. Interface Explanation</h2>
+<h3 id="main-layout">Main layout</h3>
+<p>The default Home view has three columns:
+1. <strong>Sources</strong> (left)
+2. <strong>Chat</strong> (center)
+3. <strong>Studio</strong> (right)</p>
+<h3 id="sidebar">Sidebar</h3>
+<p>The sidebar is fully configurable and can include:
+- navigation links
+- separators/spacers
+- theme toggle
+- branding logo/icon</p>
+<p>Default destinations include Home, Dashboard, Configuration, Account, Help.</p>
+<h3 id="key-controls-you-will-use-often">Key controls you will use often</h3>
+<ul>
+<li><strong>+ Quellen hinzufügen</strong>: import sources</li>
+<li><strong>Quellen abrufen</strong>: fetch connector data</li>
+<li><strong>Chat input</strong>: question/audio/image submission</li>
+<li><strong>In Notiz speichern</strong>: keep chat output</li>
+<li><strong>Template Generate button</strong>: create studio artifact</li>
+<li><strong>Download buttons</strong>: export source/note/output content</li>
+<li><strong>Configuration save buttons</strong>: persist setting changes</li>
+</ul>
+<h3 id="important-page-summaries">Important page summaries</h3>
+<ul>
+<li><strong>Dashboard</strong>: placeholder status page in current build</li>
+<li><strong>Configuration</strong>: operational control center</li>
+<li><strong>Account</strong>: memory management</li>
+<li><strong>Help</strong>: support pointers</li>
+<li><strong>Agent Config</strong>: advanced AI behavior setup</li>
+</ul>
+<hr />
+<h2 id="6-advanced-usage">6. Advanced Usage</h2>
+<h3 id="a-theme-and-navigation-customization">A. Theme and navigation customization</h3>
+<p>In Configuration → App, you can customize:
+- colors (background/text/hover/separator)
+- icon and font sizes
+- collapsed/expanded sidebar widths
+- menu entry order and item types (link/spacer/separator/theme toggle)
+- branding assets (light/dark logo and icon)</p>
+<h3 id="b-chat-presets">B. Chat presets</h3>
+<p>In Configuration → Chat:
+- select preset
+- apply model/tools/member bundle in one step</p>
+<p>This is useful for switching between workflows (for example quick response vs deeper multi-agent mode).</p>
+<h3 id="c-tool-and-coordination-tuning">C. Tool and coordination tuning</h3>
+<p>In Agent Config you can tune:
+- enabled tools per agent
+- MCP server list and enabled state
+- coordination mode (<code>direct_only</code>, <code>delegate_on_complexity</code>, <code>always_delegate</code>, <code>coordinated_rag</code>)
+- stream-events behavior</p>
+<h3 id="d-storage-and-runtime-environment">D. Storage and runtime environment</h3>
+<p>By environment settings, advanced users can change:
+- data directory location (<code>HALO_DATA_DIR</code>)
+- optional memory DB backend (<code>HALO_AGENT_DB</code>)</p>
+<hr />
+<h2 id="7-troubleshooting">7. Troubleshooting</h2>
+<h2 id="problem-i-get-weak-or-generic-answers">Problem: “I get weak or generic answers”</h2>
+<p>Possible causes:
+- no sources selected
+- source summary outdated
+- missing API key</p>
+<p>Try this:
+1. Confirm selected sources in Sources panel.
+2. Refresh all-sources summary.
+3. Verify <code>OPENAI_API_KEY</code> is configured.</p>
+<hr />
+<h2 id="problem-my-uploaded-file-fails-to-import">Problem: “My uploaded file fails to import”</h2>
+<p>Possible causes:
+- unsupported extension
+- parsing/transcription dependency missing</p>
+<p>Try this:
+1. Check supported file type list.
+2. For audio/video, ensure required dependencies (for example FFmpeg stack).
+3. Retry with a smaller or simpler file.</p>
+<hr />
+<h2 id="problem-account-page-says-memory-backend-disabled">Problem: “Account page says memory backend disabled”</h2>
+<p>Cause:
+- optional memory DB is not configured.</p>
+<p>Try this:
+1. Set <code>HALO_AGENT_DB</code> in environment.
+2. Restart app.</p>
+<hr />
+<h2 id="problem-preset-list-is-empty">Problem: “Preset list is empty”</h2>
+<p>Cause:
+- <code>presets.json</code> missing or invalid.</p>
+<p>Try this:
+1. Add a valid <code>presets.json</code> in project root.
+2. Reopen Configuration → Chat.</p>
+<hr />
+<h2 id="problem-share-action-does-nothing">Problem: “Share action does nothing”</h2>
+<p>Cause:
+- share controls are placeholder UX in this build.</p>
+<p>Try this instead:
+- use download/export and external sharing channels.</p>
+<hr />
+<h2 id="problem-no-studio-outputs-generated">Problem: “No studio outputs generated”</h2>
+<p>Possible causes:
+- no relevant selected source context
+- model/tool configuration issue</p>
+<p>Try this:
+1. Confirm source selection.
+2. Test with Bericht template first.
+3. Check chat and agent configuration.</p>
+<hr />
+<h2 id="8-faq">8. FAQ</h2>
+<h3 id="q1-do-i-need-an-account-to-use-halo-core">Q1: Do I need an account to use HALO Core?</h3>
+<p>No mandatory signup is required in the default local setup.</p>
+<h3 id="q2-where-is-my-data-stored">Q2: Where is my data stored?</h3>
+<p>By default in local JSON files under the <code>data/</code> directory.</p>
+<h3 id="q3-can-i-use-only-one-source">Q3: Can I use only one source?</h3>
+<p>Yes. You can select one or many sources per task.</p>
+<h3 id="q4-can-i-change-the-ai-model">Q4: Can I change the AI model?</h3>
+<p>Yes. Use Configuration (Chat tab) or Agent Config.</p>
+<h3 id="q5-can-i-control-which-tools-an-agent-uses">Q5: Can I control which tools an agent uses?</h3>
+<p>Yes. Use Agent Config tool selection and settings.</p>
+<h3 id="q6-can-i-export-generated-outputs">Q6: Can I export generated outputs?</h3>
+<p>Yes. Outputs and notes can be downloaded.</p>
+<h3 id="q7-is-every-connector-production-ready">Q7: Is every connector production-ready?</h3>
+<p>Not necessarily in this repository snapshot. Some connector flows are MVP/mock-oriented.</p>
+<h3 id="q8-can-i-use-images-and-audio-in-chat">Q8: Can I use images and audio in chat?</h3>
+<p>Yes. Chat input supports images and audio capture/import.</p>
+<h3 id="q9-what-if-chat-streaming-fails">Q9: What if chat streaming fails?</h3>
+<p>The runtime has fallback behavior to still generate responses when possible.</p>
+<h3 id="q10-how-do-i-reset-menusidebar-customization">Q10: How do I reset menu/sidebar customization?</h3>
+<p>Use Configuration → App and reset sidebar menu settings.</p>
+<hr />
+<h2 id="9-glossary">9. Glossary</h2>
+<ul>
+<li><strong>Source</strong>: Any imported content item used as knowledge input.</li>
+<li><strong>Grounded answer</strong>: Response tied to selected sources rather than pure free-form output.</li>
+<li><strong>Connector</strong>: Integration path to external systems for source discovery.</li>
+<li><strong>Template</strong>: Predefined studio output type (report, infographic, etc.).</li>
+<li><strong>Studio output</strong>: Generated artifact saved in Studio-Ergebnisse.</li>
+<li><strong>Note</strong>: Saved text snippet from chat/summary/manual input.</li>
+<li><strong>Preset</strong>: Saved chat setup bundle (model/tools/members).</li>
+<li><strong>Agent</strong>: AI role with its own instructions and tools.</li>
+<li><strong>Coordination mode</strong>: Rule for how master and team agents collaborate.</li>
+<li><strong>MCP server</strong>: External capability endpoint used by agents for additional tool access.</li>
+<li><strong>Stream events</strong>: Real-time internal events shown during response generation.</li>
+<li><strong>Memory backend</strong>: Optional database layer for persistent user/agent memory.</li>
+</ul>
+<hr />
+<h2 id="assumptions-and-scope-notes">Assumptions and Scope Notes</h2>
+<ul>
+<li>This handbook reflects the behavior of the repository state analyzed in <code>halo_core</code> at the provided path.</li>
+<li>Some UI labels are in German; this handbook keeps English structure with practical terminology.</li>
+<li>Connector and sharing flows include MVP/placeholder behavior in this version.</li>
+<li>This guide focuses on end users and operators, not internal developers.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
