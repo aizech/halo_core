@@ -236,6 +236,19 @@ def build_chat_agent(
 ) -> Agent | Team | None:
     team_agent: Team | None = None
     if agent_config:
+        active_mcp = []
+        mcp_servers = agent_config.get("mcp_servers")
+        if isinstance(mcp_servers, list):
+            for server in mcp_servers:
+                if not isinstance(server, dict):
+                    continue
+                if not bool(server.get("enabled", False)):
+                    continue
+                name = str(server.get("name") or "").strip()
+                if name:
+                    active_mcp.append(name)
+        _LOGGER.info("Configured active MCP servers: %s", active_mcp or ["none"])
+
         if agent_config.get("members") or agent_config.get("id") == "chat":
             team_agent = build_master_team_from_config(
                 agent_config,

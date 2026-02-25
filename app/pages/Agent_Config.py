@@ -125,10 +125,6 @@ def _render_mcp_servers_ui(
     if mcp_key not in st.session_state:
         st.session_state[mcp_key] = mcp_servers.copy()
 
-    # Sync with current config if changed
-    if st.session_state[mcp_key] != mcp_servers:
-        st.session_state[mcp_key] = mcp_servers.copy()
-
     servers_to_edit = st.session_state[mcp_key]
 
     # Render each server
@@ -257,7 +253,7 @@ def _render_mcp_servers_ui(
                         "command": "",
                     }
                 )
-                
+
         if st.button(
             "➕ Add SQLite MCP",
             key=f"mcp_add_sqlite_{selected_id}",
@@ -274,7 +270,7 @@ def _render_mcp_servers_ui(
                         "command": 'npx -y @modelcontextprotocol/server-sqlite --db "c:\\temp\\test.db"',
                     }
                 )
-                
+
         if st.button(
             "➕ Add File System MCP",
             key=f"mcp_add_fs_{selected_id}",
@@ -289,6 +285,23 @@ def _render_mcp_servers_ui(
                         "transport": "stdio",
                         "url": "",
                         "command": 'npx -y @modelcontextprotocol/server-filesystem "c:\\temp"',
+                    }
+                )
+
+        if st.button(
+            "➕ Add Airbnb MCP",
+            key=f"mcp_add_airbnb_{selected_id}",
+            help="Add Airbnb MCP Server via npx",
+            disabled=not is_admin,
+        ):
+            if is_admin:
+                servers_to_edit.append(
+                    {
+                        "name": "airbnb",
+                        "enabled": False,
+                        "transport": "stdio",
+                        "url": "",
+                        "command": "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt",
                     }
                 )
 
@@ -489,47 +502,44 @@ def _render_mcp_servers_ui(
             "YFinance Analystenempfehlungen aktiv",
             value=bool(yfinance_settings.get("analyst_recommendations", True)),
         )
-    with tab_advanced:
-        _render_mcp_servers_ui(f"adv_{selected_id}", current, is_admin)
-        
-        st.subheader("Routing & Runtime")
-        model = st.text_input("Model override", value=str(current.get("model", "")))
-        memory_scope = st.text_input(
-            "Memory scope", value=str(current.get("memory_scope", ""))
-        )
-        coordination_options = [
-            "",
-            "direct_only",
-            "delegate_on_complexity",
-            "always_delegate",
-            "coordinated_rag",
-        ]
-        current_mode = str(current.get("coordination_mode", ""))
-        if current_mode not in coordination_options:
-            coordination_options.append(current_mode)
-        coordination_mode = st.selectbox(
-            "Coordination mode",
-            options=coordination_options,
-            index=coordination_options.index(current_mode),
-            help="Controls how the master agent delegates to team members.",
-        )
-        stream_events = st.checkbox(
-            "Stream events", value=bool(current.get("stream_events", True))
-        )
+    st.subheader("Routing & Runtime")
+    model = st.text_input("Model override", value=str(current.get("model", "")))
+    memory_scope = st.text_input(
+        "Memory scope", value=str(current.get("memory_scope", ""))
+    )
+    coordination_options = [
+        "",
+        "direct_only",
+        "delegate_on_complexity",
+        "always_delegate",
+        "coordinated_rag",
+    ]
+    current_mode = str(current.get("coordination_mode", ""))
+    if current_mode not in coordination_options:
+        coordination_options.append(current_mode)
+    coordination_mode = st.selectbox(
+        "Coordination mode",
+        options=coordination_options,
+        index=coordination_options.index(current_mode),
+        help="Controls how the master agent delegates to team members.",
+    )
+    stream_events = st.checkbox(
+        "Stream events", value=bool(current.get("stream_events", True))
+    )
 
     if st.button("Save configuration", type="primary"):
         # Get MCP servers from session state
         # Try both UI keys, prefer whichever has elements
         mcp_key = f"mcp_servers_{selected_id}"
         mcp_servers_to_save = st.session_state.get(mcp_key, [])
-        
+
         adv_mcp_key = f"mcp_servers_adv_{selected_id}"
         adv_mcp_servers = st.session_state.get(adv_mcp_key, [])
-        
+
         # If advanced tab has more up to date info (it usually stays in sync via current config)
         if len(adv_mcp_servers) > len(mcp_servers_to_save):
             mcp_servers_to_save = adv_mcp_servers
-            
+
         if not isinstance(mcp_servers_to_save, list):
             mcp_servers_to_save = []
 
@@ -614,5 +624,13 @@ def _render_mcp_servers_ui(
             st.success("Saved.")
 
 
+def render_agent_config_page() -> None:
+    """Entrypoint for Streamlit multipage navigation."""
+    main._init_state()
+    main.render_sidebar()
+    is_admin = bool(st.session_state.get("is_admin", True))
+    _render_mcp_servers_ui("agent_config_page", {}, is_admin)
+
+
 if __name__ == "__main__":
-    render()
+    render_agent_config_page()

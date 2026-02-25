@@ -160,6 +160,7 @@ def stream_agent_response(
     saw_member_output = False
     saw_team_output = False
     final_response_emitted = False
+    mcp_telemetry_events = []
 
     def _emit_response() -> None:
         if on_response is not None:
@@ -221,6 +222,38 @@ def stream_agent_response(
                 changed = _append_unique_tool(current_tools, tool_item) or changed
             if changed:
                 _emit_tools()
+
+        # Collect MCP tool events for telemetry
+        if event_name in (
+            "toolcallstarted",
+            "toolcallcompleted",
+            "teamtoolcallstarted",
+            "teamtoolcallcompleted",
+        ):
+            metrics = getattr(chunk, "metrics", None)
+            # Tools inside chunk could be list or object, try to capture relevant info
+            tool_info = None
+            if tool is not None:
+                tool_info = {
+                    "name": _tool_id(tool),
+                    "type": getattr(tool, "type", "function"),
+                }
+            elif tools:
+                tool_info = [
+                    {"name": _tool_id(t), "type": getattr(t, "type", "function")}
+                    for t in tools
+                ]
+
+            event_data = {
+                "event": event_name,
+                "tool": tool_info,
+                "metrics": (
+                    metrics
+                    if isinstance(metrics, dict)
+                    else getattr(metrics, "__dict__", str(metrics)) if metrics else None
+                ),
+            }
+            mcp_telemetry_events.append(event_data)
 
         if not _content_allowed(event, event_name, run_event):
             return
@@ -289,4 +322,5 @@ def stream_agent_response(
             authoritative_response if authoritative_response is not None else response
         ),
         "tools": current_tools,
+        "mcp_events": mcp_telemetry_events,
     }

@@ -79,6 +79,59 @@ def test_load_agent_configs_accepts_optional_fields(tmp_path, monkeypatch):
     assert chat.get("memory_scope") == "session"
 
 
+def test_default_chat_config_includes_airbnb_mcp_stdio() -> None:
+    chat = agents_config._default_chat_config()
+    servers = chat.get("mcp_servers")
+    assert isinstance(servers, list)
+
+    airbnb = next((srv for srv in servers if srv.get("name") == "airbnb"), None)
+    assert isinstance(airbnb, dict)
+    assert airbnb.get("transport") == "stdio"
+    assert (
+        airbnb.get("command") == "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt"
+    )
+
+
+def test_load_agent_configs_merges_missing_default_mcp_servers(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "mcp_servers": [
+                    {
+                        "name": "agno-docs",
+                        "enabled": False,
+                        "transport": "streamable-http",
+                        "url": "https://docs.agno.com/mcp",
+                        "command": "",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    configs = agents_config.load_agent_configs()
+    servers = configs["chat"].get("mcp_servers")
+    assert isinstance(servers, list)
+    assert any(srv.get("name") == "airbnb" for srv in servers)
+    assert any(srv.get("name") == "agno-docs" for srv in servers)
+
+
 def test_load_agent_configs_accepts_mcp_servers(tmp_path, monkeypatch):
     data_dir = tmp_path / "data"
     templates_dir = tmp_path / "templates"
@@ -310,6 +363,49 @@ def test_load_agent_configs_stdio_without_command_is_auto_disabled(
     servers = configs["chat"].get("mcp_servers")
     assert isinstance(servers, list)
     assert servers[0]["enabled"] is False
+
+
+def test_load_agent_configs_rejects_invalid_allowed_tools(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+
+    # Test with wildcard/malformed tool name
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "mcp_servers": [
+                    {
+                        "name": "bad_tools",
+                        "transport": "sse",
+                        "url": "https://example.com/mcp",
+                        "allowed_tools": ["valid-tool", "invalid*tool", "valid_tool_2"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        agents_config.load_agent_configs()
+    except ValueError as exc:
+        assert "invalid tool name in allowed_tools" in str(exc)
+        assert "invalid*tool" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for invalid allowed_tools")
 
 
 def test_load_agent_configs_normalizes_instruction_lists(tmp_path, monkeypatch):

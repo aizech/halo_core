@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import asyncio
 import re
+import time
 from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from time import perf_counter
@@ -239,13 +240,16 @@ def _compose_run_trace(
             ]
 
     stream_result = "none"
+    mcp_events = []
     if streamed is not None:
         stream_result = "ok" if str(streamed.get("response") or "").strip() else "empty"
+        mcp_events = streamed.get("mcp_events", [])
 
     telemetry = {
         "model": _resolve_model_label(agent, turn.agent_config),
         "selected_members": trace.get("selected_member_ids") or [],
         "tools": trace.get("agent_tools_runtime") or [],
+        "mcp_events": mcp_events,
         "stream_mode": "stream",
         "stream_events": bool(turn.stream_events),
         "stream_result": stream_result,
@@ -302,6 +306,17 @@ def build_chat_payload(turn: ChatTurnInput) -> tuple[str, List[dict]]:
     return payload, contexts
 
 
+_MCP_CIRCUIT_BREAKER_FAILURES = {}
+_MCP_CIRCUIT_BREAKER_TIMEOUT_SECONDS = 300
+
+
+def _get_mcp_identifier(mcp_tool: object) -> str:
+    name = getattr(mcp_tool, "name", "")
+    url = getattr(mcp_tool, "url", "")
+    command = getattr(mcp_tool, "command", "")
+    return f"{name}|{url}|{command}"
+
+
 async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
     """Open connections for all MCP tools attached to the agent or team members."""
     stack = AsyncExitStack()
@@ -325,16 +340,78 @@ async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
 
     for mcp_tool in mcp_tools:
         if hasattr(mcp_tool, "__aenter__"):
+            identifier = _get_mcp_identifier(mcp_tool)
+            now = time.time()
+
+            # Check circuit breaker
+            breaker_state = _MCP_CIRCUIT_BREAKER_FAILURES.get(identifier)
+            if breaker_state:
+                failures, last_failure_time = breaker_state
+                if failures >= 3:
+                    if now - last_failure_time < _MCP_CIRCUIT_BREAKER_TIMEOUT_SECONDS:
+                        _LOGGER.warning(
+                            "MCP circuit breaker open for '%s' due to %d recent failures. Skipping connection.",
+                            getattr(mcp_tool, "name", "mcp"),
+                            failures,
+                        )
+                        continue
+                    else:
+                        # Reset breaker after timeout
+                        _LOGGER.info(
+                            "MCP circuit breaker timeout expired for '%s'. Retrying connection.",
+                            getattr(mcp_tool, "name", "mcp"),
+                        )
+                        _MCP_CIRCUIT_BREAKER_FAILURES.pop(identifier, None)
+
             try:
-                await stack.enter_async_context(mcp_tool)
+                # Basic retry logic for transient connection drops
+                max_retries = 2
+                for attempt in range(max_retries):
+                    try:
+                        await stack.enter_async_context(mcp_tool)
+                        break
+                    except asyncio.CancelledError as exc:
+                        _LOGGER.warning(
+                            "MCP lifecycle initialization cancelled for '%s': %s",
+                            getattr(mcp_tool, "name", "mcp"),
+                            exc,
+                        )
+                        raise
+                    except Exception as e:
+                        if attempt < max_retries - 1:
+                            _LOGGER.warning(
+                                "Transient failure connecting to MCP '%s': %s. Retrying...",
+                                getattr(mcp_tool, "name", "mcp"),
+                                e,
+                            )
+                            await asyncio.sleep(1)
+                        else:
+                            raise e
+
                 _LOGGER.info(
                     "MCP lifecycle opened for %s", getattr(mcp_tool, "name", "mcp")
                 )
+
+                # Reset breaker on success
+                if identifier in _MCP_CIRCUIT_BREAKER_FAILURES:
+                    _MCP_CIRCUIT_BREAKER_FAILURES.pop(identifier, None)
+
+            except asyncio.CancelledError:
+                _LOGGER.warning(
+                    "Skipping MCP lifecycle for %s due to cancellation",
+                    getattr(mcp_tool, "name", "mcp"),
+                )
+                failures, _ = _MCP_CIRCUIT_BREAKER_FAILURES.get(identifier, (0, 0))
+                _MCP_CIRCUIT_BREAKER_FAILURES[identifier] = (failures + 1, now)
+                continue
             except Exception:
                 _LOGGER.exception(
                     "Failed to open MCP lifecycle for %s",
                     getattr(mcp_tool, "name", "mcp"),
                 )
+                # Record failure
+                failures, _ = _MCP_CIRCUIT_BREAKER_FAILURES.get(identifier, (0, 0))
+                _MCP_CIRCUIT_BREAKER_FAILURES[identifier] = (failures + 1, now)
 
     return stack
 
@@ -363,33 +440,40 @@ async def stream_chat_response(
     Returns the RunCompleted/TeamRunCompleted event payload carrying the final
     response, or None on fallback/error.
     """
-    async with await _manage_mcp_lifecycle(agent):
-        try:
-            from services.streaming_adapter import stream_agent_events
-        except ImportError:
-            _LOGGER.warning("agno streaming adapter not found; falling back")
-            return None
-        try:
-            from agno.agent.events import RunEvent
-        except ImportError:
-            _LOGGER.warning("agno.agent.events.RunEvent not found; falling back")
-            return None
+    stack = await _manage_mcp_lifecycle(agent)
+    try:
+        async with stack:
+            try:
+                from services.streaming_adapter import stream_agent_response
+            except ImportError:
+                _LOGGER.warning("agno streaming adapter not found; falling back")
+                return None
+            try:
+                from agno.agent.events import RunEvent
+            except ImportError:
+                _LOGGER.warning(
+                    "agno.agent.events.RunEvent not found; continuing with generic event parsing"
+                )
+                RunEvent = None
 
-        if hasattr(agent, "run_sync"):
-            _LOGGER.warning("Agent %s is async; falling back", agent)
-            return None
+            if hasattr(agent, "run_sync"):
+                _LOGGER.warning("Agent %s is async; falling back", agent)
+                return None
 
-        return stream_agent_events(
-            agent,
-            payload,
-            images=turn.images,
-            stream_events=turn.stream_events,
-            run_event=RunEvent,
-            logger=_LOGGER,
-            log_stream_events=turn.log_stream_events,
-            on_response=turn.on_response,
-            on_tools=turn.on_tools,
-        )
+            return stream_agent_response(
+                agent,
+                payload,
+                images=turn.images,
+                stream_events=turn.stream_events,
+                run_event=RunEvent,
+                logger=_LOGGER,
+                log_stream_events=turn.log_stream_events,
+                on_response=turn.on_response,
+                on_tools=turn.on_tools,
+            )
+    except asyncio.CancelledError as exc:
+        _LOGGER.warning("MCP streaming cancelled; falling back: %s", exc)
+        return None
 
 
 def _fallback_reply(turn: ChatTurnInput, contexts: List[dict]) -> str:
@@ -424,6 +508,9 @@ def run_chat_turn(turn: ChatTurnInput) -> ChatTurnResult:
 
     try:
         streamed = asyncio.run(stream_chat_response(agent, payload, turn))
+    except asyncio.CancelledError as exc:
+        _LOGGER.warning("Chat stream cancelled; using fallback reply: %s", exc)
+        streamed = None
     except Exception:
         _LOGGER.exception("Error during chat stream execution")
         streamed = None

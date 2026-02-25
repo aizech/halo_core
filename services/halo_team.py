@@ -131,6 +131,19 @@ def build_master_team_from_config(
         logger=_LOGGER,
     )
     tools.extend(build_mcp_tools(master_config.get("mcp_servers"), logger=_LOGGER))
+
+    active_master_mcp_names: List[str] = []
+    master_mcp_servers = master_config.get("mcp_servers")
+    if isinstance(master_mcp_servers, list):
+        for server in master_mcp_servers:
+            if not isinstance(server, dict):
+                continue
+            if not bool(server.get("enabled", False)):
+                continue
+            name = str(server.get("name") or "").strip()
+            if name:
+                active_master_mcp_names.append(name)
+
     if ReasoningTools is not None:
         tools = [ReasoningTools(add_instructions=True), *tools]
 
@@ -139,6 +152,10 @@ def build_master_team_from_config(
         master_config.get("name") or master_config.get("id") or "HALO Master",
         selected_member_ids,
         model_id,
+    )
+    _LOGGER.info(
+        "Active MCP servers for chat turn: %s",
+        active_master_mcp_names or ["none"],
     )
 
     db = get_agent_db()

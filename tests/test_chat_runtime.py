@@ -256,6 +256,73 @@ def test_mcp_lifecycle_management_exception(monkeypatch):
     assert mcp1.exited is True
 
 
+def test_mcp_circuit_breaker_logic(monkeypatch):
+    """Test that repeatedly failing MCP servers trigger the circuit breaker."""
+    import asyncio
+    import time
+    from services import chat_runtime
+
+    # Reset breaker state for test isolation
+    chat_runtime._MCP_CIRCUIT_BREAKER_FAILURES.clear()
+
+    class FailingMCPTool:
+        def __init__(self, name):
+            self.name = name
+            self.attempts = 0
+
+        async def __aenter__(self):
+            self.attempts += 1
+            raise ConnectionError("Simulated connection failure")
+
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            return False
+
+    mcp_fail = FailingMCPTool("failing_server")
+    mcp_fail.__class__.__name__ = "MCPTools"
+
+    class FakeTeam:
+        tools = [mcp_fail]
+
+    agent = FakeTeam()
+
+    async def run_test():
+        # Attempt 1: fails, sets failures=1
+        async with await chat_runtime._manage_mcp_lifecycle(agent):
+            pass
+
+        # Attempt 2: fails, sets failures=2
+        async with await chat_runtime._manage_mcp_lifecycle(agent):
+            pass
+
+        # Attempt 3: fails, sets failures=3
+        async with await chat_runtime._manage_mcp_lifecycle(agent):
+            pass
+
+        # Total attempts so far = 3 attempts * 2 retries each = 6 attempts
+        assert mcp_fail.attempts == 6
+
+        # Attempt 4: circuit breaker is open, should skip connection attempt entirely
+        async with await chat_runtime._manage_mcp_lifecycle(agent):
+            pass
+
+        # Attempts remain 6, proving circuit breaker skipped it
+        assert mcp_fail.attempts == 6
+
+        # Simulate time passing to trigger circuit breaker reset
+        base_time = time.time()
+        monkeypatch.setattr(time, "time", lambda: base_time + 301)
+
+        # Attempt 5: breaker expired, should try again
+        async with await chat_runtime._manage_mcp_lifecycle(agent):
+            pass
+
+        # Attempts went up by 2 (the standard retries)
+        assert mcp_fail.attempts == 8
+
+    asyncio.run(run_test())
+    chat_runtime._MCP_CIRCUIT_BREAKER_FAILURES.clear()
+
+
 def test_run_chat_turn_fallback_on_none_stream(monkeypatch):
     """run_chat_turn uses fallback when stream_chat_response returns None."""
     turn = ChatTurnInput(

@@ -141,6 +141,34 @@ def _normalize_instructions(value: object) -> str:
     return str(value or "").strip()
 
 
+def _merge_mcp_servers(
+    defaults: List[Dict[str, Any]], configured: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Merge MCP server lists by name, keeping configured entries authoritative."""
+    merged: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for server in configured:
+        if not isinstance(server, dict):
+            continue
+        name = str(server.get("name") or "").strip().lower()
+        if name:
+            seen.add(name)
+        merged.append(server)
+
+    for server in defaults:
+        if not isinstance(server, dict):
+            continue
+        name = str(server.get("name") or "").strip().lower()
+        if name and name in seen:
+            continue
+        if name:
+            seen.add(name)
+        merged.append(server)
+
+    return merged
+
+
 def _validate_agent_config(payload: Dict[str, object], path: Path) -> Dict[str, object]:
     try:
         validated = AgentConfig.model_validate(payload)
@@ -324,6 +352,15 @@ def load_agent_configs() -> Dict[str, Dict[str, object]]:
         defaults = defaults_by_id.get(agent_id)
         if isinstance(defaults, dict):
             merged = {**defaults, **payload, "id": agent_id}
+            default_mcp_servers = defaults.get("mcp_servers")
+            payload_mcp_servers = payload.get("mcp_servers")
+            if isinstance(default_mcp_servers, list) and isinstance(
+                payload_mcp_servers, list
+            ):
+                merged["mcp_servers"] = _merge_mcp_servers(
+                    default_mcp_servers,
+                    payload_mcp_servers,
+                )
             merged = _validate_agent_config(merged, path)
             if merged != payload:
                 save_agent_config(agent_id, merged)
