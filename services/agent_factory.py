@@ -315,17 +315,21 @@ def build_mcp_tools(
             if transport_raw in {"", "http", "streamable-http"}
             else transport_raw
         )
-        if transport != "streamable-http":
+        if transport not in {"streamable-http", "sse", "stdio"}:
             logger.warning(
-                "MCP server '%s' skipped: unsupported transport for phase-1: %s",
+                "MCP server '%s' skipped: unsupported transport: %s",
                 server_name,
                 transport,
             )
             continue
 
         url = str(item.get("url") or "").strip()
-        if not url:
+        command = str(item.get("command") or "").strip()
+        if transport in {"streamable-http", "sse"} and not url:
             logger.warning("MCP server '%s' skipped: missing url", server_name)
+            continue
+        if transport == "stdio" and not command:
+            logger.warning("MCP server '%s' skipped: missing command", server_name)
             continue
 
         allowed_tools_raw = item.get("allowed_tools", [])
@@ -339,34 +343,38 @@ def build_mcp_tools(
             else []
         )
 
-        kwargs = {
-            "transport": transport,
-            "url": url,
-        }
+        kwargs = {"transport": transport}
+        if transport in {"streamable-http", "sse"}:
+            kwargs["url"] = url
+        if transport == "stdio":
+            kwargs["command"] = command
         if allowed_tools:
             kwargs["tools"] = allowed_tools
 
         try:
             tools.append(MCPTools(**kwargs))
             logger.info(
-                "MCP server '%s' attached (transport=%s, url=%s)",
+                "MCP server '%s' attached (transport=%s)",
                 server_name,
                 transport,
-                url,
             )
         except TypeError:
             logger.warning("MCPTools signature mismatch; retrying without tool filter")
             try:
-                tools.append(MCPTools(transport=transport, url=url))
+                if transport in {"streamable-http", "sse"}:
+                    tools.append(MCPTools(transport=transport, url=url))
+                else:
+                    tools.append(MCPTools(command=command))
                 logger.info(
-                    "MCP server '%s' attached without tool filter (transport=%s, url=%s)",
+                    "MCP server '%s' attached without tool filter (transport=%s)",
                     server_name,
                     transport,
-                    url,
                 )
             except Exception:
-                logger.exception("Failed to build MCPTools for url=%s", url)
+                logger.exception(
+                    "Failed to build MCPTools for server '%s'", server_name
+                )
         except Exception:
-            logger.exception("Failed to build MCPTools for url=%s", url)
+            logger.exception("Failed to build MCPTools for server '%s'", server_name)
 
     return tools

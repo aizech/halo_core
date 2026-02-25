@@ -176,7 +176,7 @@ def test_load_agent_configs_rejects_invalid_mcp_transport(tmp_path, monkeypatch)
                 "mcp_servers": [
                     {
                         "name": "bad",
-                        "transport": "stdio",
+                        "transport": "gopher",
                         "url": "https://example.com/mcp",
                     }
                 ],
@@ -191,6 +191,125 @@ def test_load_agent_configs_rejects_invalid_mcp_transport(tmp_path, monkeypatch)
         assert "mcp_servers.transport" in str(exc)
     else:
         raise AssertionError("Expected ValueError for invalid mcp_servers transport")
+
+
+def test_load_agent_configs_accepts_sse_mcp_server(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "mcp_servers": [
+                    {
+                        "name": "events",
+                        "transport": "sse",
+                        "url": "https://events.example.com/mcp",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    configs = agents_config.load_agent_configs()
+    servers = configs["chat"].get("mcp_servers")
+    assert isinstance(servers, list)
+    assert servers[0]["transport"] == "sse"
+    assert servers[0]["enabled"] is True
+
+
+def test_load_agent_configs_accepts_stdio_mcp_server(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "mcp_servers": [
+                    {
+                        "name": "airbnb",
+                        "transport": "stdio",
+                        "command": "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    configs = agents_config.load_agent_configs()
+    servers = configs["chat"].get("mcp_servers")
+    assert isinstance(servers, list)
+    assert servers[0]["transport"] == "stdio"
+    assert (
+        servers[0]["command"] == "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt"
+    )
+    assert servers[0]["enabled"] is True
+
+
+def test_load_agent_configs_stdio_without_command_is_auto_disabled(
+    tmp_path, monkeypatch
+):
+    data_dir = tmp_path / "data"
+    templates_dir = tmp_path / "templates"
+    data_dir.mkdir()
+    templates_dir.mkdir()
+    (templates_dir / "studio_templates.json").write_text(
+        json.dumps({"templates": []}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(agents_config._SETTINGS, "data_dir", data_dir)
+    monkeypatch.setattr(agents_config._SETTINGS, "templates_dir", templates_dir)
+
+    agent_dir = data_dir / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "chat.json").write_text(
+        json.dumps(
+            {
+                "id": "chat",
+                "name": "HALO Master",
+                "mcp_servers": [
+                    {
+                        "name": "empty-stdio",
+                        "transport": "stdio",
+                        "enabled": True,
+                        "command": "",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    configs = agents_config.load_agent_configs()
+    servers = configs["chat"].get("mcp_servers")
+    assert isinstance(servers, list)
+    assert servers[0]["enabled"] is False
 
 
 def test_load_agent_configs_normalizes_instruction_lists(tmp_path, monkeypatch):

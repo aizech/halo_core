@@ -255,9 +255,87 @@ def test_build_mcp_tools_skips_unsupported_transport(monkeypatch):
     tools = agent_factory.build_mcp_tools(
         [
             {
-                "name": "stdio_server",
-                "transport": "stdio",
+                "name": "bad_server",
+                "transport": "gopher",
                 "url": "http://ignored.example",
+            }
+        ],
+        logger=logging.getLogger(__name__),
+    )
+
+    assert tools == []
+
+
+def test_build_mcp_tools_includes_sse_server(monkeypatch):
+    class DummyMCPTools:
+        def __init__(self, transport=None, url=None, command=None, tools=None):
+            self.transport = transport
+            self.url = url
+            self.command = command
+            self.tools = tools
+
+    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+
+    tools = agent_factory.build_mcp_tools(
+        [
+            {
+                "name": "events",
+                "transport": "sse",
+                "url": "https://events.example.com/mcp",
+            }
+        ],
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyMCPTools)
+    assert tools[0].transport == "sse"
+    assert tools[0].url == "https://events.example.com/mcp"
+
+
+def test_build_mcp_tools_includes_stdio_server(monkeypatch):
+    class DummyMCPTools:
+        def __init__(self, transport=None, url=None, command=None, tools=None):
+            self.transport = transport
+            self.url = url
+            self.command = command
+            self.tools = tools
+
+    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+
+    tools = agent_factory.build_mcp_tools(
+        [
+            {
+                "name": "airbnb",
+                "transport": "stdio",
+                "command": "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt",
+            }
+        ],
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyMCPTools)
+    assert tools[0].transport == "stdio"
+    assert tools[0].command == "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt"
+
+
+def test_build_mcp_tools_skips_stdio_server_without_command(monkeypatch):
+    class DummyMCPTools:
+        def __init__(self, transport=None, url=None, command=None, tools=None):
+            self.transport = transport
+            self.url = url
+            self.command = command
+            self.tools = tools
+
+    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+
+    tools = agent_factory.build_mcp_tools(
+        [
+            {
+                "name": "airbnb",
+                "transport": "stdio",
+                "command": "",
             }
         ],
         logger=logging.getLogger(__name__),

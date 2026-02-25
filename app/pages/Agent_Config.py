@@ -123,6 +123,7 @@ def render_agent_config_page() -> None:
 
     # Render each server
     servers_to_remove = []
+    transport_options = ["streamable-http", "sse", "stdio"]
     for idx, server in enumerate(servers_to_edit):
         if not isinstance(server, dict):
             continue
@@ -153,26 +154,46 @@ def render_agent_config_page() -> None:
                 ):
                     servers_to_remove.append(idx)
 
-            # URL field
-            url_val = str(server.get("url", ""))
-            new_url = st.text_input(
-                "URL (streamable-http)",
-                value=url_val,
-                key=f"mcp_url_{idx}_{selected_id}",
-                placeholder="https://docs.agno.com/mcp",
-                help="HTTP endpoint for MCP server (phase-1 supports streamable-http only)",
-            )
-            servers_to_edit[idx]["url"] = new_url
+            # Transport selector
+            current_transport = str(server.get("transport", "streamable-http")).strip()
+            if current_transport not in transport_options:
+                current_transport = "streamable-http"
 
-            # Command field (for reference, not used in phase-1)
-            cmd_val = str(server.get("command", ""))
-            st.text_input(
-                "Command (stdio, not yet supported)",
-                value=cmd_val,
-                key=f"mcp_cmd_{idx}_{selected_id}",
-                disabled=True,
-                help="Command for stdio-based MCP servers (phase-2 feature)",
+            new_transport = st.selectbox(
+                "Transport",
+                options=transport_options,
+                index=transport_options.index(current_transport),
+                key=f"mcp_transport_{idx}_{selected_id}",
+                help="Choose communication protocol for the MCP server.",
             )
+            servers_to_edit[idx]["transport"] = new_transport
+
+            if new_transport in {"streamable-http", "sse"}:
+                # URL field
+                url_val = str(server.get("url", ""))
+                new_url = st.text_input(
+                    f"URL ({new_transport})",
+                    value=url_val,
+                    key=f"mcp_url_{idx}_{selected_id}",
+                    placeholder="https://...",
+                    help="HTTP endpoint for the MCP server",
+                )
+                servers_to_edit[idx]["url"] = new_url
+                if "command" in servers_to_edit[idx]:
+                    servers_to_edit[idx]["command"] = ""
+            else:
+                # Command field
+                cmd_val = str(server.get("command", ""))
+                new_cmd = st.text_input(
+                    "Command (stdio)",
+                    value=cmd_val,
+                    key=f"mcp_cmd_{idx}_{selected_id}",
+                    placeholder="npx -y @openbnb/mcp-server-airbnb",
+                    help="Command to run the stdio MCP server process locally",
+                )
+                servers_to_edit[idx]["command"] = new_cmd
+                if "url" in servers_to_edit[idx]:
+                    servers_to_edit[idx]["url"] = ""
 
             st.divider()
 

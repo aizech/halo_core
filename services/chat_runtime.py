@@ -7,13 +7,14 @@ Keeps Streamlit rendering concerns out of the business logic.
 from __future__ import annotations
 
 import logging
+import asyncio
 import re
+from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from time import perf_counter
 from typing import Callable, Dict, List
 
 from services import agents, pipelines, retrieval
-from services.streaming_adapter import stream_agent_response
 
 try:
     from agno.agent import RunEvent
@@ -301,6 +302,43 @@ def build_chat_payload(turn: ChatTurnInput) -> tuple[str, List[dict]]:
     return payload, contexts
 
 
+async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
+    """Open connections for all MCP tools attached to the agent or team members."""
+    stack = AsyncExitStack()
+    tools_to_open = []
+
+    # Collect tools from master agent
+    if hasattr(agent, "tools"):
+        tools_to_open.extend(getattr(agent, "tools") or [])
+
+    # Collect tools from team members if applicable
+    if hasattr(agent, "members"):
+        for member in getattr(agent, "members") or []:
+            if hasattr(member, "tools"):
+                tools_to_open.extend(getattr(member, "tools") or [])
+
+    # Filter for MCPTools only
+    mcp_tools = []
+    for t in tools_to_open:
+        if type(t).__name__ == "MCPTools":
+            mcp_tools.append(t)
+
+    for mcp_tool in mcp_tools:
+        if hasattr(mcp_tool, "__aenter__"):
+            try:
+                await stack.enter_async_context(mcp_tool)
+                _LOGGER.info(
+                    "MCP lifecycle opened for %s", getattr(mcp_tool, "name", "mcp")
+                )
+            except Exception:
+                _LOGGER.exception(
+                    "Failed to open MCP lifecycle for %s",
+                    getattr(mcp_tool, "name", "mcp"),
+                )
+
+    return stack
+
+
 def create_chat_agent(turn: ChatTurnInput):
     """Create the chat agent/team, with fallback on TypeError."""
     try:
@@ -317,23 +355,41 @@ def create_chat_agent(turn: ChatTurnInput):
         return agents.build_chat_agent(turn.agent_config)
 
 
-def stream_chat_response(
-    agent,
-    payload: str,
-    turn: ChatTurnInput,
+async def stream_chat_response(
+    agent: object, payload: str, turn: ChatTurnInput
 ) -> Dict[str, object] | None:
-    """Run the streaming adapter and return the raw result dict."""
-    return stream_agent_response(
-        agent,
-        payload,
-        images=turn.images,
-        stream_events=turn.stream_events,
-        run_event=RunEvent,
-        logger=_LOGGER,
-        log_stream_events=turn.log_stream_events,
-        on_response=turn.on_response,
-        on_tools=turn.on_tools,
-    )
+    """Stream response from the agent and return the stream outcome.
+
+    Returns the RunCompleted/TeamRunCompleted event payload carrying the final
+    response, or None on fallback/error.
+    """
+    async with await _manage_mcp_lifecycle(agent):
+        try:
+            from services.streaming_adapter import stream_agent_events
+        except ImportError:
+            _LOGGER.warning("agno streaming adapter not found; falling back")
+            return None
+        try:
+            from agno.agent.events import RunEvent
+        except ImportError:
+            _LOGGER.warning("agno.agent.events.RunEvent not found; falling back")
+            return None
+
+        if hasattr(agent, "run_sync"):
+            _LOGGER.warning("Agent %s is async; falling back", agent)
+            return None
+
+        return stream_agent_events(
+            agent,
+            payload,
+            images=turn.images,
+            stream_events=turn.stream_events,
+            run_event=RunEvent,
+            logger=_LOGGER,
+            log_stream_events=turn.log_stream_events,
+            on_response=turn.on_response,
+            on_tools=turn.on_tools,
+        )
 
 
 def _fallback_reply(turn: ChatTurnInput, contexts: List[dict]) -> str:
@@ -361,11 +417,16 @@ def run_chat_turn(turn: ChatTurnInput) -> ChatTurnResult:
     This is the main entry point for chat orchestration.  It is free of
     Streamlit imports so it can be unit-tested independently.
     """
+
     started_at = perf_counter()
     payload, contexts = build_chat_payload(turn)
     agent = create_chat_agent(turn)
 
-    streamed = stream_chat_response(agent, payload, turn)
+    try:
+        streamed = asyncio.run(stream_chat_response(agent, payload, turn))
+    except Exception:
+        _LOGGER.exception("Error during chat stream execution")
+        streamed = None
 
     if streamed is None:
         response = _fallback_reply(turn, contexts)

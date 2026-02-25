@@ -84,23 +84,34 @@ class AgentConfig(BaseModel):
             enabled = bool(normalized.get("enabled", True))
             normalized["enabled"] = enabled
 
-            transport_raw = str(
-                normalized.get("transport") or "streamable-http"
-            ).strip()
-            transport = (
-                "streamable-http"
-                if transport_raw.lower() in {"", "http", "streamable-http"}
-                else transport_raw
+            transport_raw = (
+                str(normalized.get("transport") or "streamable-http").strip().lower()
             )
-            if transport != "streamable-http":
-                raise ValueError("mcp_servers.transport must be streamable-http")
+            transport_aliases = {
+                "": "streamable-http",
+                "http": "streamable-http",
+                "streamable-http": "streamable-http",
+                "sse": "sse",
+                "stdio": "stdio",
+            }
+            transport = transport_aliases.get(transport_raw, transport_raw)
+            if transport not in {"streamable-http", "sse", "stdio"}:
+                raise ValueError(
+                    "mcp_servers.transport must be one of streamable-http, sse, stdio"
+                )
             normalized["transport"] = transport
 
             url = str(normalized.get("url") or "").strip()
-            if enabled and not url:
-                # Auto-disable servers without URL instead of failing
-                normalized["enabled"] = False
+            command = str(normalized.get("command") or "").strip()
             normalized["url"] = url
+            normalized["command"] = command
+
+            if transport in {"streamable-http", "sse"} and enabled and not url:
+                # Auto-disable URL-based servers without URL instead of failing startup.
+                normalized["enabled"] = False
+            if transport == "stdio" and enabled and not command:
+                # Auto-disable command-based servers without command instead of failing startup.
+                normalized["enabled"] = False
 
             allowed_tools = normalized.get("allowed_tools", [])
             if not isinstance(allowed_tools, list) or any(
