@@ -29,12 +29,12 @@ def _parse_lines(raw: str) -> List[str]:
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
 
-def render_agent_config_page() -> None:
-    main._init_state()
-    main.render_sidebar()
-    st.title("Agent Config")
-    st.caption("Manage per-agent configuration files.")
-
+def _render_mcp_servers_ui(
+    selected_id: str,
+    current: Dict[str, object],
+    is_admin: bool,
+) -> List[Dict[str, object]]:
+    """Renders the MCP Servers UI and returns the updated server list."""
     try:
         configs = _load_configs()
     except ValueError as exc:
@@ -106,6 +106,16 @@ def render_agent_config_page() -> None:
     st.subheader("MCP Servers")
     st.caption("Model Context Protocol servers for extended tool capabilities.")
 
+    # Check admin role
+    is_admin = bool(
+        st.session_state.get("is_admin", True)
+    )  # default True for testing/development
+
+    if not is_admin:
+        st.info(
+            "ℹ️ MCP Server configuration requires administrative privileges. You can view the current setup below."
+        )
+
     mcp_servers = list(current.get("mcp_servers", []))
     if not isinstance(mcp_servers, list):
         mcp_servers = []
@@ -145,12 +155,17 @@ def render_agent_config_page() -> None:
                     "Enabled",
                     value=bool(server.get("enabled", False)),
                     key=f"mcp_enabled_{idx}_{selected_id}",
+                    disabled=not is_admin,
                 )
-                servers_to_edit[idx]["enabled"] = enabled
+                if is_admin:
+                    servers_to_edit[idx]["enabled"] = enabled
 
             with col_remove:
                 if st.button(
-                    "🗑️", key=f"mcp_remove_{idx}_{selected_id}", help="Remove server"
+                    "🗑️",
+                    key=f"mcp_remove_{idx}_{selected_id}",
+                    help="Remove server",
+                    disabled=not is_admin,
                 ):
                     servers_to_remove.append(idx)
 
@@ -165,8 +180,10 @@ def render_agent_config_page() -> None:
                 index=transport_options.index(current_transport),
                 key=f"mcp_transport_{idx}_{selected_id}",
                 help="Choose communication protocol for the MCP server.",
+                disabled=not is_admin,
             )
-            servers_to_edit[idx]["transport"] = new_transport
+            if is_admin:
+                servers_to_edit[idx]["transport"] = new_transport
 
             if new_transport in {"streamable-http", "sse"}:
                 # URL field
@@ -177,10 +194,12 @@ def render_agent_config_page() -> None:
                     key=f"mcp_url_{idx}_{selected_id}",
                     placeholder="https://...",
                     help="HTTP endpoint for the MCP server",
+                    disabled=not is_admin,
                 )
-                servers_to_edit[idx]["url"] = new_url
-                if "command" in servers_to_edit[idx]:
-                    servers_to_edit[idx]["command"] = ""
+                if is_admin:
+                    servers_to_edit[idx]["url"] = new_url
+                    if "command" in servers_to_edit[idx]:
+                        servers_to_edit[idx]["command"] = ""
             else:
                 # Command field
                 cmd_val = str(server.get("command", ""))
@@ -190,47 +209,88 @@ def render_agent_config_page() -> None:
                     key=f"mcp_cmd_{idx}_{selected_id}",
                     placeholder="npx -y @openbnb/mcp-server-airbnb",
                     help="Command to run the stdio MCP server process locally",
+                    disabled=not is_admin,
                 )
-                servers_to_edit[idx]["command"] = new_cmd
-                if "url" in servers_to_edit[idx]:
-                    servers_to_edit[idx]["url"] = ""
+                if is_admin:
+                    servers_to_edit[idx]["command"] = new_cmd
+                    if "url" in servers_to_edit[idx]:
+                        servers_to_edit[idx]["url"] = ""
 
             st.divider()
 
     # Remove marked servers
-    for idx in sorted(servers_to_remove, reverse=True):
-        if 0 <= idx < len(servers_to_edit):
-            servers_to_edit.pop(idx)
+    if is_admin:
+        for idx in sorted(servers_to_remove, reverse=True):
+            if 0 <= idx < len(servers_to_edit):
+                servers_to_edit.pop(idx)
 
     # Add server button
     col_add, col_example = st.columns([1, 2])
     with col_add:
-        if st.button("➕ Add MCP Server", key=f"mcp_add_{selected_id}"):
-            servers_to_edit.append(
-                {
-                    "name": f"server-{len(servers_to_edit) + 1}",
-                    "enabled": False,
-                    "transport": "streamable-http",
-                    "url": "",
-                    "command": "",
-                }
-            )
+        if st.button(
+            "➕ Add MCP Server", key=f"mcp_add_{selected_id}", disabled=not is_admin
+        ):
+            if is_admin:
+                servers_to_edit.append(
+                    {
+                        "name": f"new-mcp-server-{len(servers_to_edit)+1}",
+                        "enabled": False,
+                        "url": "https://...",
+                        "transport": "streamable-http",
+                    }
+                )
 
     with col_example:
         if st.button(
             "➕ Add Agno Docs MCP",
             key=f"mcp_add_agno_{selected_id}",
             help="Add public Agno documentation MCP server",
+            disabled=not is_admin,
         ):
-            servers_to_edit.append(
-                {
-                    "name": "agno-docs",
-                    "enabled": False,
-                    "transport": "streamable-http",
-                    "url": "https://docs.agno.com/mcp",
-                    "command": "",
-                }
-            )
+            if is_admin:
+                servers_to_edit.append(
+                    {
+                        "name": "agno-docs",
+                        "enabled": False,
+                        "transport": "streamable-http",
+                        "url": "https://docs.agno.com/mcp",
+                        "command": "",
+                    }
+                )
+                
+        if st.button(
+            "➕ Add SQLite MCP",
+            key=f"mcp_add_sqlite_{selected_id}",
+            help="Add official SQLite MCP Server via npx",
+            disabled=not is_admin,
+        ):
+            if is_admin:
+                servers_to_edit.append(
+                    {
+                        "name": "sqlite",
+                        "enabled": False,
+                        "transport": "stdio",
+                        "url": "",
+                        "command": 'npx -y @modelcontextprotocol/server-sqlite --db "c:\\temp\\test.db"',
+                    }
+                )
+                
+        if st.button(
+            "➕ Add File System MCP",
+            key=f"mcp_add_fs_{selected_id}",
+            help="Add official File System MCP Server via npx",
+            disabled=not is_admin,
+        ):
+            if is_admin:
+                servers_to_edit.append(
+                    {
+                        "name": "filesystem",
+                        "enabled": False,
+                        "transport": "stdio",
+                        "url": "",
+                        "command": 'npx -y @modelcontextprotocol/server-filesystem "c:\\temp"',
+                    }
+                )
 
     # Update session state
     st.session_state[mcp_key] = servers_to_edit
@@ -429,35 +489,47 @@ def render_agent_config_page() -> None:
             "YFinance Analystenempfehlungen aktiv",
             value=bool(yfinance_settings.get("analyst_recommendations", True)),
         )
-
-    st.subheader("Routing & Runtime")
-    model = st.text_input("Model override", value=str(current.get("model", "")))
-    memory_scope = st.text_input(
-        "Memory scope", value=str(current.get("memory_scope", ""))
-    )
-    coordination_options = [
-        "",
-        "direct_only",
-        "delegate_on_complexity",
-        "always_delegate",
-        "coordinated_rag",
-    ]
-    current_mode = str(current.get("coordination_mode", ""))
-    if current_mode not in coordination_options:
-        coordination_options.append(current_mode)
-    coordination_mode = st.selectbox(
-        "Coordination mode",
-        options=coordination_options,
-        index=coordination_options.index(current_mode),
-        help="Controls how the master agent delegates to team members.",
-    )
-    stream_events = st.checkbox(
-        "Stream events", value=bool(current.get("stream_events", True))
-    )
+    with tab_advanced:
+        _render_mcp_servers_ui(f"adv_{selected_id}", current, is_admin)
+        
+        st.subheader("Routing & Runtime")
+        model = st.text_input("Model override", value=str(current.get("model", "")))
+        memory_scope = st.text_input(
+            "Memory scope", value=str(current.get("memory_scope", ""))
+        )
+        coordination_options = [
+            "",
+            "direct_only",
+            "delegate_on_complexity",
+            "always_delegate",
+            "coordinated_rag",
+        ]
+        current_mode = str(current.get("coordination_mode", ""))
+        if current_mode not in coordination_options:
+            coordination_options.append(current_mode)
+        coordination_mode = st.selectbox(
+            "Coordination mode",
+            options=coordination_options,
+            index=coordination_options.index(current_mode),
+            help="Controls how the master agent delegates to team members.",
+        )
+        stream_events = st.checkbox(
+            "Stream events", value=bool(current.get("stream_events", True))
+        )
 
     if st.button("Save configuration", type="primary"):
         # Get MCP servers from session state
+        # Try both UI keys, prefer whichever has elements
+        mcp_key = f"mcp_servers_{selected_id}"
         mcp_servers_to_save = st.session_state.get(mcp_key, [])
+        
+        adv_mcp_key = f"mcp_servers_adv_{selected_id}"
+        adv_mcp_servers = st.session_state.get(adv_mcp_key, [])
+        
+        # If advanced tab has more up to date info (it usually stays in sync via current config)
+        if len(adv_mcp_servers) > len(mcp_servers_to_save):
+            mcp_servers_to_save = adv_mcp_servers
+            
         if not isinstance(mcp_servers_to_save, list):
             mcp_servers_to_save = []
 
@@ -543,4 +615,4 @@ def render_agent_config_page() -> None:
 
 
 if __name__ == "__main__":
-    render_agent_config_page()
+    render()

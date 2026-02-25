@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -51,7 +52,7 @@ class AgentConfig(BaseModel):
 
     @field_validator("mcp_servers", mode="before")
     @classmethod
-    def _validate_mcp_servers(cls, value: object) -> List[Dict[str, Any]]:
+    def _validate_allowed_tool_name(cls, value: object) -> List[Dict[str, Any]]:
         if not isinstance(value, list):
             raise ValueError("must be a list")
 
@@ -114,13 +115,20 @@ class AgentConfig(BaseModel):
                 normalized["enabled"] = False
 
             allowed_tools = normalized.get("allowed_tools", [])
-            if not isinstance(allowed_tools, list) or any(
-                not isinstance(tool, str) for tool in allowed_tools
-            ):
+            if not isinstance(allowed_tools, list):
                 raise ValueError("mcp_servers.allowed_tools must be a list of strings")
-            normalized["allowed_tools"] = [
-                tool.strip() for tool in allowed_tools if tool.strip()
-            ]
+
+            validated_tools = []
+            for tool in allowed_tools:
+                tool_str = str(tool).strip()
+                if not tool_str:
+                    continue
+                # Enforce alphanumeric, dashes, underscores only to prevent malformed or wildcard strings
+                if not re.match(r"^[a-zA-Z0-9_-]+$", tool_str):
+                    raise ValueError(f"invalid tool name in allowed_tools: {tool_str}")
+                validated_tools.append(tool_str)
+
+            normalized["allowed_tools"] = validated_tools
 
             validated.append(normalized)
 
@@ -156,10 +164,31 @@ DEFAULT_MCP_SERVERS = [
     {
         "name": "airbnb",
         "enabled": False,
-        "transport": "streamable-http",
+        "transport": "stdio",
         "url": "",
         "command": "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt",
-    }
+    },
+    {
+        "name": "agno-docs",
+        "enabled": False,
+        "transport": "streamable-http",
+        "url": "https://docs.agno.com/mcp",
+        "command": "",
+    },
+    {
+        "name": "sqlite",
+        "enabled": False,
+        "transport": "stdio",
+        "url": "",
+        "command": 'npx -y @modelcontextprotocol/server-sqlite --db "c:\\temp\\test.db"',
+    },
+    {
+        "name": "filesystem",
+        "enabled": False,
+        "transport": "stdio",
+        "url": "",
+        "command": 'npx -y @modelcontextprotocol/server-filesystem "c:\\temp"',
+    },
 ]
 
 
