@@ -69,6 +69,7 @@ def _render_mcp_servers_ui(
         "pubmed": "PubMed Suche",
         "websearch": "Web Search",
         "youtube": "YouTube",
+        "youtube_transcript": "YouTube Transkript",
         "duckduckgo": "DuckDuckGo Suche",
         "arxiv": "arXiv Papers",
         "website": "Website Inhalte",
@@ -385,6 +386,24 @@ def _render_mcp_servers_ui(
             "YouTube Timestamps aktiv",
             value=bool(youtube_settings.get("fetch_timestamps", False)),
         )
+    if "youtube_transcript" in selected_tools:
+        youtube_transcript_settings = (
+            tool_settings.get("youtube_transcript", {})
+            if isinstance(tool_settings.get("youtube_transcript"), dict)
+            else {}
+        )
+        youtube_transcript_fetch_captions = st.checkbox(
+            "YouTube Transkript: Captions aktiv",
+            value=bool(youtube_transcript_settings.get("fetch_captions", True)),
+        )
+        youtube_transcript_fetch_video_info = st.checkbox(
+            "YouTube Transkript: Video-Infos aktiv",
+            value=bool(youtube_transcript_settings.get("fetch_video_info", False)),
+        )
+        youtube_transcript_fetch_timestamps = st.checkbox(
+            "YouTube Transkript: Timestamps aktiv",
+            value=bool(youtube_transcript_settings.get("fetch_timestamps", True)),
+        )
     if "duckduckgo" in selected_tools:
         duckduckgo_settings = (
             tool_settings.get("duckduckgo", {})
@@ -562,6 +581,12 @@ def _render_mcp_servers_ui(
                 "fetch_captions": youtube_fetch_captions,
                 "fetch_video_info": youtube_fetch_video_info,
                 "fetch_timestamps": youtube_fetch_timestamps,
+            }
+        if "youtube_transcript" in selected_tools:
+            updated_tool_settings["youtube_transcript"] = {
+                "fetch_captions": youtube_transcript_fetch_captions,
+                "fetch_video_info": youtube_transcript_fetch_video_info,
+                "fetch_timestamps": youtube_transcript_fetch_timestamps,
             }
         if "duckduckgo" in selected_tools:
             updated_tool_settings["duckduckgo"] = {

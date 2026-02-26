@@ -49,13 +49,15 @@ def test_build_tools_includes_youtube_with_settings(monkeypatch):
     class DummyYouTubeTools:
         def __init__(
             self,
-            fetch_captions=True,
-            fetch_video_info=True,
-            fetch_timestamps=False,
+            enable_get_video_captions=True,
+            enable_get_video_data=True,
+            enable_get_video_timestamps=False,
+            languages=None,
         ):
-            self.fetch_captions = fetch_captions
-            self.fetch_video_info = fetch_video_info
-            self.fetch_timestamps = fetch_timestamps
+            self.enable_get_video_captions = enable_get_video_captions
+            self.enable_get_video_data = enable_get_video_data
+            self.enable_get_video_timestamps = enable_get_video_timestamps
+            self.languages = languages
 
     monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
 
@@ -73,9 +75,104 @@ def test_build_tools_includes_youtube_with_settings(monkeypatch):
 
     assert len(tools) == 1
     assert isinstance(tools[0], DummyYouTubeTools)
-    assert tools[0].fetch_captions is True
-    assert tools[0].fetch_video_info is False
-    assert tools[0].fetch_timestamps is True
+    assert tools[0].enable_get_video_captions is True
+    assert tools[0].enable_get_video_data is False
+    assert tools[0].enable_get_video_timestamps is True
+
+
+def test_build_tools_includes_youtube_transcript_with_defaults(monkeypatch):
+    class DummyYouTubeTools:
+        def __init__(
+            self,
+            enable_get_video_captions=True,
+            enable_get_video_data=True,
+            enable_get_video_timestamps=False,
+            languages=None,
+        ):
+            self.enable_get_video_captions = enable_get_video_captions
+            self.enable_get_video_data = enable_get_video_data
+            self.enable_get_video_timestamps = enable_get_video_timestamps
+            self.languages = languages
+
+    monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
+
+    tools = agent_factory.build_tools(
+        ["youtube_transcript"],
+        {},
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyYouTubeTools)
+    assert tools[0].enable_get_video_captions is True
+    assert tools[0].enable_get_video_data is False
+    assert tools[0].enable_get_video_timestamps is True
+    assert tools[0].languages == ["en", "de"]
+
+
+def test_build_tools_includes_youtube_transcript_with_settings(monkeypatch):
+    class DummyYouTubeTools:
+        def __init__(
+            self,
+            enable_get_video_captions=True,
+            enable_get_video_data=True,
+            enable_get_video_timestamps=False,
+            languages=None,
+        ):
+            self.enable_get_video_captions = enable_get_video_captions
+            self.enable_get_video_data = enable_get_video_data
+            self.enable_get_video_timestamps = enable_get_video_timestamps
+            self.languages = languages
+
+    monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
+
+    tools = agent_factory.build_tools(
+        ["youtube_transcript"],
+        {
+            "youtube_transcript": {
+                "fetch_captions": False,
+                "fetch_video_info": True,
+                "fetch_timestamps": False,
+                "languages": ["de"],
+            }
+        },
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyYouTubeTools)
+    assert tools[0].enable_get_video_captions is False
+    assert tools[0].enable_get_video_data is True
+    assert tools[0].enable_get_video_timestamps is False
+    assert tools[0].languages == ["de"]
+
+
+def test_build_tools_youtube_transcript_falls_back_to_noarg_when_kwargs_unsupported(
+    monkeypatch,
+):
+    class DummyYouTubeTools:
+        def __init__(self, *args, **kwargs):
+            if kwargs:
+                raise TypeError("unexpected keyword")
+            self.used_noarg = True
+
+    monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
+
+    tools = agent_factory.build_tools(
+        ["youtube_transcript"],
+        {
+            "youtube_transcript": {
+                "fetch_captions": True,
+                "fetch_video_info": False,
+                "fetch_timestamps": True,
+            }
+        },
+        logger=logging.getLogger(__name__),
+    )
+
+    assert len(tools) == 1
+    assert isinstance(tools[0], DummyYouTubeTools)
+    assert tools[0].used_noarg is True
 
 
 def test_build_tools_includes_duckduckgo_with_settings(monkeypatch):

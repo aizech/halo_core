@@ -1713,6 +1713,7 @@ def _render_chat_memory_configuration(
         "pubmed": "PubMed Suche",
         "websearch": "Web Search",
         "youtube": "YouTube",
+        "youtube_transcript": "YouTube Transkript",
         "duckduckgo": "DuckDuckGo Suche",
         "arxiv": "arXiv Papers",
         "website": "Website Inhalte",
@@ -1815,6 +1816,15 @@ def _render_advanced_configuration(
     youtube_captions_key = f"agent_cfg_youtube_captions_{key_suffix}"
     youtube_video_info_key = f"agent_cfg_youtube_video_info_{key_suffix}"
     youtube_timestamps_key = f"agent_cfg_youtube_timestamps_{key_suffix}"
+    youtube_transcript_captions_key = (
+        f"agent_cfg_youtube_transcript_captions_{key_suffix}"
+    )
+    youtube_transcript_video_info_key = (
+        f"agent_cfg_youtube_transcript_video_info_{key_suffix}"
+    )
+    youtube_transcript_timestamps_key = (
+        f"agent_cfg_youtube_transcript_timestamps_{key_suffix}"
+    )
     duckduckgo_search_key = f"agent_cfg_duckduckgo_search_{key_suffix}"
     duckduckgo_news_key = f"agent_cfg_duckduckgo_news_{key_suffix}"
     duckduckgo_results_key = f"agent_cfg_duckduckgo_results_{key_suffix}"
@@ -1874,6 +1884,7 @@ def _render_advanced_configuration(
         "pubmed": "PubMed Suche",
         "websearch": "Web Search",
         "youtube": "YouTube",
+        "youtube_transcript": "YouTube Transkript",
         "duckduckgo": "DuckDuckGo Suche",
         "arxiv": "arXiv Papers",
         "website": "Website Inhalte",
@@ -1960,6 +1971,23 @@ def _render_advanced_configuration(
             "YouTube Timestamps aktiv",
             value=bool(youtube_settings.get("fetch_timestamps", False)),
             key=youtube_timestamps_key,
+        )
+    if "youtube_transcript" in selected_tools:
+        youtube_transcript_settings = tool_settings.get("youtube_transcript", {})
+        container.checkbox(
+            "YouTube Transkript: Captions aktiv",
+            value=bool(youtube_transcript_settings.get("fetch_captions", True)),
+            key=youtube_transcript_captions_key,
+        )
+        container.checkbox(
+            "YouTube Transkript: Video-Infos aktiv",
+            value=bool(youtube_transcript_settings.get("fetch_video_info", False)),
+            key=youtube_transcript_video_info_key,
+        )
+        container.checkbox(
+            "YouTube Transkript: Timestamps aktiv",
+            value=bool(youtube_transcript_settings.get("fetch_timestamps", True)),
+            key=youtube_transcript_timestamps_key,
         )
     if "duckduckgo" in selected_tools:
         duckduckgo_settings = tool_settings.get("duckduckgo", {})
@@ -2165,6 +2193,18 @@ def _render_advanced_configuration(
                 ),
                 "fetch_timestamps": bool(
                     st.session_state.get(youtube_timestamps_key, False)
+                ),
+            }
+        if "youtube_transcript" in selected_tools:
+            updated_tool_settings["youtube_transcript"] = {
+                "fetch_captions": bool(
+                    st.session_state.get(youtube_transcript_captions_key, True)
+                ),
+                "fetch_video_info": bool(
+                    st.session_state.get(youtube_transcript_video_info_key, False)
+                ),
+                "fetch_timestamps": bool(
+                    st.session_state.get(youtube_transcript_timestamps_key, True)
                 ),
             }
         if "duckduckgo" in selected_tools:

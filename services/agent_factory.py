@@ -147,23 +147,92 @@ def build_tools(
                     tools.append(WebSearchTools())
             else:
                 tools.append(WebSearchTools())
-        if tool_id == "youtube":
-            youtube_settings = tool_settings.get("youtube")
+        if tool_id in {"youtube", "youtube_transcript"}:
+            settings_key = (
+                "youtube_transcript" if tool_id == "youtube_transcript" else "youtube"
+            )
+            youtube_settings = tool_settings.get(settings_key)
+            default_youtube_flags = {
+                "enable_get_video_captions": True,
+                "enable_get_video_data": tool_id != "youtube_transcript",
+                "enable_get_video_timestamps": tool_id == "youtube_transcript",
+            }
+            default_languages = ["en", "de"] if tool_id == "youtube_transcript" else []
             if isinstance(youtube_settings, dict):
+                fetch_captions = bool(youtube_settings.get("fetch_captions", True))
+                fetch_video_info = bool(
+                    youtube_settings.get(
+                        "fetch_video_info",
+                        default_youtube_flags["enable_get_video_data"],
+                    )
+                )
+                fetch_timestamps = bool(
+                    youtube_settings.get(
+                        "fetch_timestamps",
+                        default_youtube_flags["enable_get_video_timestamps"],
+                    )
+                )
+                languages_raw = youtube_settings.get("languages")
+                languages = (
+                    [
+                        str(language).strip()
+                        for language in languages_raw
+                        if str(language).strip()
+                    ]
+                    if isinstance(languages_raw, list)
+                    else []
+                )
                 youtube_kwargs = {
-                    "fetch_captions": youtube_settings.get("fetch_captions", True),
-                    "fetch_video_info": youtube_settings.get("fetch_video_info", True),
-                    "fetch_timestamps": youtube_settings.get("fetch_timestamps", False),
+                    "enable_get_video_captions": bool(
+                        youtube_settings.get(
+                            "enable_get_video_captions",
+                            fetch_captions,
+                        )
+                    ),
+                    "enable_get_video_data": bool(
+                        youtube_settings.get(
+                            "enable_get_video_data",
+                            fetch_video_info,
+                        )
+                    ),
+                    "enable_get_video_timestamps": bool(
+                        youtube_settings.get(
+                            "enable_get_video_timestamps",
+                            fetch_timestamps,
+                        )
+                    ),
                 }
+                if languages:
+                    youtube_kwargs["languages"] = languages
+                elif default_languages:
+                    youtube_kwargs["languages"] = default_languages
                 try:
                     tools.append(YouTubeTools(**youtube_kwargs))
                 except TypeError:
                     logger.warning(
                         "YouTube tool does not support configured settings; using defaults"
                     )
-                    tools.append(YouTubeTools())
+                    try:
+                        fallback_kwargs = {**default_youtube_flags}
+                        if default_languages:
+                            fallback_kwargs["languages"] = default_languages
+                        tools.append(YouTubeTools(**fallback_kwargs))
+                    except TypeError:
+                        logger.warning(
+                            "YouTube tool does not support fetch_* options in this Agno version; using no-arg init"
+                        )
+                        tools.append(YouTubeTools())
             else:
-                tools.append(YouTubeTools())
+                try:
+                    default_kwargs = {**default_youtube_flags}
+                    if default_languages:
+                        default_kwargs["languages"] = default_languages
+                    tools.append(YouTubeTools(**default_kwargs))
+                except TypeError:
+                    logger.warning(
+                        "YouTube tool does not support fetch_* options in this Agno version; using no-arg init"
+                    )
+                    tools.append(YouTubeTools())
         if tool_id == "duckduckgo":
             if DuckDuckGoTools is None:
                 logger.warning("DuckDuckGo tool not available")
