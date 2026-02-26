@@ -444,7 +444,7 @@ async def stream_chat_response(
     try:
         async with stack:
             try:
-                from services.streaming_adapter import stream_agent_response
+                from services.streaming_adapter import stream_agent_response_async
             except ImportError:
                 _LOGGER.warning("agno streaming adapter not found; falling back")
                 return None
@@ -460,7 +460,7 @@ async def stream_chat_response(
                 _LOGGER.warning("Agent %s is async; falling back", agent)
                 return None
 
-            return stream_agent_response(
+            return await stream_agent_response_async(
                 agent,
                 payload,
                 images=turn.images,

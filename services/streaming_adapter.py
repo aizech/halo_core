@@ -128,7 +128,43 @@ def _run_stream(
         return agent.run(payload, stream=True)
 
 
-def stream_agent_response(
+def _run_stream_async(
+    agent: object,
+    payload: str,
+    *,
+    images: list[object] | None,
+    stream_events: bool,
+):
+    arun = getattr(agent, "arun", None)
+    if callable(arun):
+        try:
+            if images:
+                return arun(
+                    payload,
+                    images=images,
+                    stream=True,
+                    stream_events=stream_events,
+                    stream_intermediate_steps=True,
+                )
+            return arun(
+                payload,
+                stream=True,
+                stream_events=stream_events,
+                stream_intermediate_steps=True,
+            )
+        except TypeError:
+            if images:
+                return arun(payload, stream=True, images=images)
+            return arun(payload, stream=True)
+    return _run_stream(
+        agent,
+        payload,
+        images=images,
+        stream_events=stream_events,
+    )
+
+
+async def stream_agent_response_async(
     agent: object,
     payload: str,
     *,
@@ -144,7 +180,7 @@ def stream_agent_response(
         return None
 
     try:
-        run_response = _run_stream(
+        run_response = _run_stream_async(
             agent,
             payload,
             images=images,
@@ -301,12 +337,12 @@ def stream_agent_response(
             else:
                 response = _merge_text(response, text)
 
-    async def _consume_async() -> None:
+    if inspect.isawaitable(run_response):
+        run_response = await run_response
+
+    if inspect.isasyncgen(run_response) or hasattr(run_response, "__aiter__"):
         async for chunk in run_response:
             _handle_chunk(chunk)
-
-    if inspect.isasyncgen(run_response):
-        asyncio.run(_consume_async())
     else:
         for chunk in run_response:
             _handle_chunk(chunk)
@@ -324,3 +360,30 @@ def stream_agent_response(
         "tools": current_tools,
         "mcp_events": mcp_telemetry_events,
     }
+
+
+def stream_agent_response(
+    agent: object,
+    payload: str,
+    *,
+    images: list[object] | None = None,
+    stream_events: bool = True,
+    run_event: object = None,
+    logger: logging.Logger | None = None,
+    log_stream_events: bool = False,
+    on_response: Callable[[str], None] | None = None,
+    on_tools: Callable[[List[object]], None] | None = None,
+) -> dict[str, object] | None:
+    return asyncio.run(
+        stream_agent_response_async(
+            agent,
+            payload,
+            images=images,
+            stream_events=stream_events,
+            run_event=run_event,
+            logger=logger,
+            log_stream_events=log_stream_events,
+            on_response=on_response,
+            on_tools=on_tools,
+        )
+    )

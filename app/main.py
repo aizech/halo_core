@@ -129,6 +129,11 @@ def _get_agent_config(agent_id: str) -> Dict[str, object] | None:
     configs = st.session_state.get("agent_configs", {})
     config = configs.get(agent_id)
     if isinstance(config, dict):
+        if agent_id == "chat" and config.get("enabled", True) is False:
+            _LOGGER.warning(
+                "Chat config is disabled, but chat runtime requires it; using config anyway"
+            )
+            return config
         if config.get("enabled", True) is False:
             return None
         return config
