@@ -1,0 +1,1337 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for HALO Core">
+      
+      
+      
+        <link rel="canonical" href="http://docs.corpusanalytica.com/architecture-and-runtime/">
+      
+      
+        <link rel="prev" href="../repository-overview/">
+      
+      
+        <link rel="next" href="../agent-system/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Architecture and Runtime - HALO Core Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#halo-core-architecture-and-runtime-flows" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="HALO Core Docs" class="md-header__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            HALO Core Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture and Runtime
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aizech/halo_core" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aizech/halo_core
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="HALO Core Docs" class="md-nav__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    HALO Core Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aizech/halo_core" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aizech/halo_core
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-handbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Handbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../repository-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Repository Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Runtime
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-architectural-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Architectural style
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-runtime-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Runtime layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#21-presentation-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Presentation layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-orchestration-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Orchestration layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-agentteam-coordination-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Agent/team coordination layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-data-and-retrieval-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Data and retrieval layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-streaming-abstraction-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Streaming abstraction layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-app-startup-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) App startup flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-source-ingestion-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Source ingestion flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Source ingestion flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-upload-and-document-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Upload and document parsing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-supported-content-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Supported content paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-connector-and-web-search-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Connector and web search paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-chat-turn-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Chat turn flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5) Chat turn flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-ui-responsibilities-render_chat_panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 UI responsibilities (render_chat_panel)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-runtime-responsibilities-serviceschat_runtimepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Runtime responsibilities (services/chat_runtime.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-streaming-behavior-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Streaming behavior model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-citation-and-grounding-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Citation and grounding policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-studio-generation-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Studio generation flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-persistence-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Persistence architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-config-driven-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10) Config-driven behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-fallback-and-resilience-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11) Fallback and resilience behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-observability-and-trace-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12) Observability and trace model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-architectural-constraints-and-near-term-priorities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13) Architectural constraints and near-term priorities
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-storage-and-retrieval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Storage and Retrieval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui-panels-and-pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Panels and Pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-testing-and-operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development, Testing, and Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-architectural-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Architectural style
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-runtime-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Runtime layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#21-presentation-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Presentation layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-orchestration-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Orchestration layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-agentteam-coordination-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Agent/team coordination layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-data-and-retrieval-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Data and retrieval layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-streaming-abstraction-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Streaming abstraction layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-app-startup-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) App startup flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-source-ingestion-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Source ingestion flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Source ingestion flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-upload-and-document-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Upload and document parsing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-supported-content-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Supported content paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-connector-and-web-search-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Connector and web search paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-chat-turn-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Chat turn flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5) Chat turn flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-ui-responsibilities-render_chat_panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 UI responsibilities (render_chat_panel)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-runtime-responsibilities-serviceschat_runtimepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Runtime responsibilities (services/chat_runtime.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-streaming-behavior-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Streaming behavior model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-citation-and-grounding-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Citation and grounding policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-studio-generation-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Studio generation flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-persistence-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Persistence architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-config-driven-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10) Config-driven behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-fallback-and-resilience-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11) Fallback and resilience behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-observability-and-trace-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12) Observability and trace model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-architectural-constraints-and-near-term-priorities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13) Architectural constraints and near-term priorities
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="halo-core-architecture-and-runtime-flows">HALO Core Architecture and Runtime Flows</h1>
+<h2 id="1-architectural-style">1) Architectural style</h2>
+<p>HALO Core follows a UI + service-layer split:</p>
+<ul>
+<li><code>app/</code> handles Streamlit rendering and interaction wiring.</li>
+<li><code>services/</code> handles orchestration, storage, ingestion, retrieval, routing, and agent behavior.</li>
+</ul>
+<p>The current codebase is in an incremental migration state: some runtime logic still lives in <code>app/main.py</code>, while core chat orchestration has already been extracted into <code>services/chat_runtime.py</code>.</p>
+<h2 id="2-runtime-layers">2) Runtime layers</h2>
+<h2 id="21-presentation-layer">2.1 Presentation layer</h2>
+<ul>
+<li><code>app/main.py</code>: primary 3-panel UI and sidebar</li>
+<li><code>app/pages/*.py</code>: auxiliary Streamlit pages (Configuration, Agent Config, Dashboard, Account, Help)</li>
+</ul>
+<h2 id="22-orchestration-layer">2.2 Orchestration layer</h2>
+<ul>
+<li><code>services/chat_runtime.py</code>: chat-turn pipeline (payload, agent creation, stream handling, fallback, trace)</li>
+<li><code>services/pipelines.py</code>: lightweight wrappers for chat/studio/infographic generation</li>
+<li><code>services/agents.py</code>: core agent and team invocation logic</li>
+</ul>
+<h2 id="23-agentteam-coordination-layer">2.3 Agent/team coordination layer</h2>
+<ul>
+<li><code>services/halo_team.py</code>: team assembly from config</li>
+<li><code>services/routing_policy.py</code>: deterministic member selection for coordination modes</li>
+<li><code>services/agent_factory.py</code>: provider/model/tool factory functions</li>
+<li><code>services/agents_config.py</code>: config schema, defaults, migration, persistence</li>
+<li><code>services/presets.py</code>: preset application and chat config overrides</li>
+</ul>
+<h2 id="24-data-and-retrieval-layer">2.4 Data and retrieval layer</h2>
+<ul>
+<li><code>services/storage.py</code>: JSON persistence and optional agent DB initialization</li>
+<li><code>services/ingestion.py</code>: source extraction + indexing bridge</li>
+<li><code>services/parsers.py</code>: file-type-specific parsing/transcription/captioning</li>
+<li><code>services/chunking.py</code>: text normalization/chunk segmentation</li>
+<li><code>services/retrieval.py</code>: LanceDB indexing and similarity search</li>
+<li><code>services/knowledge.py</code>: optional native Agno Knowledge wrapper over LanceDB</li>
+</ul>
+<h2 id="25-streaming-abstraction-layer">2.5 Streaming abstraction layer</h2>
+<ul>
+<li><code>services/streaming_adapter.py</code>: normalizes event names, deduplicates output, merges tool events, and enforces final response authority.</li>
+</ul>
+<h2 id="3-app-startup-flow">3) App startup flow</h2>
+<ol>
+<li><code>run_app()</code> sets page configuration and renders sidebar.</li>
+<li><code>_init_state()</code> initializes session-state keys and loads persisted data:</li>
+<li>session id</li>
+<li>sources</li>
+<li>chat history</li>
+<li>notes</li>
+<li>studio templates and outputs</li>
+<li>app config</li>
+<li>agent configs</li>
+<li>Main content is rendered via three Streamlit columns:</li>
+<li><code>render_sources_panel()</code></li>
+<li><code>render_chat_panel()</code></li>
+<li><code>render_studio_panel()</code></li>
+</ol>
+<h2 id="4-source-ingestion-flow">4) Source ingestion flow</h2>
+<h3 id="41-upload-and-document-parsing">4.1 Upload and document parsing</h3>
+<p>In Sources panel:</p>
+<ul>
+<li>user uploads one or more files</li>
+<li>each file is passed to <code>ingestion.extract_document_payload()</code></li>
+<li>extraction delegates to <code>parsers.extract_text_from_bytes()</code></li>
+<li>a source entry is created and persisted in JSON</li>
+<li>parsed body is chunked and indexed into LanceDB via <code>ingestion.ingest_source_content()</code> and <code>retrieval.index_source_text()</code></li>
+</ul>
+<h3 id="42-supported-content-paths">4.2 Supported content paths</h3>
+<p>Parser behavior by extension:</p>
+<ul>
+<li>text-like: <code>.txt</code>, <code>.md</code>, <code>.csv</code></li>
+<li>office docs: <code>.pdf</code>, <code>.docx</code>, <code>.xlsx</code>, <code>.pptx</code></li>
+<li>image captioning path (if API key available): <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.webp</code>, <code>.gif</code></li>
+<li>audio transcription path: <code>.mp3</code>, <code>.wav</code>, <code>.m4a</code>, <code>.aac</code>, <code>.flac</code>, <code>.ogg</code>, <code>.opus</code></li>
+<li>video transcription path: <code>.mp4</code>, <code>.mov</code>, <code>.mkv</code>, <code>.webm</code>, <code>.avi</code></li>
+</ul>
+<h3 id="43-connector-and-web-search-paths">4.3 Connector and web search paths</h3>
+<ul>
+<li>connectors are currently mock providers (<code>GoogleDriveConnector</code>, <code>NotionConnector</code>) cached in JSON</li>
+<li>web search in ingestion is currently a mock response set</li>
+</ul>
+<h2 id="5-chat-turn-flow">5) Chat turn flow</h2>
+<p>Chat flow is intentionally split between UI and service orchestration.</p>
+<h3 id="51-ui-responsibilities-render_chat_panel">5.1 UI responsibilities (<code>render_chat_panel</code>)</h3>
+<ul>
+<li>render chat history and media attachments</li>
+<li>capture user input from <code>st.chat_input</code> (text, optional images, optional audio)</li>
+<li>persist user message</li>
+<li>create <code>ChatTurnInput</code></li>
+<li>wire UI callbacks for streaming response and tool-call display</li>
+<li>append final assistant message to persisted history</li>
+</ul>
+<h3 id="52-runtime-responsibilities-serviceschat_runtimepy">5.2 Runtime responsibilities (<code>services/chat_runtime.py</code>)</h3>
+<p><code>run_chat_turn()</code> pipeline:</p>
+<ol>
+<li><code>build_chat_payload()</code></li>
+<li>query retrieval contexts (<code>retrieval.query_similar</code>)</li>
+<li>build payload text (<code>agents.build_chat_payload</code>)</li>
+<li><code>create_chat_agent()</code></li>
+<li>build team/agent from config (with prompt-aware fallback)</li>
+<li><code>stream_chat_response()</code></li>
+<li>stream normalized events via <code>stream_agent_response</code></li>
+<li>response handling</li>
+<li>if stream is <code>None</code> or empty: fallback to <code>pipelines.generate_chat_reply</code></li>
+<li>apply citation policy</li>
+<li>trace and telemetry</li>
+<li>compose structured trace with model, members, tools, latency, knowledge hits/sources, stream outcome</li>
+</ol>
+<h2 id="6-streaming-behavior-model">6) Streaming behavior model</h2>
+<p><code>stream_agent_response()</code> handles difficult stream cases:</p>
+<ul>
+<li>normalizes event names across possible event enum/string formats</li>
+<li>allows content only for known run/team events</li>
+<li>deduplicates team/member output overlap</li>
+<li>treats completed events as authoritative final output</li>
+<li>ignores post-final chunks to avoid corrupted response merges</li>
+<li>collects tool-call events into unique tool list</li>
+</ul>
+<p>This behavior is validated by streaming-focused tests in <code>tests/test_streaming.py</code> and runtime tests in <code>tests/test_chat_runtime.py</code>.</p>
+<h2 id="7-citation-and-grounding-policy">7) Citation and grounding policy</h2>
+<p>Chat runtime applies a post-processing citation policy:</p>
+<ul>
+<li>single source: append one normalized citation (<code>[Quelle: ...]</code> + page when available)</li>
+<li>multiple sources: append a markdown <code>### Quellen</code> section with bulletized citations</li>
+<li>existing citation tags are cleaned/reduced for consistency</li>
+</ul>
+<p>Page inference supports multiple metadata key names (<code>page</code>, <code>page_number</code>, <code>page_index</code>, <code>chunk_index</code>, etc.).</p>
+<h2 id="8-studio-generation-flow">8) Studio generation flow</h2>
+<p><code>render_studio_panel()</code> loads templates from <code>templates/studio_templates.json</code> and renders cards.</p>
+<p>Card generation flow:</p>
+<ol>
+<li>user presses template generate action</li>
+<li>UI builds prompt from language/tone/instructions/user prompt</li>
+<li>selected sources are passed to pipeline</li>
+<li>for infographic template, dedicated image generation pipeline is used</li>
+<li>output is normalized and persisted to <code>studio_outputs</code></li>
+<li>output appears in Studio results section, where it can be:</li>
+<li>renamed</li>
+<li>downloaded</li>
+<li>deleted</li>
+<li>promoted to source</li>
+</ol>
+<p>Studio notes are managed separately in <code>studio_notes</code> and can also be promoted to source entries.</p>
+<h2 id="9-persistence-architecture">9) Persistence architecture</h2>
+<p>Persistence uses local files by default, under <code>HALO_DATA_DIR</code>:</p>
+<ul>
+<li>source catalog</li>
+<li>notes and studio outputs</li>
+<li>connector cache</li>
+<li>per-session chat history JSON files</li>
+<li>LanceDB vector store for retrieval</li>
+</ul>
+<p>Optional persistent Agno DB memory is activated when <code>HALO_AGENT_DB</code> is configured.</p>
+<h2 id="10-config-driven-behavior">10) Config-driven behavior</h2>
+<p>Configuration is data-driven in three major areas:</p>
+<ol>
+<li>Agent configs (<code>data/agents/*.json</code>)</li>
+<li>Studio template definitions (<code>templates/studio_templates.json</code>)</li>
+<li>Chat presets (<code>presets.json</code>)</li>
+</ol>
+<p>This allows many behavior changes without touching Python code.</p>
+<h2 id="11-fallback-and-resilience-behavior">11) Fallback and resilience behavior</h2>
+<p>The implementation includes multiple protective fallback paths:</p>
+<ul>
+<li>model construction returns <code>None</code> if provider/key unavailable</li>
+<li>team build falls back to single-agent mode</li>
+<li>stream failure or empty stream falls back to non-streaming generation</li>
+<li>parser functions return meaningful placeholders when API keys are absent for media understanding</li>
+<li>knowledge initialization failures degrade to manual retrieval path</li>
+</ul>
+<h2 id="12-observability-and-trace-model">12) Observability and trace model</h2>
+<p>Runtime traces combine base agent trace and chat telemetry envelope:</p>
+<ul>
+<li>model</li>
+<li>selected members</li>
+<li>tools</li>
+<li>stream mode/events/result</li>
+<li>latency (ms)</li>
+<li>knowledge hits and source names</li>
+<li>fallback usage flag</li>
+</ul>
+<p>Traces are attached to assistant chat messages and rendered in UI under "Agent Actions".</p>
+<h2 id="13-architectural-constraints-and-near-term-priorities">13) Architectural constraints and near-term priorities</h2>
+<p>Current constraints:</p>
+<ul>
+<li><code>app/main.py</code> remains large and still contains mixed concerns</li>
+<li>some connectors and search paths are mock/demo behavior</li>
+<li>studio export helpers are placeholder-level for PDF/slide output</li>
+</ul>
+<p>Near-term direction (as already tracked in backlog/docs):</p>
+<ul>
+<li>continue extracting orchestration from <code>app/main.py</code></li>
+<li>keep routing and stream handling deterministic and test-covered</li>
+<li>expand native Agno knowledge/memory usage while preserving safe fallback behavior</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

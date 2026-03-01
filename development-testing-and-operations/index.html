@@ -1,0 +1,1536 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for HALO Core">
+      
+      
+      
+        <link rel="canonical" href="http://docs.corpusanalytica.com/development-testing-and-operations/">
+      
+      
+        <link rel="prev" href="../ui-panels-and-pages/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Development, Testing, and Operations - HALO Core Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#halo-core-development-testing-and-operations" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="HALO Core Docs" class="md-header__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            HALO Core Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Development, Testing, and Operations
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aizech/halo_core" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aizech/halo_core
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="HALO Core Docs" class="md-nav__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    HALO Core Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aizech/halo_core" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aizech/halo_core
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-handbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Handbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../repository-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Repository Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-and-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-storage-and-retrieval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Storage and Retrieval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui-panels-and-pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Panels and Pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development, Testing, and Operations
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development, Testing, and Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-local-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Local setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#21-environment-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Environment setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-secrets-and-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Secrets and configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-running-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Running the app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-daily-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Daily development workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Testing strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-linting-and-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Linting and formatting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cicd-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) CI/CD workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#61-ci-ciyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 CI (ci.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#62-docs-lint-docsyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Docs lint (docs.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#63-dependency-audit-audityml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Dependency audit (audit.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#64-release-build-releaseyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Release build (release.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-runtime-observability-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Runtime observability and debugging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#71-logging-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Logging controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#72-chat-run-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Chat run traces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-common-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Common troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8) Common troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-app-starts-but-chat-responses-are-poorplaceholder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 App starts but chat responses are poor/placeholder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-team-members-not-active" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 Team members not active
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-tool-calls-not-displayed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Tool calls not displayed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-media-parsing-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4 Media parsing issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-data-and-environment-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Data and environment operations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#91-data-directory-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Data directory control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#92-optional-agent-db-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Optional agent DB memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#93-backup-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Backup recommendations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-contribution-and-quality-expectations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10) Contribution and quality expectations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-suggested-change-playbooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11) Suggested change playbooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11) Suggested change playbooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-chatruntime-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Chat/runtime change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-ingestionretrieval-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Ingestion/retrieval change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-ui-panel-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 UI panel change
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-release-readiness-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12) Release readiness checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-local-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Local setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#21-environment-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Environment setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-secrets-and-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Secrets and configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-running-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Running the app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-daily-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Daily development workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Testing strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-linting-and-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Linting and formatting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cicd-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) CI/CD workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#61-ci-ciyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 CI (ci.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#62-docs-lint-docsyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Docs lint (docs.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#63-dependency-audit-audityml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Dependency audit (audit.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#64-release-build-releaseyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Release build (release.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-runtime-observability-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Runtime observability and debugging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#71-logging-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Logging controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#72-chat-run-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Chat run traces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-common-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Common troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8) Common troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-app-starts-but-chat-responses-are-poorplaceholder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 App starts but chat responses are poor/placeholder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-team-members-not-active" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 Team members not active
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-tool-calls-not-displayed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Tool calls not displayed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-media-parsing-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4 Media parsing issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-data-and-environment-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Data and environment operations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#91-data-directory-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Data directory control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#92-optional-agent-db-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Optional agent DB memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#93-backup-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Backup recommendations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-contribution-and-quality-expectations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10) Contribution and quality expectations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-suggested-change-playbooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11) Suggested change playbooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11) Suggested change playbooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-chatruntime-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Chat/runtime change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-ingestionretrieval-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Ingestion/retrieval change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-ui-panel-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 UI panel change
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-release-readiness-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12) Release readiness checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="halo-core-development-testing-and-operations">HALO Core Development, Testing, and Operations</h1>
+<h2 id="1-prerequisites">1) Prerequisites</h2>
+<p>Minimum local requirements:</p>
+<ul>
+<li>Python 3.10+</li>
+<li>Git</li>
+<li>FFmpeg (required for audio/video parsing paths)</li>
+<li>API credentials for model/tool providers (at least OpenAI for full functionality)</li>
+</ul>
+<p>Repository dependencies are defined in <code>requirements.txt</code>.</p>
+<h2 id="2-local-setup">2) Local setup</h2>
+<h2 id="21-environment-setup">2.1 Environment setup</h2>
+<pre><code class="language-bash">python -m venv .venv
+. .venv/Scripts/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+</code></pre>
+<h2 id="22-secrets-and-configuration">2.2 Secrets and configuration</h2>
+<p>Use <code>.streamlit/secrets.toml</code> and/or environment variables.</p>
+<p>Important settings consumed by <code>services/settings.py</code>:</p>
+<ul>
+<li><code>OPENAI_API_KEY</code></li>
+<li><code>HALO_DATA_DIR</code></li>
+<li><code>HALO_TEMPLATES_DIR</code></li>
+<li><code>HALO_AGENT_DB</code></li>
+</ul>
+<p>Do not hardcode secrets in source files.</p>
+<h2 id="23-running-the-app">2.3 Running the app</h2>
+<pre><code class="language-bash">streamlit run app/main.py
+</code></pre>
+<h2 id="3-daily-development-workflow">3) Daily development workflow</h2>
+<p>Recommended loop:</p>
+<ol>
+<li>Pull latest changes and inspect current docs/PRDs if feature scope changed.</li>
+<li>Implement focused changes in relevant module.</li>
+<li>Run targeted tests for touched services first.</li>
+<li>Run lint/format checks.</li>
+<li>Run full test suite before finalizing.</li>
+</ol>
+<h2 id="4-testing-strategy">4) Testing strategy</h2>
+<p>The repository uses pytest with module-focused tests under <code>tests/</code>.</p>
+<p>High-value test areas include:</p>
+<ul>
+<li><code>test_chat_runtime.py</code>: chat orchestration + telemetry + fallback behavior</li>
+<li><code>test_streaming.py</code>: stream event dedup/final-response correctness</li>
+<li><code>test_agents_config.py</code>: schema and config merge logic</li>
+<li><code>test_halo_team.py</code>: team routing/coordination behavior</li>
+<li><code>test_chat_state.py</code>: message/state helper behavior</li>
+<li><code>test_chunking.py</code>, <code>test_ingestion.py</code>, <code>test_knowledge.py</code>: ingestion/retrieval support paths</li>
+</ul>
+<p>Run all tests:</p>
+<pre><code class="language-bash">pytest
+</code></pre>
+<p>Run targeted tests:</p>
+<pre><code class="language-bash">pytest tests/test_chat_runtime.py -v
+pytest tests/test_streaming.py -v
+</code></pre>
+<h2 id="5-linting-and-formatting">5) Linting and formatting</h2>
+<p>Standard tools in repository workflows:</p>
+<ul>
+<li><code>ruff check .</code></li>
+<li><code>black --check .</code></li>
+<li><code>mypy app services</code> (configured in docs, currently commented in CI)</li>
+</ul>
+<p>Typical local sequence:</p>
+<pre><code class="language-bash">ruff check .
+black --check .
+</code></pre>
+<p>If formatting fixes are needed:</p>
+<pre><code class="language-bash">black .
+</code></pre>
+<h2 id="6-cicd-workflows">6) CI/CD workflows</h2>
+<p>Defined under <code>.github/workflows/</code>.</p>
+<h2 id="61-ci-ciyml">6.1 CI (<code>ci.yml</code>)</h2>
+<ul>
+<li>triggers on push to main and pull requests</li>
+<li>runs on Python 3.11 and 3.13</li>
+<li>installs dependencies and quality tooling</li>
+<li>runs:</li>
+<li>ruff</li>
+<li>black check</li>
+<li>pytest</li>
+</ul>
+<h2 id="62-docs-lint-docsyml">6.2 Docs lint (<code>docs.yml</code>)</h2>
+<ul>
+<li>triggers on PRs touching markdown files</li>
+<li>runs markdown lint over <code>**/*.md</code></li>
+</ul>
+<h2 id="63-dependency-audit-audityml">6.3 Dependency audit (<code>audit.yml</code>)</h2>
+<ul>
+<li>scheduled weekly + manual dispatch</li>
+<li>runs <code>pip-audit -r requirements.txt</code></li>
+</ul>
+<h2 id="64-release-build-releaseyml">6.4 Release build (<code>release.yml</code>)</h2>
+<ul>
+<li>triggers on version tag pushes (<code>v*</code>)</li>
+<li>builds Docker image and emits summary</li>
+</ul>
+<h2 id="7-runtime-observability-and-debugging">7) Runtime observability and debugging</h2>
+<h2 id="71-logging-controls">7.1 Logging controls</h2>
+<p>App configuration supports toggles for:</p>
+<ul>
+<li>agent payload logs</li>
+<li>agent response logs</li>
+<li>agent error logs</li>
+<li>user request logs</li>
+<li>stream event logs</li>
+</ul>
+<p>These are configured in UI and persisted in <code>config.json</code>.</p>
+<h2 id="72-chat-run-traces">7.2 Chat run traces</h2>
+<p>Assistant messages can include structured traces with telemetry fields:</p>
+<ul>
+<li>model</li>
+<li>selected members</li>
+<li>tools</li>
+<li>stream outcome</li>
+<li>latency</li>
+<li>knowledge hits/sources</li>
+<li>fallback usage</li>
+</ul>
+<p>This enables rapid diagnosis of routing, stream, and grounding behavior.</p>
+<h2 id="8-common-troubleshooting">8) Common troubleshooting</h2>
+<h3 id="81-app-starts-but-chat-responses-are-poorplaceholder">8.1 App starts but chat responses are poor/placeholder</h3>
+<p>Likely cause:
+- missing OpenAI key</p>
+<p>Actions:
+1. confirm <code>OPENAI_API_KEY</code> exists in secrets/env
+2. restart streamlit session
+3. verify model id in chat config/preset</p>
+<h3 id="82-team-members-not-active">8.2 Team members not active</h3>
+<p>Likely causes:
+- members disabled in agent config
+- coordination mode set to <code>direct_only</code>
+- prompt did not match <code>skills</code> for <code>delegate_on_complexity</code></p>
+<p>Actions:
+1. open Agent Config page
+2. verify member <code>enabled</code>, <code>skills</code>, <code>coordination_mode</code>
+3. inspect assistant trace in "Agent Actions"</p>
+<h3 id="83-tool-calls-not-displayed">8.3 Tool calls not displayed</h3>
+<p>Likely causes:
+- <code>stream_events</code> disabled in agent/preset
+- tools not configured for active agent/member</p>
+<p>Actions:
+1. verify <code>stream_events: true</code>
+2. verify tool IDs in config
+3. enable stream debug logging</p>
+<h3 id="84-media-parsing-issues">8.4 Media parsing issues</h3>
+<p>Likely causes:
+- missing FFmpeg or API keys</p>
+<p>Actions:
+1. verify FFmpeg in PATH
+2. verify OpenAI key for transcription/caption paths
+3. check parser error output in UI/logs</p>
+<h2 id="9-data-and-environment-operations">9) Data and environment operations</h2>
+<h2 id="91-data-directory-control">9.1 Data directory control</h2>
+<p>Use <code>HALO_DATA_DIR</code> to separate datasets by environment.</p>
+<p>Suggested structure:</p>
+<ul>
+<li><code>data-dev/</code></li>
+<li><code>data-staging/</code></li>
+<li><code>data-prod/</code> (if applicable)</li>
+</ul>
+<h2 id="92-optional-agent-db-memory">9.2 Optional agent DB memory</h2>
+<p>Set <code>HALO_AGENT_DB</code> to enable persistent Agno memory backend.</p>
+<p>If unset, app runs in JSON-only memory mode without failure.</p>
+<h2 id="93-backup-recommendations">9.3 Backup recommendations</h2>
+<p>Back up together:</p>
+<ul>
+<li>JSON files in data dir</li>
+<li><code>chat_history/</code></li>
+<li><code>lancedb/</code></li>
+<li><code>agents/</code> config folder</li>
+</ul>
+<h2 id="10-contribution-and-quality-expectations">10) Contribution and quality expectations</h2>
+<p>Project documentation and standards emphasize:</p>
+<ul>
+<li>focused, minimal diffs</li>
+<li>behavior-preserving refactors unless explicitly changing behavior</li>
+<li>tests updated with behavior changes</li>
+<li>docs updated when architecture/runtime changes</li>
+</ul>
+<p>Primary references:</p>
+<ul>
+<li><code>AGENTS.md</code></li>
+<li><code>CONTRIBUTING.md</code></li>
+<li><code>README.md</code></li>
+</ul>
+<h2 id="11-suggested-change-playbooks">11) Suggested change playbooks</h2>
+<h3 id="111-chatruntime-change">11.1 Chat/runtime change</h3>
+<ol>
+<li>update service logic (<code>chat_runtime</code>, <code>streaming_adapter</code>, <code>agents</code>, or <code>halo_team</code>)</li>
+<li>add/update focused tests</li>
+<li>run chat/runtime + streaming tests</li>
+<li>run full test suite</li>
+<li>update docs in <code>docs/</code> if behavior changed</li>
+</ol>
+<h3 id="112-ingestionretrieval-change">11.2 Ingestion/retrieval change</h3>
+<ol>
+<li>update <code>parsers</code>/<code>ingestion</code>/<code>chunking</code>/<code>retrieval</code></li>
+<li>add/update ingestion/chunking/retrieval tests</li>
+<li>verify source add/index/query path manually</li>
+<li>document any schema/data migration implications</li>
+</ol>
+<h3 id="113-ui-panel-change">11.3 UI panel change</h3>
+<ol>
+<li>keep rendering concerns in <code>app/</code></li>
+<li>avoid embedding new business logic in panel functions when service abstraction exists</li>
+<li>validate all panel actions still persist state correctly</li>
+<li>include screenshots/notes in PR when UX behavior changes</li>
+</ol>
+<h2 id="12-release-readiness-checklist">12) Release readiness checklist</h2>
+<p>Before tagging a release candidate:</p>
+<ol>
+<li>All CI checks passing (lint/format/tests)</li>
+<li>No known blocking regressions in chat/source/studio flows</li>
+<li>Docs reflect current runtime behavior</li>
+<li>Agent config defaults and templates are valid</li>
+<li>Dependency audit findings reviewed</li>
+</ol>
+<p>This checklist should be treated as minimum quality gate for stable delivery.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
