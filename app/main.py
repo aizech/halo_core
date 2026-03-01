@@ -1331,165 +1331,198 @@ def _render_app_design_configuration(
         key="menu_theme_preset_dark",
     )
 
-    color_box = container.container(border=True)
-    color_box.markdown("**Farben**")
-    color_left, color_right = color_box.columns(2)
-    with color_left:
-        sidebar_bg = st.color_picker(
-            "Sidebar Hintergrund",
-            value=str(current_menu.get("sidebar_bg", "#343A40")),
-            key="menu_sidebar_bg",
+    sidebar_bg = str(current_menu.get("sidebar_bg", "#343A40"))
+    sidebar_text = str(current_menu.get("sidebar_text_color", "#F8F9FA"))
+    sidebar_icon = str(current_menu.get("sidebar_icon_color", "#F8F9FA"))
+    sidebar_hover = str(current_menu.get("sidebar_hover_bg", "#F22222"))
+    sidebar_hover_text = str(
+        current_menu.get(
+            "sidebar_hover_text_color",
+            current_menu.get("sidebar_text_color", "#F8F9FA"),
         )
-        sidebar_text = st.color_picker(
-            "Sidebar Textfarbe",
-            value=str(current_menu.get("sidebar_text_color", "#F8F9FA")),
-            key="menu_sidebar_text",
+    )
+    sidebar_active = str(current_menu.get("sidebar_active_bg", "#CC1E1E"))
+    sidebar_focus = str(current_menu.get("sidebar_focus_outline", "#F22222"))
+    sidebar_separator = str(current_menu.get("sidebar_separator_color", "#6C757D"))
+    sidebar_separator_light = str(
+        current_menu.get(
+            "sidebar_separator_color_light",
+            current_menu.get("sidebar_separator_color", "#D0D0D0"),
         )
-        sidebar_hover = st.color_picker(
-            "Hover Farbe",
-            value=str(current_menu.get("sidebar_hover_bg", "#F22222")),
-            key="menu_sidebar_hover",
+    )
+    sidebar_separator_dark = str(
+        current_menu.get(
+            "sidebar_separator_color_dark",
+            current_menu.get("sidebar_separator_color", "#6C757D"),
         )
-        sidebar_hover_text = st.color_picker(
-            "Hover Textfarbe",
-            value=str(
-                current_menu.get(
-                    "sidebar_hover_text_color",
-                    current_menu.get("sidebar_text_color", "#F8F9FA"),
-                )
-            ),
-            key="menu_sidebar_hover_text",
-        )
-        sidebar_separator = st.color_picker(
-            "Separator Farbe",
-            value=str(current_menu.get("sidebar_separator_color", "#6C757D")),
-            key="menu_sidebar_separator",
-        )
-    with color_right:
-        sidebar_icon = st.color_picker(
-            "Icon Farbe",
-            value=str(current_menu.get("sidebar_icon_color", "#F8F9FA")),
-            key="menu_sidebar_icon",
-        )
-        sidebar_active = st.color_picker(
-            "Aktive Farbe",
-            value=str(current_menu.get("sidebar_active_bg", "#CC1E1E")),
-            key="menu_sidebar_active",
-        )
-        sidebar_focus = st.color_picker(
-            "Focus Outline",
-            value=str(current_menu.get("sidebar_focus_outline", "#F22222")),
-            key="menu_sidebar_focus",
-        )
-        sidebar_separator_light = st.color_picker(
-            "Separator Farbe (Light)",
-            value=str(
-                current_menu.get(
-                    "sidebar_separator_color_light",
-                    current_menu.get("sidebar_separator_color", "#D0D0D0"),
-                )
-            ),
-            key="menu_sidebar_separator_light",
-        )
-        sidebar_separator_dark = st.color_picker(
-            "Separator Farbe (Dark)",
-            value=str(
-                current_menu.get(
-                    "sidebar_separator_color_dark",
-                    current_menu.get("sidebar_separator_color", "#6C757D"),
-                )
-            ),
-            key="menu_sidebar_separator_dark",
-        )
+    )
+    sidebar_font_size = int(current_menu.get("sidebar_font_size_px", 16))
+    sidebar_icon_size = int(current_menu.get("sidebar_icon_size_px", 22))
+    sidebar_item_gap = int(current_menu.get("sidebar_item_gap_px", 8))
+    sidebar_collapsed_width = int(current_menu.get("sidebar_collapsed_width_px", 64))
+    sidebar_hover_width = int(current_menu.get("sidebar_hover_width_px", 240))
+    logo_src_light = str(current_menu.get("logo_src_light", ""))
+    icon_src_light = str(current_menu.get("icon_src_light", ""))
+    logo_src_dark = str(current_menu.get("logo_src_dark", ""))
+    icon_src_dark = str(current_menu.get("icon_src_dark", ""))
+    logo_height_px = int(current_menu.get("logo_height_px", 44))
+    logo_render_height_px = int(current_menu.get("logo_render_height_px", 36))
+    icon_render_height_px = int(current_menu.get("icon_render_height_px", 24))
 
-    sizing_box = container.container(border=True)
-    sizing_box.markdown("**Größen & Layout**")
-    sizing_left, sizing_right = sizing_box.columns(2)
-    with sizing_left:
-        sidebar_font_size = st.slider(
-            "Schriftgröße (px)",
-            min_value=12,
-            max_value=24,
-            value=int(current_menu.get("sidebar_font_size_px", 16)),
-            key="menu_sidebar_font_size",
+    show_advanced_design = container.checkbox(
+        "Erweiterte Design-Optionen anzeigen",
+        value=bool(st.session_state.get("cfg_show_advanced_design", False)),
+        key="cfg_show_advanced_design",
+    )
+    if not show_advanced_design:
+        container.caption(
+            "Farben, Größen und Branding sind ausgeblendet. Aktiviere die erweiterten Optionen, um sie anzupassen."
         )
-        sidebar_icon_size = st.slider(
-            "Icon Größe (px)",
+    else:
+        color_box = container.container(border=True)
+        color_box.markdown("**Farben**")
+        color_left, color_right = color_box.columns(2)
+        with color_left:
+            sidebar_bg = st.color_picker(
+                "Sidebar Hintergrund",
+                value=sidebar_bg,
+                key="menu_sidebar_bg",
+            )
+            sidebar_text = st.color_picker(
+                "Sidebar Textfarbe",
+                value=sidebar_text,
+                key="menu_sidebar_text",
+            )
+            sidebar_hover = st.color_picker(
+                "Hover Farbe",
+                value=sidebar_hover,
+                key="menu_sidebar_hover",
+            )
+            sidebar_hover_text = st.color_picker(
+                "Hover Textfarbe",
+                value=sidebar_hover_text,
+                key="menu_sidebar_hover_text",
+            )
+            sidebar_separator = st.color_picker(
+                "Separator Farbe",
+                value=sidebar_separator,
+                key="menu_sidebar_separator",
+            )
+        with color_right:
+            sidebar_icon = st.color_picker(
+                "Icon Farbe",
+                value=sidebar_icon,
+                key="menu_sidebar_icon",
+            )
+            sidebar_active = st.color_picker(
+                "Aktive Farbe",
+                value=sidebar_active,
+                key="menu_sidebar_active",
+            )
+            sidebar_focus = st.color_picker(
+                "Focus Outline",
+                value=sidebar_focus,
+                key="menu_sidebar_focus",
+            )
+            sidebar_separator_light = st.color_picker(
+                "Separator Farbe (Light)",
+                value=sidebar_separator_light,
+                key="menu_sidebar_separator_light",
+            )
+            sidebar_separator_dark = st.color_picker(
+                "Separator Farbe (Dark)",
+                value=sidebar_separator_dark,
+                key="menu_sidebar_separator_dark",
+            )
+
+        sizing_box = container.container(border=True)
+        sizing_box.markdown("**Größen & Layout**")
+        sizing_left, sizing_right = sizing_box.columns(2)
+        with sizing_left:
+            sidebar_font_size = st.slider(
+                "Schriftgröße (px)",
+                min_value=12,
+                max_value=24,
+                value=sidebar_font_size,
+                key="menu_sidebar_font_size",
+            )
+            sidebar_icon_size = st.slider(
+                "Icon Größe (px)",
+                min_value=16,
+                max_value=32,
+                value=sidebar_icon_size,
+                key="menu_sidebar_icon_size",
+            )
+            sidebar_item_gap = st.slider(
+                "Abstand zwischen Menüpunkten (px)",
+                min_value=0,
+                max_value=32,
+                value=sidebar_item_gap,
+                key="menu_sidebar_item_gap",
+            )
+        with sizing_right:
+            sidebar_collapsed_width = st.slider(
+                "Breite eingeklappt (px)",
+                min_value=56,
+                max_value=120,
+                value=sidebar_collapsed_width,
+                key="menu_sidebar_collapsed_width",
+            )
+            sidebar_hover_width = st.slider(
+                "Breite bei Hover (px)",
+                min_value=180,
+                max_value=360,
+                value=sidebar_hover_width,
+                key="menu_sidebar_hover_width",
+            )
+
+        branding_box = container.container(border=True)
+        branding_box.markdown("**Branding (Logo & Icon)**")
+        branding_col_1, branding_col_2 = branding_box.columns(2)
+        with branding_col_1:
+            logo_src_light = st.text_input(
+                "Logo Quelle (Light)",
+                value=logo_src_light,
+                key="menu_logo_src_light",
+            )
+            icon_src_light = st.text_input(
+                "Icon Quelle (Light)",
+                value=icon_src_light,
+                key="menu_icon_src_light",
+            )
+        with branding_col_2:
+            logo_src_dark = st.text_input(
+                "Logo Quelle (Dark)",
+                value=logo_src_dark,
+                key="menu_logo_src_dark",
+            )
+            icon_src_dark = st.text_input(
+                "Icon Quelle (Dark)",
+                value=icon_src_dark,
+                key="menu_icon_src_dark",
+            )
+
+        logo_height_px = branding_box.slider(
+            "Logo Platzhöhe (px)",
+            min_value=24,
+            max_value=128,
+            value=logo_height_px,
+            key="menu_logo_height",
+        )
+        logo_render_height_px = branding_box.slider(
+            "Logo Renderhöhe (px)",
+            min_value=20,
+            max_value=96,
+            value=logo_render_height_px,
+            key="menu_logo_render_height",
+        )
+        icon_render_height_px = branding_box.slider(
+            "Icon Renderhöhe (px)",
             min_value=16,
-            max_value=32,
-            value=int(current_menu.get("sidebar_icon_size_px", 22)),
-            key="menu_sidebar_icon_size",
+            max_value=64,
+            value=icon_render_height_px,
+            key="menu_icon_render_height",
         )
-        sidebar_item_gap = st.slider(
-            "Abstand zwischen Menüpunkten (px)",
-            min_value=0,
-            max_value=32,
-            value=int(current_menu.get("sidebar_item_gap_px", 8)),
-            key="menu_sidebar_item_gap",
-        )
-    with sizing_right:
-        sidebar_collapsed_width = st.slider(
-            "Breite eingeklappt (px)",
-            min_value=56,
-            max_value=120,
-            value=int(current_menu.get("sidebar_collapsed_width_px", 64)),
-            key="menu_sidebar_collapsed_width",
-        )
-        sidebar_hover_width = st.slider(
-            "Breite bei Hover (px)",
-            min_value=180,
-            max_value=360,
-            value=int(current_menu.get("sidebar_hover_width_px", 240)),
-            key="menu_sidebar_hover_width",
-        )
-
-    branding_box = container.container(border=True)
-    branding_box.markdown("**Branding (Logo & Icon)**")
-    branding_col_1, branding_col_2 = branding_box.columns(2)
-    with branding_col_1:
-        logo_src_light = st.text_input(
-            "Logo Quelle (Light)",
-            value=str(current_menu.get("logo_src_light", "")),
-            key="menu_logo_src_light",
-        )
-        icon_src_light = st.text_input(
-            "Icon Quelle (Light)",
-            value=str(current_menu.get("icon_src_light", "")),
-            key="menu_icon_src_light",
-        )
-    with branding_col_2:
-        logo_src_dark = st.text_input(
-            "Logo Quelle (Dark)",
-            value=str(current_menu.get("logo_src_dark", "")),
-            key="menu_logo_src_dark",
-        )
-        icon_src_dark = st.text_input(
-            "Icon Quelle (Dark)",
-            value=str(current_menu.get("icon_src_dark", "")),
-            key="menu_icon_src_dark",
-        )
-
-    logo_height_px = branding_box.slider(
-        "Logo Platzhöhe (px)",
-        min_value=24,
-        max_value=128,
-        value=int(current_menu.get("logo_height_px", 44)),
-        key="menu_logo_height",
-    )
-    logo_render_height_px = branding_box.slider(
-        "Logo Renderhöhe (px)",
-        min_value=20,
-        max_value=96,
-        value=int(current_menu.get("logo_render_height_px", 36)),
-        key="menu_logo_render_height",
-    )
-    icon_render_height_px = branding_box.slider(
-        "Icon Renderhöhe (px)",
-        min_value=16,
-        max_value=64,
-        value=int(current_menu.get("icon_render_height_px", 24)),
-        key="menu_icon_render_height",
-    )
 
     menu_items = current_menu.get("items", [])
     menu_items_signature = _menu_items_signature(menu_items)
