@@ -1501,6 +1501,15 @@ def _render_app_design_configuration(
         )
         st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = menu_items_signature
     editor_items = st.session_state.get(_MENU_EDITOR_ITEMS_KEY, [])
+    show_menu_editor = container.checkbox(
+        "Navigation & Menu Editor anzeigen (Erweitert)",
+        value=bool(st.session_state.get("cfg_show_menu_editor", False)),
+        key="cfg_show_menu_editor",
+    )
+    if not show_menu_editor:
+        container.caption(
+            "Der erweiterte Menü-Editor ist ausgeblendet. Aktiviere ihn bei Bedarf für Reihenfolge, Spacer/Separator und Seitenzuordnung."
+        )
 
     page_options: List[str] = []
     page_labels: Dict[str, str] = {}
@@ -1524,128 +1533,131 @@ def _render_app_design_configuration(
             if label:
                 page_labels[page] = label
 
-    menu_caption_cols = container.columns([4, 2])
-    menu_caption_cols[0].caption(
-        "Menüeinträge: mit ↑ / ↓ sortieren, Spacer / Separator / Theme Toggle einfügen"
-    )
-    menu_caption_cols[1].markdown(
-        "[Google Material Icons](https://fonts.google.com/icons)",
-        help="Icon-Namen für das Feld 'Icon (Material)'",
-    )
+    if show_menu_editor:
+        menu_caption_cols = container.columns([4, 2])
+        menu_caption_cols[0].caption(
+            "Menüeinträge: mit ↑ / ↓ sortieren, Spacer / Separator / Theme Toggle einfügen"
+        )
+        menu_caption_cols[1].markdown(
+            "[Google Material Icons](https://fonts.google.com/icons)",
+            help="Icon-Namen für das Feld 'Icon (Material)'",
+        )
     pending_action_name: str | None = None
     pending_action_index = -1
 
-    for index, item in enumerate(editor_items):
-        if not isinstance(item, dict):
-            continue
-        row_id = str(item.get("_editor_id") or uuid.uuid4().hex)
-        item["_editor_id"] = row_id
-        item_box = container.container(border=True)
+    if show_menu_editor:
+        for index, item in enumerate(editor_items):
+            if not isinstance(item, dict):
+                continue
+            row_id = str(item.get("_editor_id") or uuid.uuid4().hex)
+            item["_editor_id"] = row_id
+            item_box = container.container(border=True)
 
-        kind_options = ["link", "spacer", "separator", "theme_toggle"]
-        kind_labels = {
-            "link": "Link",
-            "spacer": "Spacer",
-            "separator": "Separator",
-            "theme_toggle": "Theme Toggle",
-        }
-        current_kind = str(item.get("kind", "link")).strip().lower()
-        if current_kind not in kind_options:
-            current_kind = "link"
-        header_cols = item_box.columns([2.4, 6.2, 0.6, 0.6, 0.6])
-        header_cols[0].markdown(
-            f"<div style='font-weight: 700; font-size: 1.05rem;'>Eintrag {index + 1}</div>",
-            unsafe_allow_html=True,
-        )
-        selected_kind = header_cols[1].selectbox(
-            "Typ",
-            options=kind_options,
-            index=kind_options.index(current_kind),
-            format_func=lambda value: kind_labels.get(value, value),
-            key=f"menu_item_kind_{row_id}",
-            label_visibility="collapsed",
-        )
-        item["kind"] = selected_kind
-
-        if header_cols[2].button(
-            "↑",
-            key=f"menu_item_up_{row_id}",
-            disabled=index == 0,
-        ):
-            pending_action_name = "up"
-            pending_action_index = index
-        if header_cols[3].button(
-            "↓",
-            key=f"menu_item_down_{row_id}",
-            disabled=index >= len(editor_items) - 1,
-        ):
-            pending_action_name = "down"
-            pending_action_index = index
-        if header_cols[4].button("✕", key=f"menu_item_delete_{row_id}"):
-            pending_action_name = "delete"
-            pending_action_index = index
-
-        if selected_kind == "link":
-            link_cols = item_box.columns([2.0, 1.4, 2.9, 1.7])
-            item["label"] = link_cols[0].text_input(
-                "Label",
-                value=str(item.get("label", "")),
-                key=f"menu_item_label_{row_id}",
+            kind_options = ["link", "spacer", "separator", "theme_toggle"]
+            kind_labels = {
+                "link": "Link",
+                "spacer": "Spacer",
+                "separator": "Separator",
+                "theme_toggle": "Theme Toggle",
+            }
+            current_kind = str(item.get("kind", "link")).strip().lower()
+            if current_kind not in kind_options:
+                current_kind = "link"
+            header_cols = item_box.columns([2.4, 6.2, 0.6, 0.6, 0.6])
+            header_cols[0].markdown(
+                f"<div style='font-weight: 700; font-size: 1.05rem;'>Eintrag {index + 1}</div>",
+                unsafe_allow_html=True,
             )
-            item["icon"] = link_cols[1].text_input(
-                "Icon (Material)",
-                value=str(item.get("icon", "")),
-                key=f"menu_item_icon_{row_id}",
+            selected_kind = header_cols[1].selectbox(
+                "Typ",
+                options=kind_options,
+                index=kind_options.index(current_kind),
+                format_func=lambda value: kind_labels.get(value, value),
+                key=f"menu_item_kind_{row_id}",
+                label_visibility="collapsed",
             )
-            page_value = str(item.get("page", "")).strip()
-            if page_value and page_value not in page_options:
-                page_options.append(page_value)
-            if page_options:
-                default_page = (
-                    page_value if page_value in page_options else page_options[0]
+            item["kind"] = selected_kind
+
+            if header_cols[2].button(
+                "↑",
+                key=f"menu_item_up_{row_id}",
+                disabled=index == 0,
+            ):
+                pending_action_name = "up"
+                pending_action_index = index
+            if header_cols[3].button(
+                "↓",
+                key=f"menu_item_down_{row_id}",
+                disabled=index >= len(editor_items) - 1,
+            ):
+                pending_action_name = "down"
+                pending_action_index = index
+            if header_cols[4].button("✕", key=f"menu_item_delete_{row_id}"):
+                pending_action_name = "delete"
+                pending_action_index = index
+
+            if selected_kind == "link":
+                link_cols = item_box.columns([2.0, 1.4, 2.9, 1.7])
+                item["label"] = link_cols[0].text_input(
+                    "Label",
+                    value=str(item.get("label", "")),
+                    key=f"menu_item_label_{row_id}",
                 )
-                item["page"] = link_cols[2].selectbox(
-                    "Seite",
-                    options=page_options,
-                    index=page_options.index(default_page),
-                    format_func=lambda page: f"{page_labels.get(page, page)} ({page})",
-                    key=f"menu_item_page_{row_id}",
+                item["icon"] = link_cols[1].text_input(
+                    "Icon (Material)",
+                    value=str(item.get("icon", "")),
+                    key=f"menu_item_icon_{row_id}",
                 )
-            else:
-                item["page"] = link_cols[2].text_input(
-                    "Seite",
-                    value=page_value,
-                    key=f"menu_item_page_{row_id}",
+                page_value = str(item.get("page", "")).strip()
+                if page_value and page_value not in page_options:
+                    page_options.append(page_value)
+                if page_options:
+                    default_page = (
+                        page_value if page_value in page_options else page_options[0]
+                    )
+                    item["page"] = link_cols[2].selectbox(
+                        "Seite",
+                        options=page_options,
+                        index=page_options.index(default_page),
+                        format_func=lambda page: f"{page_labels.get(page, page)} ({page})",
+                        key=f"menu_item_page_{row_id}",
+                    )
+                else:
+                    item["page"] = link_cols[2].text_input(
+                        "Seite",
+                        value=page_value,
+                        key=f"menu_item_page_{row_id}",
+                    )
+                access_value = str(item.get("access") or "public").strip().lower()
+                if access_value not in {"public", "logged_in", "admin"}:
+                    access_value = "public"
+                item["access"] = link_cols[3].selectbox(
+                    "Access",
+                    options=["public", "logged_in", "admin"],
+                    index=["public", "logged_in", "admin"].index(access_value),
+                    key=f"menu_item_access_{row_id}",
                 )
-            access_value = str(item.get("access") or "public").strip().lower()
-            if access_value not in {"public", "logged_in", "admin"}:
-                access_value = "public"
-            item["access"] = link_cols[3].selectbox(
-                "Access",
-                options=["public", "logged_in", "admin"],
-                index=["public", "logged_in", "admin"].index(access_value),
-                key=f"menu_item_access_{row_id}",
-            )
-        elif selected_kind == "spacer":
-            item["spacer_px"] = item_box.slider(
-                "Spacer Höhe (px)",
-                min_value=4,
-                max_value=64,
-                value=int(item.get("spacer_px", 16)),
-                key=f"menu_item_spacer_{row_id}",
-            )
+            elif selected_kind == "spacer":
+                item["spacer_px"] = item_box.slider(
+                    "Spacer Höhe (px)",
+                    min_value=4,
+                    max_value=64,
+                    value=int(item.get("spacer_px", 16)),
+                    key=f"menu_item_spacer_{row_id}",
+                )
 
-    add_cols = container.columns(4)
-    if add_cols[0].button("+ Link", key="menu_item_add_link"):
-        pending_action_name = "add_link"
-    if add_cols[1].button("+ Spacer", key="menu_item_add_spacer"):
-        pending_action_name = "add_spacer"
-    if add_cols[2].button("+ Separator", key="menu_item_add_separator"):
-        pending_action_name = "add_separator"
-    if add_cols[3].button("+ Theme Toggle", key="menu_item_add_theme_toggle"):
-        pending_action_name = "add_theme_toggle"
+    if show_menu_editor:
+        add_cols = container.columns(4)
+        if add_cols[0].button("+ Link", key="menu_item_add_link"):
+            pending_action_name = "add_link"
+        if add_cols[1].button("+ Spacer", key="menu_item_add_spacer"):
+            pending_action_name = "add_spacer"
+        if add_cols[2].button("+ Separator", key="menu_item_add_separator"):
+            pending_action_name = "add_separator"
+        if add_cols[3].button("+ Theme Toggle", key="menu_item_add_theme_toggle"):
+            pending_action_name = "add_theme_toggle"
 
-    if pending_action_name:
+    if show_menu_editor and pending_action_name:
         next_items = _normalize_menu_editor_items(editor_items)
         if pending_action_name == "up" and pending_action_index > 0:
             next_items[pending_action_index - 1], next_items[pending_action_index] = (
