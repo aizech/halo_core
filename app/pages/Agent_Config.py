@@ -655,6 +655,10 @@ def render_agent_config_page() -> None:
     main.render_sidebar()
     if not main.require_access("logged_in"):
         st.stop()
+    st.title("Agent Config")
+    st.caption(
+        "Dedicated full-page editor for agent settings. Inhaltlich entspricht dies der Agent-Konfiguration im Configuration-Tab 'Advanced', aber mit mehr Fokus auf einer eigenen Seite."
+    )
     is_admin = bool(st.session_state.get("is_admin", True))
     _render_mcp_servers_ui("agent_config_page", {}, is_admin)
 

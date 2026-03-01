@@ -34,8 +34,15 @@ def render_configuration_page() -> None:
         advanced.render(st)
 
     st.divider()
-    st.subheader("Agent Configuration")
-    if st.button("Open Agent Config", key="open_agent_config", width="stretch"):
+    st.subheader("Agent Configuration (full page)")
+    st.caption(
+        "Im Tab 'Advanced' kannst du Agenten direkt hier konfigurieren. Öffne die Vollansicht nur für fokussierte Bearbeitung auf einer eigenen Seite."
+    )
+    if st.button(
+        "Open full-page Agent Config",
+        key="open_agent_config",
+        width="stretch",
+    ):
         try:
             st.switch_page("pages/Agent_Config.py")
         except Exception:

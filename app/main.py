@@ -1811,6 +1811,10 @@ def _render_sources_configuration(
 def _render_chat_memory_configuration(
     container: st.delta_generator.DeltaGenerator,
 ) -> None:
+    container.caption(
+        "Diese Seite konfiguriert den Chat-Orchestrator. Einzelne Agenten (Rolle, Instruktionen, MCP, Tool-Details) bearbeitest du im Tab 'Advanced' oder auf der Seite 'Agent Config'."
+    )
+
     payload_key = "cfg_chat_log_agent_payload"
     response_key = "cfg_chat_log_agent_response"
     errors_key = "cfg_chat_log_agent_errors"
@@ -1968,6 +1972,9 @@ def _render_chat_memory_configuration(
 def _render_advanced_configuration(
     container: st.delta_generator.DeltaGenerator,
 ) -> None:
+    container.info(
+        "Primary place for per-agent configuration. Änderungen hier betreffen den jeweils ausgewählten Agenten direkt (inkl. Tools, MCP und Runtime)."
+    )
     container.subheader("Agenten")
     agent_configs = st.session_state.get("agent_configs", {})
     agent_ids = sorted(agent_configs.keys())
