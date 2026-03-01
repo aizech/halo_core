@@ -45,6 +45,7 @@ from services import menu_settings  # noqa: E402
 from services import theme_presets  # noqa: E402
 from services import presets  # noqa: E402
 from services import user_memory  # noqa: E402
+from services import auth as auth_service  # noqa: E402
 import services.agents as agents  # noqa: E402
 from services import agents_config  # noqa: E402
 from services import exports  # noqa: E402
@@ -948,9 +949,30 @@ def _init_state() -> None:
             enabled_connectors=list(connectors.AVAILABLE_CONNECTORS.keys()),
         ),
     )
-    if not str(st.session_state["config"].get("user_id") or "").strip():
-        st.session_state["config"]["user_id"] = "local-user"
-        storage.save_config(st.session_state["config"])
+    config = st.session_state["config"]
+    auth_user = auth_service.resolve_auth_user(config)
+    st.session_state["auth_user"] = auth_user
+
+    config["session_id"] = st.session_state.get("session_id")
+    current_user_id = str(config.get("user_id") or "").strip()
+    previous_local_identity = str(config.get("local_identity") or "").strip()
+    had_legacy_user_id = "legacy_user_id" in config
+    canonical_user_id = auth_service.resolve_canonical_user_id(config, auth_user)
+
+    config_changed = False
+    if current_user_id != canonical_user_id:
+        config["user_id"] = canonical_user_id
+        config_changed = True
+    if str(config.get("local_identity") or "").strip() != previous_local_identity:
+        config_changed = True
+    if ("legacy_user_id" in config) != had_legacy_user_id:
+        config_changed = True
+    if "session_id" in config:
+        del config["session_id"]
+    if config_changed:
+        storage.save_config(config)
+
+    st.session_state["user_id"] = canonical_user_id
     _ensure(
         st.session_state,
         "agent_configs",

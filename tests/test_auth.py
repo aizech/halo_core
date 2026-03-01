@@ -144,3 +144,56 @@ def test_logout_calls_streamlit_logout(monkeypatch):
     auth.logout()
 
     assert fake_st._logout_calls == 1
+
+
+def test_resolve_canonical_user_id_prefers_authenticated_user_id():
+    config = {"user_id": "local-user", "session_id": "sess-1"}
+    auth_user = auth.AuthUser(
+        user_id="auth0:sub-1",
+        email="a@example.com",
+        name="A",
+        avatar_url="",
+        provider="auth0",
+        is_logged_in=True,
+        subject="sub-1",
+    )
+
+    canonical = auth.resolve_canonical_user_id(config, auth_user)
+
+    assert canonical == "auth0:sub-1"
+
+
+def test_resolve_canonical_user_id_keeps_existing_non_legacy_user_id():
+    config = {"user_id": "email:existing@example.com", "session_id": "sess-1"}
+    auth_user = auth.AuthUser(
+        user_id="local-user",
+        email="",
+        name="",
+        avatar_url="",
+        provider="local",
+        is_logged_in=False,
+        subject="",
+    )
+
+    canonical = auth.resolve_canonical_user_id(config, auth_user)
+
+    assert canonical == "email:existing@example.com"
+
+
+def test_resolve_canonical_user_id_converts_legacy_local_user():
+    config = {"user_id": "local-user", "session_id": "sess-xyz"}
+    auth_user = auth.AuthUser(
+        user_id="local-user",
+        email="",
+        name="",
+        avatar_url="",
+        provider="local",
+        is_logged_in=False,
+        subject="",
+    )
+
+    canonical = auth.resolve_canonical_user_id(config, auth_user)
+
+    assert canonical == "local:sess-xyz"
+    assert config.get("legacy_user_id") == "local-user"
+    assert config.get("local_identity") == "sess-xyz"

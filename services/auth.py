@@ -191,6 +191,28 @@ def resolve_auth_user(config: dict[str, Any] | None = None) -> AuthUser:
     )
 
 
+def resolve_canonical_user_id(config: dict[str, Any], auth_user: AuthUser) -> str:
+    current_user_id = str(config.get("user_id") or "").strip()
+    legacy_user_id = current_user_id == "local-user"
+
+    local_identity = str(config.get("local_identity") or "").strip()
+    if not local_identity:
+        local_identity = str(config.get("session_id") or "").strip() or "local-user"
+        config["local_identity"] = local_identity
+
+    resolved_user_id = str(auth_user.user_id or "").strip()
+    if resolved_user_id and resolved_user_id != "local-user":
+        canonical_user_id = resolved_user_id
+    elif current_user_id and not legacy_user_id:
+        canonical_user_id = current_user_id
+    else:
+        canonical_user_id = f"local:{local_identity}"
+
+    if legacy_user_id and "legacy_user_id" not in config:
+        config["legacy_user_id"] = "local-user"
+    return canonical_user_id
+
+
 def login(provider: str = "auth0") -> None:
     if not hasattr(st, "login"):
         raise RuntimeError("Streamlit login is not available in this environment.")
