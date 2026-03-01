@@ -64,6 +64,68 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _config_saved_state_key(section_key: str) -> str:
+    return f"cfg_saved_at_{section_key}"
+
+
+def _config_baseline_state_key(section_key: str) -> str:
+    return f"cfg_baseline_{section_key}"
+
+
+def _config_signature(payload: object) -> str:
+    try:
+        return json.dumps(payload, sort_keys=True, default=str)
+    except TypeError:
+        return repr(payload)
+
+
+def _set_config_baseline(section_key: str, payload: object) -> None:
+    st.session_state[_config_baseline_state_key(section_key)] = _config_signature(
+        payload
+    )
+
+
+def _render_config_dirty_hint(
+    container: st.delta_generator.DeltaGenerator,
+    section_key: str,
+    payload: object,
+    message: str = "Ungespeicherte Änderungen.",
+) -> bool:
+    current_signature = _config_signature(payload)
+    baseline_key = _config_baseline_state_key(section_key)
+    baseline_signature = st.session_state.get(baseline_key)
+    if not isinstance(baseline_signature, str):
+        st.session_state[baseline_key] = current_signature
+        return False
+
+    is_dirty = baseline_signature != current_signature
+    if is_dirty:
+        container.warning(message)
+    return is_dirty
+
+
+def _mark_config_saved(
+    container: st.delta_generator.DeltaGenerator,
+    section_key: str,
+    message: str,
+    payload: object | None = None,
+) -> None:
+    saved_at = datetime.now().strftime("%H:%M:%S")
+    st.session_state[_config_saved_state_key(section_key)] = saved_at
+    if payload is not None:
+        _set_config_baseline(section_key, payload)
+    container.success(message)
+
+
+def _render_config_saved_caption(
+    container: st.delta_generator.DeltaGenerator,
+    section_key: str,
+) -> None:
+    saved_at = st.session_state.get(_config_saved_state_key(section_key))
+    if isinstance(saved_at, str) and saved_at.strip():
+        container.caption(f"Zuletzt gespeichert: {saved_at}")
+
+
 @dataclass
 class SourceItem:
     name: str
@@ -1168,6 +1230,8 @@ def _render_app_design_configuration(
         container = st.sidebar
 
     container.subheader("Sidebar Menu")
+    _render_config_saved_caption(container, "app_menu")
+    _render_config_saved_caption(container, "app_auth")
     current_menu = menu_settings.get_menu_settings(st.session_state["config"])
     container.caption("Farben, Größen und Theme-Einstellungen für das Sidebar-Menü.")
 
@@ -1203,6 +1267,19 @@ def _render_app_design_configuration(
         key="cfg_auth_provider",
         help="z.B. auth0",
     )
+    auth_payload = {
+        "auth_mode": auth_mode,
+        "enable_auth_services": bool(enable_auth_services),
+        "enable_auth_ui": bool(enable_auth_ui),
+        "enable_access_guards": bool(enable_access_guards),
+        "auth_provider": str(auth_provider).strip(),
+    }
+    _render_config_dirty_hint(
+        auth_box,
+        "app_auth",
+        auth_payload,
+        "Ungespeicherte Auth-Änderungen.",
+    )
     if auth_box.button("Auth-Einstellungen speichern", key="save_auth_rollout"):
         st.session_state["config"]["auth_mode"] = auth_mode
         st.session_state["config"]["enable_auth_services"] = bool(enable_auth_services)
@@ -1214,7 +1291,12 @@ def _render_app_design_configuration(
         elif "auth_provider" in st.session_state["config"]:
             del st.session_state["config"]["auth_provider"]
         storage.save_config(st.session_state["config"])
-        st.success("Auth-Einstellungen gespeichert.")
+        _mark_config_saved(
+            auth_box,
+            "app_auth",
+            "Auth-Einstellungen gespeichert.",
+            payload=auth_payload,
+        )
         st.rerun()
 
     theme_mode_value = str(current_menu.get("theme_mode", "dark")).strip().lower()
@@ -1746,7 +1828,7 @@ def _render_app_design_configuration(
         st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = _menu_items_signature(
             _strip_editor_metadata(st.session_state[_MENU_EDITOR_ITEMS_KEY])
         )
-        container.success("Sidebar Menu gespeichert")
+        _mark_config_saved(container, "app_menu", "Sidebar Menu gespeichert")
 
     if container.button("Sidebar Menu zurücksetzen", key="reset_sidebar_menu"):
         reset_menu = menu_settings.save_menu_settings(
@@ -1759,7 +1841,11 @@ def _render_app_design_configuration(
         st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = _menu_items_signature(
             _strip_editor_metadata(st.session_state[_MENU_EDITOR_ITEMS_KEY])
         )
-        container.success("Sidebar Menu auf Standard zurückgesetzt")
+        _mark_config_saved(
+            container,
+            "app_menu",
+            "Sidebar Menu auf Standard zurückgesetzt",
+        )
 
 
 def _render_configuration_panel(
@@ -1771,6 +1857,7 @@ def _render_configuration_panel(
 def _render_sources_configuration(
     container: st.delta_generator.DeltaGenerator,
 ) -> None:
+    _render_config_saved_caption(container, "sources")
     container.subheader("Quellen & Connectoren")
     enabled = container.multiselect(
         "Aktivierte Connectoren",
@@ -1786,7 +1873,20 @@ def _render_sources_configuration(
             st.session_state["config"].get("image_model", "gpt-image-1")
         ),
     )
-    if container.button("Speichern", key="save_connectors"):
+    sources_payload = {
+        "enabled_connectors": list(enabled),
+        "image_model": image_model,
+    }
+    _render_config_dirty_hint(
+        container,
+        "sources",
+        sources_payload,
+        "Ungespeicherte Quellen-Änderungen.",
+    )
+    if container.button(
+        "Quellen-Einstellungen speichern",
+        key="save_connectors",
+    ):
         st.session_state["config"]["enabled_connectors"] = enabled
         st.session_state["config"]["image_model"] = image_model
         st.session_state["config"]["log_agent_payload"] = bool(
@@ -1805,12 +1905,18 @@ def _render_sources_configuration(
             st.session_state.get("log_stream_events", False)
         )
         storage.save_config(st.session_state["config"])
-        container.success("Connector-Einstellungen aktualisiert")
+        _mark_config_saved(
+            container,
+            "sources",
+            "Quellen-Einstellungen gespeichert",
+            payload=sources_payload,
+        )
 
 
 def _render_chat_memory_configuration(
     container: st.delta_generator.DeltaGenerator,
 ) -> None:
+    _render_config_saved_caption(container, "chat")
     container.caption(
         "Diese Seite konfiguriert den Chat-Orchestrator. Einzelne Agenten (Rolle, Instruktionen, MCP, Tool-Details) bearbeitest du im Tab 'Advanced' oder auf der Seite 'Agent Config'."
     )
@@ -1871,6 +1977,9 @@ def _render_chat_memory_configuration(
     container.subheader("Chat Presets")
     presets_payload = presets.load_presets()
     preset_names = sorted(presets_payload.keys())
+    selected_preset = str(
+        st.session_state.get("config", {}).get("chat_preset", "Default")
+    )
     if preset_names:
         current_preset = st.session_state.get("config", {}).get(
             "chat_preset", "Default"
@@ -1895,7 +2004,7 @@ def _render_chat_memory_configuration(
                 agent_configs = st.session_state.get("agent_configs", {})
                 agent_configs["chat"] = updated
                 st.session_state["agent_configs"] = agent_configs
-                container.success("Chat-Preset angewendet")
+                _mark_config_saved(container, "chat", "Chat-Preset angewendet")
     else:
         container.caption("Keine Presets gefunden (presets.json fehlt).")
 
@@ -1956,7 +2065,19 @@ def _render_chat_memory_configuration(
         format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
         key=chat_tools_key,
     )
-    if container.button("Chat speichern", key="cfg_chat_save_config"):
+    chat_payload = {
+        "chat_preset": selected_preset,
+        "model": st.session_state.get(chat_model_key, "openai:gpt-5.2"),
+        "members": st.session_state.get(chat_members_key, []),
+        "tools": st.session_state.get(chat_tools_key, []),
+    }
+    _render_config_dirty_hint(
+        container,
+        "chat",
+        chat_payload,
+        "Ungespeicherte Chat-Änderungen.",
+    )
+    if container.button("Chat-Konfiguration speichern", key="cfg_chat_save_config"):
         updated = {
             **chat_config,
             "model": st.session_state.get(chat_model_key, "openai:gpt-5.2"),
@@ -1966,12 +2087,18 @@ def _render_chat_memory_configuration(
         agents_config.save_agent_config("chat", updated)
         agent_configs["chat"] = updated
         st.session_state["agent_configs"] = agent_configs
-        container.success("Chat-Konfiguration gespeichert")
+        _mark_config_saved(
+            container,
+            "chat",
+            "Chat-Konfiguration gespeichert",
+            payload=chat_payload,
+        )
 
 
 def _render_advanced_configuration(
     container: st.delta_generator.DeltaGenerator,
 ) -> None:
+    _render_config_saved_caption(container, "advanced")
     container.info(
         "Primary place for per-agent configuration. Änderungen hier betreffen den jeweils ausgewählten Agenten direkt (inkl. Tools, MCP und Runtime)."
     )
@@ -2354,7 +2481,43 @@ def _render_advanced_configuration(
         key=mcp_servers_key,
         height=160,
     )
-    if container.button("Agent speichern", key="cfg_advanced_save_agent_config"):
+    advanced_payload = {
+        "agent_id": selected_agent_id,
+        "enabled": bool(
+            st.session_state.get(enabled_key, selected_agent.get("enabled", True))
+        ),
+        "name": str(
+            st.session_state.get(name_key, selected_agent.get("name", ""))
+        ).strip(),
+        "role": str(
+            st.session_state.get(role_key, selected_agent.get("role", ""))
+        ).strip(),
+        "description": str(
+            st.session_state.get(description_key, selected_agent.get("description", ""))
+        ).strip(),
+        "instructions": str(
+            st.session_state.get(
+                instructions_key, selected_agent.get("instructions", "")
+            )
+        ).strip(),
+        "model": str(
+            st.session_state.get(model_key, selected_agent.get("model", ""))
+        ).strip(),
+        "tools": st.session_state.get(tools_key, selected_agent.get("tools", [])),
+        "members": st.session_state.get(members_key, selected_agent.get("members", [])),
+        "mcp_calls": str(st.session_state.get(mcp_calls_key, "")),
+        "mcp_servers": str(st.session_state.get(mcp_servers_key, "")),
+    }
+    _render_config_dirty_hint(
+        container,
+        "advanced",
+        advanced_payload,
+        "Ungespeicherte Agent-Änderungen.",
+    )
+    if container.button(
+        "Agent-Konfiguration speichern",
+        key="cfg_advanced_save_agent_config",
+    ):
         try:
             parsed_mcp_servers = json.loads(
                 str(st.session_state.get(mcp_servers_key, "[]")) or "[]"
@@ -2473,7 +2636,12 @@ def _render_advanced_configuration(
         agents_config.save_agent_config(selected_agent_id, updated)
         agent_configs[selected_agent_id] = updated
         st.session_state["agent_configs"] = agent_configs
-        container.success("Agent-Konfiguration gespeichert")
+        _mark_config_saved(
+            container,
+            "advanced",
+            "Agent-Konfiguration gespeichert",
+            payload=advanced_payload,
+        )
 
 
 def _add_source(name: str, type_label: str, meta: str, body: str | None = None) -> None:
