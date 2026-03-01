@@ -653,6 +653,8 @@ def render_agent_config_page() -> None:
     """Entrypoint for Streamlit multipage navigation."""
     main._init_state()
     main.render_sidebar()
+    if not main.require_access("logged_in"):
+        st.stop()
     is_admin = bool(st.session_state.get("is_admin", True))
     _render_mcp_servers_ui("agent_config_page", {}, is_admin)
 

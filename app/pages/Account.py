@@ -9,6 +9,8 @@ from services import user_memory
 def render_account_page() -> None:
     main._init_state()
     main.render_sidebar()
+    if not main.require_access("logged_in"):
+        st.stop()
     st.title("Account")
     st.caption("Manage your profile and preferences.")
     user_id = user_memory.resolve_user_id(st.session_state)

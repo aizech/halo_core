@@ -46,6 +46,7 @@ from services import theme_presets  # noqa: E402
 from services import presets  # noqa: E402
 from services import user_memory  # noqa: E402
 from services import auth as auth_service  # noqa: E402
+from services import access_policy  # noqa: E402
 import services.agents as agents  # noqa: E402
 from services import agents_config  # noqa: E402
 from services import exports  # noqa: E402
@@ -457,7 +458,15 @@ def _src_to_css_url(src: str) -> str:
 
 
 def render_sidebar() -> None:
-    menu_cfg = menu_settings.get_menu_settings(st.session_state.get("config", {}))
+    config = st.session_state.get("config", {})
+    if not isinstance(config, dict):
+        config = {}
+    menu_cfg = menu_settings.get_menu_settings(config)
+    auth_user = st.session_state.get("auth_user")
+    if auth_user is None:
+        auth_user = auth_service.resolve_auth_user(config)
+        st.session_state["auth_user"] = auth_user
+    access_guards_enabled = bool(config.get("enable_access_guards", False))
 
     theme_mode = str(menu_cfg.get("theme_mode") or "light").strip().lower()
     if theme_mode not in {"light", "dark"}:
@@ -825,6 +834,15 @@ def render_sidebar() -> None:
         label = str(item.get("label", "")).strip()
         page = str(item.get("page", "")).strip()
         icon = str(item.get("icon", "")).strip()
+        access_level = str(item.get("access") or "public").strip().lower()
+        if access_level not in {"public", "logged_in", "admin"}:
+            access_level = "public"
+        if access_guards_enabled and not access_policy.can_access(
+            access_level,
+            auth_user,
+            str(config.get("auth_mode") or "local_only"),
+        ):
+            continue
         if not label or not page:
             continue
         icon_token = f":material/{icon}:" if icon else None
@@ -868,6 +886,33 @@ def render_sidebar() -> None:
             "<div class='halo-theme-toggle-label'>Dark mode</div>",
             unsafe_allow_html=True,
         )
+
+    if bool(config.get("enable_auth_ui", False)) and auth_service.is_auth_enabled(
+        config
+    ):
+        st.sidebar.divider()
+        if bool(getattr(auth_user, "is_logged_in", False)):
+            display_name = (
+                str(getattr(auth_user, "name", "")).strip()
+                or str(getattr(auth_user, "email", "")).strip()
+            )
+            if display_name:
+                st.sidebar.caption(f"Signed in as {display_name}")
+            if st.sidebar.button("Log out", key="sidebar_auth_logout", width="stretch"):
+                try:
+                    auth_service.logout()
+                    st.rerun()
+                except Exception as exc:
+                    st.sidebar.error(f"Logout failed: {exc}")
+        elif str(config.get("auth_mode") or "local_only") != "local_only":
+            if st.sidebar.button("Log in", key="sidebar_auth_login", width="stretch"):
+                provider = (
+                    str(config.get("auth_provider") or "auth0").strip() or "auth0"
+                )
+                try:
+                    auth_service.login(provider)
+                except Exception as exc:
+                    st.sidebar.error(f"Login failed: {exc}")
 
     st.sidebar.button("New Notebook", width="stretch", key="new_notebook")
     st.sidebar.divider()
@@ -957,7 +1002,28 @@ def _init_state() -> None:
     current_user_id = str(config.get("user_id") or "").strip()
     previous_local_identity = str(config.get("local_identity") or "").strip()
     had_legacy_user_id = "legacy_user_id" in config
-    canonical_user_id = auth_service.resolve_canonical_user_id(config, auth_user)
+    canonical_resolver = getattr(auth_service, "resolve_canonical_user_id", None)
+    if callable(canonical_resolver):
+        canonical_user_id = canonical_resolver(config, auth_user)
+    else:
+        legacy_user_id = current_user_id == "local-user"
+        local_identity = str(config.get("local_identity") or "").strip()
+        if not local_identity:
+            local_identity = str(st.session_state.get("session_id") or "").strip()
+            if not local_identity:
+                local_identity = "local-user"
+            config["local_identity"] = local_identity
+
+        resolved_user_id = str(getattr(auth_user, "user_id", "") or "").strip()
+        if resolved_user_id and resolved_user_id != "local-user":
+            canonical_user_id = resolved_user_id
+        elif current_user_id and not legacy_user_id:
+            canonical_user_id = current_user_id
+        else:
+            canonical_user_id = f"local:{local_identity}"
+
+        if legacy_user_id and "legacy_user_id" not in config:
+            config["legacy_user_id"] = "local-user"
 
     config_changed = False
     if current_user_id != canonical_user_id:
@@ -978,6 +1044,32 @@ def _init_state() -> None:
         "agent_configs",
         agents_config.load_agent_configs,
     )
+
+
+def require_access(level: str) -> bool:
+    config = st.session_state.get("config", {})
+    if not isinstance(config, dict):
+        config = {}
+    if not bool(config.get("enable_access_guards", False)):
+        return True
+
+    auth_user = st.session_state.get("auth_user")
+    if auth_user is None:
+        auth_user = auth_service.resolve_auth_user(config)
+        st.session_state["auth_user"] = auth_user
+
+    access_level = str(level or "public").strip().lower()
+    if access_level not in {"public", "logged_in", "admin"}:
+        access_level = "public"
+    if access_policy.can_access(
+        access_level,
+        auth_user,
+        str(config.get("auth_mode") or "local_only"),
+    ):
+        return True
+
+    access_policy.deny_access_ui(access_level)
+    return False
 
 
 def _normalize_agent_tools(raw_tools: object) -> List[str]:
@@ -1034,6 +1126,10 @@ def _normalize_menu_editor_items(items: object) -> List[Dict[str, object]]:
         editor_item["label"] = str(raw_item.get("label", "")).strip()
         editor_item["icon"] = str(raw_item.get("icon", "")).strip()
         editor_item["page"] = str(raw_item.get("page", "")).strip()
+        access_level = str(raw_item.get("access") or "public").strip().lower()
+        if access_level not in {"public", "logged_in", "admin"}:
+            access_level = "public"
+        editor_item["access"] = access_level
         normalized.append(editor_item)
     return normalized
 
@@ -1355,7 +1451,7 @@ def _render_app_design_configuration(
             pending_action_index = index
 
         if selected_kind == "link":
-            link_cols = item_box.columns([2.2, 1.6, 3.2])
+            link_cols = item_box.columns([2.0, 1.4, 2.9, 1.7])
             item["label"] = link_cols[0].text_input(
                 "Label",
                 value=str(item.get("label", "")),
@@ -1386,6 +1482,15 @@ def _render_app_design_configuration(
                     value=page_value,
                     key=f"menu_item_page_{row_id}",
                 )
+            access_value = str(item.get("access") or "public").strip().lower()
+            if access_value not in {"public", "logged_in", "admin"}:
+                access_value = "public"
+            item["access"] = link_cols[3].selectbox(
+                "Access",
+                options=["public", "logged_in", "admin"],
+                index=["public", "logged_in", "admin"].index(access_value),
+                key=f"menu_item_access_{row_id}",
+            )
         elif selected_kind == "spacer":
             item["spacer_px"] = item_box.slider(
                 "Spacer Höhe (px)",
@@ -1433,6 +1538,7 @@ def _render_app_design_configuration(
                     "label": page_labels.get(default_page, "Neuer Menüpunkt"),
                     "icon": "chevron_right",
                     "page": default_page,
+                    "access": "public",
                 }
             )
         elif pending_action_name == "add_spacer":
@@ -1519,6 +1625,18 @@ def _render_app_design_configuration(
                     item.get("page", ""),
                 )
             ).strip()
+            access_value = (
+                str(
+                    st.session_state.get(
+                        f"menu_item_access_{row_id}",
+                        item.get("access", "public"),
+                    )
+                )
+                .strip()
+                .lower()
+            )
+            if access_value not in {"public", "logged_in", "admin"}:
+                access_value = "public"
             if not label or not page:
                 continue
             updated_items.append(
@@ -1527,6 +1645,7 @@ def _render_app_design_configuration(
                     "label": label,
                     "icon": icon,
                     "page": page,
+                    "access": access_value,
                 }
             )
 
@@ -4312,8 +4431,8 @@ def _render_studio_notes_section() -> None:
 
 def run_app() -> None:
     configure_page()
-    render_sidebar()
     _init_state()
+    render_sidebar()
 
     col_sources, col_chat, col_studio = st.columns([0.25, 0.45, 0.3])
     with col_sources:

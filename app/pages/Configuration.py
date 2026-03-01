@@ -13,6 +13,8 @@ import app.pages.config_sections.studio as studio
 def render_configuration_page() -> None:
     main._init_state()
     main.render_sidebar()
+    if not main.require_access("logged_in"):
+        st.stop()
     st.title("Configuration")
     st.caption("Manage app settings by section.")
 

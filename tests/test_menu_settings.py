@@ -6,22 +6,64 @@ from services import menu_settings
 def test_normalize_menu_settings_keeps_custom_item_order_and_kinds() -> None:
     raw = {
         "items": [
-            {"kind": "link", "label": "Help", "icon": "help", "page": "pages/Help.py"},
+            {
+                "kind": "link",
+                "label": "Help",
+                "icon": "help",
+                "page": "pages/Help.py",
+                "access": "public",
+            },
             {"kind": "separator"},
             {"kind": "spacer", "spacer_px": 24},
-            {"kind": "link", "label": "Home", "icon": "home", "page": "main.py"},
+            {
+                "kind": "link",
+                "label": "Home",
+                "icon": "home",
+                "page": "main.py",
+                "access": "logged_in",
+            },
         ]
     }
 
     normalized = menu_settings.normalize_menu_settings(raw)
 
     assert normalized["items"] == [
-        {"kind": "link", "label": "Help", "icon": "help", "page": "pages/Help.py"},
+        {
+            "kind": "link",
+            "label": "Help",
+            "icon": "help",
+            "page": "pages/Help.py",
+            "access": "public",
+        },
         {"kind": "separator"},
         {"kind": "spacer", "spacer_px": 24},
-        {"kind": "link", "label": "Home", "icon": "home", "page": "main.py"},
+        {
+            "kind": "link",
+            "label": "Home",
+            "icon": "home",
+            "page": "main.py",
+            "access": "logged_in",
+        },
         {"kind": "theme_toggle"},
     ]
+
+
+def test_normalize_menu_settings_defaults_invalid_access_to_public() -> None:
+    raw = {
+        "items": [
+            {
+                "kind": "link",
+                "label": "Dashboard",
+                "icon": "dashboard",
+                "page": "pages/Dashboard.py",
+                "access": "superuser",
+            }
+        ]
+    }
+
+    normalized = menu_settings.normalize_menu_settings(raw)
+
+    assert normalized["items"][0]["access"] == "public"
 
 
 def test_normalize_menu_settings_clamps_spacer_and_gap_values() -> None:

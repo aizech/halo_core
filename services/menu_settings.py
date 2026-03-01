@@ -10,6 +10,8 @@ MENU_SETTINGS_KEY = "menu_settings"
 
 _HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
+_ALLOWED_ACCESS_LEVELS = {"public", "logged_in", "admin"}
+
 DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
     "sidebar_bg": "#343A40",
     "sidebar_text_color": "#F8F9FA",
@@ -40,26 +42,41 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
     "sidebar_item_gap_px": 8,
     "sidebar_transition": "0.3s",
     "items": [
-        {"kind": "link", "label": "Home", "icon": "home", "page": "main.py"},
+        {
+            "kind": "link",
+            "label": "Home",
+            "icon": "home",
+            "page": "main.py",
+            "access": "public",
+        },
         {
             "kind": "link",
             "label": "Dashboard",
             "icon": "dashboard",
             "page": "pages/Dashboard.py",
+            "access": "logged_in",
         },
         {
             "kind": "link",
             "label": "Configuration",
             "icon": "settings",
             "page": "pages/Configuration.py",
+            "access": "logged_in",
         },
         {
             "kind": "link",
             "label": "Account",
             "icon": "account_circle",
             "page": "pages/Account.py",
+            "access": "logged_in",
         },
-        {"kind": "link", "label": "Help", "icon": "help", "page": "pages/Help.py"},
+        {
+            "kind": "link",
+            "label": "Help",
+            "icon": "help",
+            "page": "pages/Help.py",
+            "access": "public",
+        },
         {"kind": "separator"},
         {"kind": "theme_toggle"},
     ],
@@ -83,6 +100,13 @@ def _normalize_item_kind(value: Any) -> str:
     if item_kind in {"link", "separator", "spacer", "theme_toggle"}:
         return item_kind
     return "link"
+
+
+def _normalize_access_level(value: Any) -> str:
+    access_level = str(value or "public").strip().lower()
+    if access_level in _ALLOWED_ACCESS_LEVELS:
+        return access_level
+    return "public"
 
 
 def _normalize_items(value: Any) -> List[Dict[str, Any]]:
@@ -124,6 +148,7 @@ def _normalize_items(value: Any) -> List[Dict[str, Any]]:
                 "label": label,
                 "icon": icon,
                 "page": page,
+                "access": _normalize_access_level(raw.get("access")),
             }
         )
 
