@@ -17,6 +17,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "log_user_requests": True,
     "log_stream_events": False,
     "chat_preset": "Default",
+    "auth_mode": "local_only",
+    "enable_auth_services": False,
+    "enable_auth_ui": False,
+    "enable_access_guards": False,
 }
 
 WELCOME_MESSAGE: Dict[str, object] = {

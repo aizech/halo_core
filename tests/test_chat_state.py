@@ -9,7 +9,12 @@ def test_default_config_has_expected_keys():
     assert "image_model" in chat_state.DEFAULT_CONFIG
     assert "log_stream_events" in chat_state.DEFAULT_CONFIG
     assert "chat_preset" in chat_state.DEFAULT_CONFIG
+    assert "auth_mode" in chat_state.DEFAULT_CONFIG
+    assert "enable_auth_services" in chat_state.DEFAULT_CONFIG
+    assert "enable_auth_ui" in chat_state.DEFAULT_CONFIG
+    assert "enable_access_guards" in chat_state.DEFAULT_CONFIG
     assert chat_state.DEFAULT_CONFIG["chat_preset"] == "Default"
+    assert chat_state.DEFAULT_CONFIG["auth_mode"] == "local_only"
 
 
 def test_new_session_id_is_unique():

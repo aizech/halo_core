@@ -870,7 +870,7 @@ def render_sidebar() -> None:
 
     st.sidebar.button("New Notebook", width="stretch", key="new_notebook")
     st.sidebar.divider()
-    st.sidebar.caption("Need help? Visit AGENTS.md or join the #halo-support channel.")
+    st.sidebar.caption("2026 | Made with :heart: by Corpus Analytica")
 
 
 def _init_state() -> None:
