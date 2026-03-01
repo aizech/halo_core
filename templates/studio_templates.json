@@ -1,9 +1,123 @@
 {
   "templates": [
     {
+      "id": "executive_brief",
+      "title": "Executive Brief",
+      "description": "Verdichtet ausgewählte Quellen zu einem entscheidungsreifen Kurzüberblick für Führungskräfte.",
+      "icon": "📌",
+      "color": "#E8F4FD",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen prägnanten Executive Brief auf maximal 1–2 Seiten. Struktur: 1) Situation & Kontext (2–3 Sätze), 2) Kernerkenntnisse als Aufzählung (max. 5 Punkte), 3) Handlungsempfehlung(en) mit Begründung, 4) Offene Risiken oder Datenlücken. Schreibe direkt, ohne Fülltext. Verwende keine Fachbegriffe ohne Erklärung. Ton: sachlich, präzise."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Förmlich",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen prägnanten Executive Brief auf maximal 1–2 Seiten. Struktur: 1) Situation & Kontext (2–3 Sätze), 2) Kernerkenntnisse als Aufzählung (max. 5 Punkte), 3) Handlungsempfehlung(en) mit Begründung, 4) Offene Risiken oder Datenlücken. Schreibe direkt, ohne Fülltext. Verwende keine Fachbegriffe ohne Erklärung. Ton: sachlich, präzise."
+      }
+    },
+    {
+      "id": "literature_review",
+      "title": "Literaturüberblick",
+      "description": "Synthetisiert wissenschaftliche Quellen zu einem strukturierten Stand der Forschung.",
+      "icon": "🔬",
+      "color": "#EAF5EA",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen wissenschaftlichen Literaturüberblick. Struktur: 1) Fragestellung und Scope, 2) Methodischer Überblick der einbezogenen Quellen (Studientypen, Zeitraum, N), 3) Konsolidierte Kernbefunde mit Quellenangaben, 4) Widersprüche oder Forschungslücken, 5) Schlussfolgerung und weiterer Forschungsbedarf. Zitiere Quellen namentlich. Verwende akademischen Stil. Kein Editorializing."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Förmlich",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen wissenschaftlichen Literaturüberblick. Struktur: 1) Fragestellung und Scope, 2) Methodischer Überblick der einbezogenen Quellen (Studientypen, Zeitraum, N), 3) Konsolidierte Kernbefunde mit Quellenangaben, 4) Widersprüche oder Forschungslücken, 5) Schlussfolgerung und weiterer Forschungsbedarf. Zitiere Quellen namentlich. Verwende akademischen Stil. Kein Editorializing."
+      }
+    },
+    {
+      "id": "patient_summary",
+      "title": "Patientenzusammenfassung",
+      "description": "Strukturiert klinische Informationen aus Quellen in eine übersichtliche Patientenübersicht.",
+      "icon": "🏥",
+      "color": "#FFF0F0",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten klinischen Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine strukturierte Patientenzusammenfassung. Struktur: 1) Diagnose(n) und ICD-Codes falls vorhanden, 2) Anamnese-Kurzfassung, 3) Aktuelle Medikation und Therapie, 4) Relevante Befunde und Laborwerte (tabellarisch falls möglich), 5) Verlauf und nächste Schritte. Schreibe klar und klinisch präzise. Keine Spekulationen. Markiere fehlende oder unklare Informationen explizit als '[Nicht dokumentiert]'."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Förmlich",
+        "instructions": "Analysiere die bereitgestellten klinischen Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine strukturierte Patientenzusammenfassung. Struktur: 1) Diagnose(n) und ICD-Codes falls vorhanden, 2) Anamnese-Kurzfassung, 3) Aktuelle Medikation und Therapie, 4) Relevante Befunde und Laborwerte (tabellarisch falls möglich), 5) Verlauf und nächste Schritte. Schreibe klar und klinisch präzise. Keine Spekulationen. Markiere fehlende oder unklare Informationen explizit als '[Nicht dokumentiert]'."
+      }
+    },
+    {
+      "id": "meeting_minutes",
+      "title": "Protokoll",
+      "description": "Extrahiert Beschlüsse, Aufgaben und nächste Schritte aus Gesprächs- oder Dokumentenquellen.",
+      "icon": "📝",
+      "color": "#FFFBE6",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein strukturiertes Gesprächsprotokoll. Struktur: 1) Teilnehmer (soweit erkennbar), 2) Besprochene Themen als nummerierte Liste, 3) Beschlüsse und Einigungen (fett markiert), 4) Offene Punkte und Diskussionen ohne Ergebnis, 5) Aufgaben (To-Dos) mit Verantwortlichen und Terminen falls vorhanden. Halte dich strikt an das, was in den Quellen steht. Keine Interpretationen oder Ergänzungen."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein strukturiertes Gesprächsprotokoll. Struktur: 1) Teilnehmer (soweit erkennbar), 2) Besprochene Themen als nummerierte Liste, 3) Beschlüsse und Einigungen (fett markiert), 4) Offene Punkte und Diskussionen ohne Ergebnis, 5) Aufgaben (To-Dos) mit Verantwortlichen und Terminen falls vorhanden. Halte dich strikt an das, was in den Quellen steht. Keine Interpretationen oder Ergänzungen."
+      }
+    },
+    {
+      "id": "glossary",
+      "title": "Glossar",
+      "description": "Extrahiert Fachbegriffe aus den Quellen und erklärt sie verständlich.",
+      "icon": "📖",
+      "color": "#F0F4FF",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Glossar der wichtigsten Fachbegriffe. Format: alphabetisch sortierte Liste, jeder Eintrag mit: **Begriff** — kurze, präzise Definition (1–3 Sätze) basierend auf dem Kontext der Quellen. Wenn ein Begriff in den Quellen unterschiedlich verwendet wird, weise auf die Varianz hin. Ziel: ein Leser ohne Fachkenntnisse soll die Texte damit verstehen können. Maximal 30 Begriffe, priorisiere nach Relevanz und Häufigkeit."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Glossar der wichtigsten Fachbegriffe. Format: alphabetisch sortierte Liste, jeder Eintrag mit: **Begriff** — kurze, präzise Definition (1–3 Sätze) basierend auf dem Kontext der Quellen. Wenn ein Begriff in den Quellen unterschiedlich verwendet wird, weise auf die Varianz hin. Ziel: ein Leser ohne Fachkenntnisse soll die Texte damit verstehen können. Maximal 30 Begriffe, priorisiere nach Relevanz und Häufigkeit."
+      }
+    },
+    {
+      "id": "research_memo",
+      "title": "Forschungsmemo",
+      "description": "Wandelt Quellenmaterial in ein kompaktes Recherche-Memo mit Bewertung und Handlungsrelevanz um.",
+      "icon": "🧪",
+      "color": "#F5F0FF",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Forschungsmemo. Struktur: 1) Fragestellung (1 Satz), 2) Quellenbasis (Anzahl, Typen, Qualitätsbewertung: hoch/mittel/niedrig), 3) Kernbefunde geordnet nach Evidenzstärke, 4) Praktische Implikationen für den konkreten Anwendungskontext, 5) Empfehlung: weitere Recherche nötig / ausreichend Grundlage für Entscheidung. Verwende klare Sprache, kein akademischer Jargon. Länge: max. 600 Wörter."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Forschungsmemo. Struktur: 1) Fragestellung (1 Satz), 2) Quellenbasis (Anzahl, Typen, Qualitätsbewertung: hoch/mittel/niedrig), 3) Kernbefunde geordnet nach Evidenzstärke, 4) Praktische Implikationen für den konkreten Anwendungskontext, 5) Empfehlung: weitere Recherche nötig / ausreichend Grundlage für Entscheidung. Verwende klare Sprache, kein akademischer Jargon. Länge: max. 600 Wörter."
+      }
+    },
+    {
       "id": "reports",
       "title": "Bericht",
-      "description": "Fasse Erkenntnisse in professionellen Reports zusammen.",
+      "description": "Fasst Erkenntnisse aus ausgewählten Quellen in einem professionellen, strukturierten Report zusammen.",
       "icon": "📊",
       "color": "#E7F0FF",
       "actions": [
@@ -11,75 +125,18 @@
         {"id": "configure", "label": "Konfigurieren"}
       ],
       "agent": {
-        "instructions": "Erstelle einen Bericht mit klaren Abschnitten."
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen professionellen Bericht. Struktur: 1) Zusammenfassung (Executive Summary, 3–5 Sätze), 2) Hintergrund und Kontext, 3) Haupterkenntnisse mit Quellenbelegen, 4) Analyse und Bewertung, 5) Schlussfolgerung. Nutze Überschriften, Absätze und bei Bedarf Aufzählungen. Ton und Sprache passen sich der Konfiguration an."
       },
       "defaults": {
         "language": "Deutsch",
-        "tone": "Neutral"
-      }
-    },
-    {
-      "id": "infographic",
-      "title": "Infografik",
-      "description": "Stelle Statistiken grafisch dar.",
-      "status": "BETA",
-      "icon": "📈",
-      "color": "#EDE7FF",
-      "badge": "BETA",
-      "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
-      ],
-      "agent": {
-        "instructions": "Fasse Kennzahlen als Infografik-Story zusammen."
-      },
-      "defaults": {
-        "language": "Deutsch",
-        "tone": "Neutral"
-      }
-    },
-    {
-      "id": "podcast",
-      "title": "Podcast",
-      "description": "Konvertiere Erkenntnisse in Hörstücke.",
-      "status": "BETA",
-      "icon": "🎧",
-      "color": "#F3ECFF",
-      "badge": "BETA",
-      "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
-      ],
-      "agent": {
-        "instructions": "Erzeuge ein strukturiertes Podcast-Skript."
-      },
-      "defaults": {
-        "language": "Deutsch",
-        "tone": "Neutral"
-      }
-    },
-    {
-      "id": "video_overview",
-      "title": "Videoübersicht",
-      "description": "Erstelle ein kurzes Drehbuch für Clips.",
-      "icon": "🎬",
-      "color": "#DFF5EC",
-      "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
-      ],
-      "agent": {
-        "instructions": "Erstelle ein Clip-Storyboard mit Szenen."
-      },
-      "defaults": {
-        "language": "Deutsch",
-        "tone": "Neutral"
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen professionellen Bericht. Struktur: 1) Zusammenfassung (Executive Summary, 3–5 Sätze), 2) Hintergrund und Kontext, 3) Haupterkenntnisse mit Quellenbelegen, 4) Analyse und Bewertung, 5) Schlussfolgerung. Nutze Überschriften, Absätze und bei Bedarf Aufzählungen. Ton und Sprache passen sich der Konfiguration an."
       }
     },
     {
       "id": "presentation",
       "title": "Präsentation",
-      "description": "Erstelle Slides als Grundlage für Vorträge.",
+      "description": "Erstellt eine Folienstruktur mit Agenda aus den ausgewählten Quellen.",
       "status": "BETA",
       "icon": "🖥️",
       "color": "#FFF4E0",
@@ -89,17 +146,18 @@
         {"id": "configure", "label": "Konfigurieren"}
       ],
       "agent": {
-        "instructions": "Erzeuge eine Folienstruktur mit Agenda."
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine Präsentationsstruktur. Format: Gliederung als nummerierte Folienübersicht. Jede Folie erhält: Titel, 3–5 Stichpunkte, optionalen Sprecherhinweis in Kursivschrift. Beginne mit Titelfolie und Agenda, schließe mit Zusammenfassung und nächsten Schritten. Maximal 12 Folien. Ton und Sprache gemäß Konfiguration."
       },
       "defaults": {
         "language": "Deutsch",
-        "tone": "Neutral"
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine Präsentationsstruktur. Format: Gliederung als nummerierte Folienübersicht. Jede Folie erhält: Titel, 3–5 Stichpunkte, optionalen Sprecherhinweis in Kursivschrift. Beginne mit Titelfolie und Agenda, schließe mit Zusammenfassung und nächsten Schritten. Maximal 12 Folien. Ton und Sprache gemäß Konfiguration."
       }
     },
     {
       "id": "datatable",
       "title": "Datentabelle",
-      "description": "Strukturiere Fakten in tabellarischer Form.",
+      "description": "Strukturiert Fakten und Kennzahlen aus den Quellen in tabellarischer Form.",
       "icon": "📋",
       "color": "#F1F5F9",
       "actions": [
@@ -107,11 +165,73 @@
         {"id": "configure", "label": "Konfigurieren"}
       ],
       "agent": {
-        "instructions": "Erstelle eine tabellarische Zusammenfassung."
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und extrahiere alle relevanten Fakten, Kennzahlen und Vergleichspunkte. Gib das Ergebnis als Markdown-Tabelle aus. Spalten: Kategorie | Wert / Befund | Quelle | Anmerkung. Ergänze unter der Tabelle eine kurze Interpretation der auffälligsten Muster (max. 3 Sätze). Falls keine tabellierbaren Daten vorhanden: strukturiere als Liste von Fakten mit Quellenangaben."
       },
       "defaults": {
         "language": "Deutsch",
-        "tone": "Neutral"
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und extrahiere alle relevanten Fakten, Kennzahlen und Vergleichspunkte. Gib das Ergebnis als Markdown-Tabelle aus. Spalten: Kategorie | Wert / Befund | Quelle | Anmerkung. Ergänze unter der Tabelle eine kurze Interpretation der auffälligsten Muster (max. 3 Sätze). Falls keine tabellierbaren Daten vorhanden: strukturiere als Liste von Fakten mit Quellenangaben."
+      }
+    },
+    {
+      "id": "podcast",
+      "title": "Podcast",
+      "description": "Konvertiert Quelleninhalte in ein gesprochenes, dialogisches Podcast-Skript.",
+      "status": "BETA",
+      "icon": "🎧",
+      "color": "#F3ECFF",
+      "badge": "BETA",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Podcast-Skript als Dialog zwischen zwei Sprechern (Host und Experte). Struktur: Intro (Teaser + Themenvorstellung), 3–4 inhaltliche Segmente mit natürlichem Gesprächsfluss, Outro mit Zusammenfassung und Call-to-Action. Ton: informativ aber locker, keine akademische Sprache. Länge: ca. 8–12 Minuten Sprechzeit (ca. 1200–1800 Wörter). Markiere Sprecherwechsel klar."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Locker",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Podcast-Skript als Dialog zwischen zwei Sprechern (Host und Experte). Struktur: Intro (Teaser + Themenvorstellung), 3–4 inhaltliche Segmente mit natürlichem Gesprächsfluss, Outro mit Zusammenfassung und Call-to-Action. Ton: informativ aber locker, keine akademische Sprache. Länge: ca. 8–12 Minuten Sprechzeit (ca. 1200–1800 Wörter). Markiere Sprecherwechsel klar."
+      }
+    },
+    {
+      "id": "infographic",
+      "title": "Infografik",
+      "description": "Verdichtet Statistiken und Kernbotschaften aus den Quellen als Infografik-Textvorlage.",
+      "status": "BETA",
+      "icon": "📈",
+      "color": "#EDE7FF",
+      "badge": "BETA",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine Infografik-Textvorlage. Format: 1) Headline (max. 10 Wörter, Kernaussage), 2) 3–5 visuelle Blöcke mit je: Überschrift, 1 prägnante Kennzahl oder Aussage, 1 Erklärungssatz, 3) Fußzeile mit Quellenangaben. Verwende kurze, plakative Sprache. Vermeide Fließtext. Alle Zahlen direkt aus den Quellen — keine Schätzungen."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine Infografik-Textvorlage. Format: 1) Headline (max. 10 Wörter, Kernaussage), 2) 3–5 visuelle Blöcke mit je: Überschrift, 1 prägnante Kennzahl oder Aussage, 1 Erklärungssatz, 3) Fußzeile mit Quellenangaben. Verwende kurze, plakative Sprache. Vermeide Fließtext. Alle Zahlen direkt aus den Quellen — keine Schätzungen."
+      }
+    },
+    {
+      "id": "video_overview",
+      "title": "Videoübersicht",
+      "description": "Erstellt ein Storyboard mit Szenenstruktur aus den ausgewählten Quellen.",
+      "icon": "🎬",
+      "color": "#DFF5EC",
+      "actions": [
+        {"id": "generate", "label": "Generieren"},
+        {"id": "configure", "label": "Konfigurieren"}
+      ],
+      "agent": {
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Video-Storyboard. Format: nummerierte Szenenübersicht, jede Szene mit: Szene Nr. | Visual-Beschreibung | Sprecher-Text (Voice-over) | Dauer (Sek.). Gesamtlänge: 60–120 Sekunden. Beginne mit Hook-Szene, schließe mit klarem Call-to-Action. Sprache des Sprecher-Textes: klar, direkt, für gesprochene Sprache optimiert."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral",
+        "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Video-Storyboard. Format: nummerierte Szenenübersicht, jede Szene mit: Szene Nr. | Visual-Beschreibung | Sprecher-Text (Voice-over) | Dauer (Sek.). Gesamtlänge: 60–120 Sekunden. Beginne mit Hook-Szene, schließe mit klarem Call-to-Action. Sprache des Sprecher-Textes: klar, direkt, für gesprochene Sprache optimiert."
       }
     }
   ]
