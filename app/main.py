@@ -887,11 +887,13 @@ def render_sidebar() -> None:
             unsafe_allow_html=True,
         )
 
-    if bool(config.get("enable_auth_ui", False)) and auth_service.is_auth_enabled(
-        config
-    ):
+    auth_mode = auth_service.normalize_auth_mode(config.get("auth_mode"))
+    auth_enabled = auth_service.is_auth_enabled(config)
+    if bool(config.get("enable_auth_ui", False)) and auth_mode != "local_only":
         st.sidebar.divider()
-        if bool(getattr(auth_user, "is_logged_in", False)):
+        if not auth_enabled:
+            st.sidebar.caption("Auth service is not configured yet.")
+        if bool(getattr(auth_user, "is_logged_in", False)) and auth_enabled:
             display_name = (
                 str(getattr(auth_user, "name", "")).strip()
                 or str(getattr(auth_user, "email", "")).strip()
@@ -904,8 +906,13 @@ def render_sidebar() -> None:
                     st.rerun()
                 except Exception as exc:
                     st.sidebar.error(f"Logout failed: {exc}")
-        elif str(config.get("auth_mode") or "local_only") != "local_only":
-            if st.sidebar.button("Log in", key="sidebar_auth_login", width="stretch"):
+        else:
+            if st.sidebar.button(
+                "Log in",
+                key="sidebar_auth_login",
+                width="stretch",
+                disabled=not auth_enabled,
+            ):
                 provider = (
                     str(config.get("auth_provider") or "auth0").strip() or "auth0"
                 )
@@ -1163,6 +1170,52 @@ def _render_app_design_configuration(
     container.subheader("Sidebar Menu")
     current_menu = menu_settings.get_menu_settings(st.session_state["config"])
     container.caption("Farben, Größen und Theme-Einstellungen für das Sidebar-Menü.")
+
+    auth_box = container.container(border=True)
+    auth_box.markdown("**Auth & Access**")
+    auth_mode_value = auth_service.normalize_auth_mode(
+        st.session_state["config"].get("auth_mode")
+    )
+    auth_mode = auth_box.selectbox(
+        "Auth-Modus",
+        options=["local_only", "auth_optional", "auth_required"],
+        index=["local_only", "auth_optional", "auth_required"].index(auth_mode_value),
+        key="cfg_auth_mode",
+    )
+    enable_auth_services = auth_box.checkbox(
+        "Auth-Services aktivieren",
+        value=bool(st.session_state["config"].get("enable_auth_services", False)),
+        key="cfg_enable_auth_services",
+    )
+    enable_auth_ui = auth_box.checkbox(
+        "Login/Logout UI anzeigen",
+        value=bool(st.session_state["config"].get("enable_auth_ui", False)),
+        key="cfg_enable_auth_ui",
+    )
+    enable_access_guards = auth_box.checkbox(
+        "Access Guards aktivieren",
+        value=bool(st.session_state["config"].get("enable_access_guards", False)),
+        key="cfg_enable_access_guards",
+    )
+    auth_provider = auth_box.text_input(
+        "Auth Provider",
+        value=str(st.session_state["config"].get("auth_provider") or "auth0"),
+        key="cfg_auth_provider",
+        help="z.B. auth0",
+    )
+    if auth_box.button("Auth-Einstellungen speichern", key="save_auth_rollout"):
+        st.session_state["config"]["auth_mode"] = auth_mode
+        st.session_state["config"]["enable_auth_services"] = bool(enable_auth_services)
+        st.session_state["config"]["enable_auth_ui"] = bool(enable_auth_ui)
+        st.session_state["config"]["enable_access_guards"] = bool(enable_access_guards)
+        provider_value = str(auth_provider).strip()
+        if provider_value:
+            st.session_state["config"]["auth_provider"] = provider_value
+        elif "auth_provider" in st.session_state["config"]:
+            del st.session_state["config"]["auth_provider"]
+        storage.save_config(st.session_state["config"])
+        st.success("Auth-Einstellungen gespeichert.")
+        st.rerun()
 
     theme_mode_value = str(current_menu.get("theme_mode", "dark")).strip().lower()
     if theme_mode_value not in {"light", "dark"}:
