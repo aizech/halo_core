@@ -1647,7 +1647,28 @@ def _render_app_design_configuration(
             current_kind = str(item.get("kind", "link")).strip().lower()
             if current_kind not in kind_options:
                 current_kind = "link"
-            header_cols = item_box.columns([2.4, 6.2, 0.6, 0.6, 0.6])
+
+            _row_icon = str(item.get("icon") or "").strip()
+            _row_label = str(item.get("label") or "").strip()
+            _row_page = str(item.get("page") or "").strip()
+            _row_access = str(item.get("access") or "public").strip()
+            if current_kind == "link" and (_row_label or _row_page):
+                _summary_parts = []
+                if _row_icon:
+                    _summary_parts.append(f"`{_row_icon}`")
+                if _row_label:
+                    _summary_parts.append(f"**{_row_label}**")
+                if _row_page:
+                    _summary_parts.append(f"→ `{_row_page}`")
+                _access_badge = {"public": "🌐", "logged_in": "🔒", "admin": "🔑"}.get(
+                    _row_access, "🌐"
+                )
+                _summary_parts.append(_access_badge)
+                item_box.caption(" · ".join(_summary_parts))
+            elif current_kind in {"spacer", "separator", "theme_toggle"}:
+                item_box.caption(kind_labels.get(current_kind, current_kind))
+
+            header_cols = item_box.columns([2.4, 5.4, 0.6, 0.6, 0.6, 0.6, 0.6])
             header_cols[0].markdown(
                 f"<div style='font-weight: 700; font-size: 1.05rem;'>Eintrag {index + 1}</div>",
                 unsafe_allow_html=True,
@@ -1666,6 +1687,7 @@ def _render_app_design_configuration(
                 "↑",
                 key=f"menu_item_up_{row_id}",
                 disabled=index == 0,
+                help="Nach oben verschieben",
             ):
                 pending_action_name = "up"
                 pending_action_index = index
@@ -1673,10 +1695,22 @@ def _render_app_design_configuration(
                 "↓",
                 key=f"menu_item_down_{row_id}",
                 disabled=index >= len(editor_items) - 1,
+                help="Nach unten verschieben",
             ):
                 pending_action_name = "down"
                 pending_action_index = index
-            if header_cols[4].button("✕", key=f"menu_item_delete_{row_id}"):
+            if header_cols[4].button(
+                "⧉",
+                key=f"menu_item_dup_{row_id}",
+                help="Eintrag duplizieren",
+            ):
+                pending_action_name = "duplicate"
+                pending_action_index = index
+            if header_cols[5].button(
+                "✕",
+                key=f"menu_item_delete_{row_id}",
+                help="Eintrag löschen",
+            ):
                 pending_action_name = "delete"
                 pending_action_index = index
 
@@ -1756,6 +1790,12 @@ def _render_app_design_configuration(
                 next_items[pending_action_index],
                 next_items[pending_action_index + 1],
             )
+        elif pending_action_name == "duplicate" and 0 <= pending_action_index < len(
+            next_items
+        ):
+            original = dict(next_items[pending_action_index])
+            original["_editor_id"] = uuid.uuid4().hex
+            next_items.insert(pending_action_index + 1, original)
         elif pending_action_name == "delete" and 0 <= pending_action_index < len(
             next_items
         ):
@@ -1996,12 +2036,40 @@ def _render_sources_configuration(
 ) -> None:
     _render_config_saved_caption(container, "sources")
     container.subheader("Quellen & Connectoren")
+    container.caption(
+        "Aktivierte Connectoren werden beim nächsten Quellen-Sync abgefragt. "
+        "Stelle sicher, dass die zugehörigen API-Credentials als Umgebungsvariablen gesetzt sind."
+    )
     enabled = container.multiselect(
         "Aktivierte Connectoren",
         options=list(connectors.AVAILABLE_CONNECTORS.keys()),
         default=st.session_state["config"].get("enabled_connectors", []),
         format_func=lambda key: connectors.AVAILABLE_CONNECTORS[key].name,
     )
+    if enabled:
+        conn_status_box = container.container(border=True)
+        conn_status_box.markdown("**Connector-Status**")
+        connector_cache = {}
+        try:
+            connector_cache = storage.load_connector_cache() or {}
+        except Exception:
+            pass
+        for slug in enabled:
+            connector_obj = connectors.AVAILABLE_CONNECTORS.get(slug)
+            if not connector_obj:
+                continue
+            cached = connector_cache.get(slug)
+            if cached and isinstance(cached.get("items"), list):
+                item_count = len(cached["items"])
+                conn_status_box.markdown(
+                    f"✅ **{connector_obj.name}** &mdash; {item_count} Einträge im Cache",
+                    unsafe_allow_html=True,
+                )
+            else:
+                conn_status_box.markdown(
+                    f"⚠️ **{connector_obj.name}** &mdash; Noch kein Cache. Wird beim nächsten Sync geladen.",
+                    unsafe_allow_html=True,
+                )
     container.subheader("Bildgenerierung")
     image_model = container.selectbox(
         "Bildmodell",
@@ -2058,6 +2126,26 @@ def _render_chat_memory_configuration(
         "Diese Seite konfiguriert den Chat-Orchestrator. Einzelne Agenten (Rolle, Instruktionen, MCP, Tool-Details) bearbeitest du im Tab 'Advanced' oder auf der Seite 'Agent Config'."
     )
 
+    agent_configs_rt = st.session_state.get("agent_configs", {})
+    chat_config_rt = (
+        agent_configs_rt.get("chat", {}) if isinstance(agent_configs_rt, dict) else {}
+    )
+    rt_model = str(chat_config_rt.get("model") or "—")
+    rt_members = chat_config_rt.get("members", [])
+    rt_members_display = (
+        ", ".join(rt_members) if isinstance(rt_members, list) and rt_members else "—"
+    )
+    rt_tools_raw = _normalize_agent_tools(chat_config_rt.get("tools", []))
+    rt_tools_display = ", ".join(rt_tools_raw) if rt_tools_raw else "—"
+    rt_preset = str(st.session_state.get("config", {}).get("chat_preset") or "—")
+    summary_box = container.container(border=True)
+    summary_box.markdown("**Aktive Chat-Konfiguration**")
+    sum_c1, sum_c2 = summary_box.columns(2)
+    sum_c1.markdown(f"**Modell:** `{rt_model}`")
+    sum_c1.markdown(f"**Preset:** `{rt_preset}`")
+    sum_c2.markdown(f"**Team:** {rt_members_display}")
+    sum_c2.markdown(f"**Tools:** {rt_tools_display}")
+
     payload_key = "cfg_chat_log_agent_payload"
     response_key = "cfg_chat_log_agent_response"
     errors_key = "cfg_chat_log_agent_errors"
@@ -2065,30 +2153,39 @@ def _render_chat_memory_configuration(
     stream_events_key = "cfg_chat_log_stream_events"
 
     container.subheader("Agent-Logging")
-    container.checkbox(
-        "Agent payload loggen",
-        value=bool(st.session_state["config"].get("log_agent_payload", True)),
-        key=payload_key,
-    )
-    container.checkbox(
-        "Agent response loggen",
-        value=bool(st.session_state["config"].get("log_agent_response", True)),
-        key=response_key,
-    )
-    container.checkbox(
+    safe_log_box = container.container(border=True)
+    safe_log_box.markdown("**Produktions-Logging** (immer sicher)")
+    safe_log_box.checkbox(
         "Agent Fehler loggen",
         value=bool(st.session_state["config"].get("log_agent_errors", True)),
         key=errors_key,
+        help="Fehler und Exceptions aus Agent-Läufen protokollieren.",
     )
-    container.checkbox(
+    safe_log_box.checkbox(
         "User Requests loggen",
         value=bool(st.session_state["config"].get("log_user_requests", True)),
         key=requests_key,
+        help="Eingehende Nutzeranfragen in der Konsole protokollieren.",
     )
-    container.checkbox(
+    debug_log_box = container.container(border=True)
+    debug_log_box.markdown("**Debug-Logging** (nur für Entwicklung / Diagnose)")
+    debug_log_box.checkbox(
+        "Agent payload loggen",
+        value=bool(st.session_state["config"].get("log_agent_payload", True)),
+        key=payload_key,
+        help="Vollständigen Input-Payload an den Agenten loggen. Kann sensible Daten enthalten.",
+    )
+    debug_log_box.checkbox(
+        "Agent response loggen",
+        value=bool(st.session_state["config"].get("log_agent_response", True)),
+        key=response_key,
+        help="Vollständige Antworten des Agenten loggen. Kann sensible Daten enthalten.",
+    )
+    debug_log_box.checkbox(
         "Stream-Events debug",
         value=bool(st.session_state["config"].get("log_stream_events", False)),
         key=stream_events_key,
+        help="Alle Streaming-Events in der Konsole ausgeben. Nur für Debugging.",
     )
 
     st.session_state["log_agent_payload"] = bool(
@@ -2191,6 +2288,12 @@ def _render_chat_memory_configuration(
         key=chat_model_key,
         help="Format: provider:model (z.B. openai:gpt-5.2)",
     )
+    _chat_model_val = str(st.session_state.get(chat_model_key, "")).strip()
+    if _chat_model_val and ":" not in _chat_model_val:
+        container.warning(
+            f"⚠️ Ungültiges Modell-Format: `{_chat_model_val}`. "
+            "Erwartet: `provider:model` (z.B. `openai:gpt-5.2`)."
+        )
     container.multiselect(
         "Chat Team",
         options=member_options,
@@ -2326,39 +2429,62 @@ def _render_advanced_configuration(
         agent_id for agent_id in agent_ids if agent_id != selected_agent_id
     ]
 
-    container.checkbox(
+    adv_expert_mode = container.checkbox(
+        "Expertenmodus anzeigen",
+        value=bool(st.session_state.get("cfg_adv_expert_mode", False)),
+        key="cfg_adv_expert_mode",
+        help="Zeigt alle Felder inkl. Beschreibung, MCP-Server und Tool-Details.",
+    )
+
+    id_box = container.container(border=True)
+    id_box.markdown("**Identität & Instruktionen**")
+    id_box.checkbox(
         "Aktiviert",
         value=bool(selected_agent.get("enabled", True)),
         key=enabled_key,
     )
-    container.text_input(
+    id_box.text_input(
         "Name",
         value=str(selected_agent.get("name", "")),
         key=name_key,
     )
-    container.text_input(
+    id_box.text_input(
         "Rolle",
         value=str(selected_agent.get("role", "")),
         key=role_key,
     )
-    container.text_area(
-        "Beschreibung",
-        value=str(selected_agent.get("description", "")),
-        key=description_key,
-        height=100,
-    )
-    container.text_area(
+    if adv_expert_mode:
+        id_box.text_area(
+            "Beschreibung",
+            value=str(selected_agent.get("description", "")),
+            key=description_key,
+            height=100,
+        )
+    else:
+        id_box.caption(
+            f"Beschreibung: {str(selected_agent.get('description', '—'))[:120] or '—'}"
+        )
+    id_box.text_area(
         "Anweisungen",
         value=str(selected_agent.get("instructions", "")),
         key=instructions_key,
         height=160,
     )
-    container.text_input(
+
+    rt_box = container.container(border=True)
+    rt_box.markdown("**Runtime**")
+    rt_box.text_input(
         "Model",
         value=str(selected_agent.get("model", "openai:gpt-5.2")),
         key=model_key,
         help="Format: provider:model (z.B. openai:gpt-5.2)",
     )
+    _adv_model_val = str(st.session_state.get(model_key, "")).strip()
+    if _adv_model_val and ":" not in _adv_model_val:
+        rt_box.warning(
+            f"⚠️ Ungültiges Modell-Format: `{_adv_model_val}`. "
+            "Erwartet: `provider:model` (z.B. `openai:gpt-5.2`)."
+        )
 
     available_tools = {
         "pubmed": "PubMed Suche",
@@ -2381,8 +2507,10 @@ def _render_advanced_configuration(
             not isinstance(tool, str) for tool in stored_tools
         ):
             st.session_state[tools_key] = normalized_tools
-    selected_tools = container.multiselect(
-        "Tools",
+    tools_box = container.container(border=True)
+    tools_box.markdown("**Tools**")
+    selected_tools = tools_box.multiselect(
+        "Aktive Tools",
         options=list(available_tools.keys()),
         default=[tool_id for tool_id in normalized_tools if tool_id in available_tools],
         format_func=lambda tool_id: available_tools.get(tool_id, tool_id),
@@ -2393,32 +2521,36 @@ def _render_advanced_configuration(
         if isinstance(selected_agent.get("tool_settings"), dict)
         else {}
     )
-    if "pubmed" in selected_tools:
+    if not adv_expert_mode and selected_tools:
+        tools_box.caption(
+            "Tool-Details (E-Mail, Max Results, Timeouts) sind im Expertenmodus verfügbar."
+        )
+    if adv_expert_mode and "pubmed" in selected_tools:
         pubmed_settings = tool_settings.get("pubmed", {})
-        container.text_input(
+        tools_box.text_input(
             "PubMed E-Mail",
             value=str(pubmed_settings.get("email", "")),
             key=pubmed_email_key,
         )
-        container.number_input(
+        tools_box.number_input(
             "PubMed Max Results",
             min_value=1,
             value=int(pubmed_settings.get("max_results") or 5),
             key=pubmed_max_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "PubMed Suche aktiv",
             value=bool(pubmed_settings.get("enable_search_pubmed", True)),
             key=pubmed_enable_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "PubMed Alle Quellen",
             value=bool(pubmed_settings.get("all", False)),
             key=pubmed_all_key,
         )
-    if "websearch" in selected_tools:
+    if adv_expert_mode and "websearch" in selected_tools:
         websearch_settings = tool_settings.get("websearch", {})
-        container.selectbox(
+        tools_box.selectbox(
             "WebSearch Backend",
             options=["", "duckduckgo", "google", "bing", "brave", "yandex"],
             index=["", "duckduckgo", "google", "bing", "brave", "yandex"].index(
@@ -2429,76 +2561,76 @@ def _render_advanced_configuration(
             ),
             key=websearch_backend_key,
         )
-        container.number_input(
+        tools_box.number_input(
             "WebSearch Max Results",
             min_value=1,
             value=int(websearch_settings.get("num_results") or 5),
             key=websearch_results_key,
         )
-    if "youtube" in selected_tools:
+    if adv_expert_mode and "youtube" in selected_tools:
         youtube_settings = tool_settings.get("youtube", {})
-        container.checkbox(
+        tools_box.checkbox(
             "YouTube Captions aktiv",
             value=bool(youtube_settings.get("fetch_captions", True)),
             key=youtube_captions_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "YouTube Video-Infos aktiv",
             value=bool(youtube_settings.get("fetch_video_info", True)),
             key=youtube_video_info_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "YouTube Timestamps aktiv",
             value=bool(youtube_settings.get("fetch_timestamps", False)),
             key=youtube_timestamps_key,
         )
-    if "youtube_transcript" in selected_tools:
+    if adv_expert_mode and "youtube_transcript" in selected_tools:
         youtube_transcript_settings = tool_settings.get("youtube_transcript", {})
-        container.checkbox(
+        tools_box.checkbox(
             "YouTube Transkript: Captions aktiv",
             value=bool(youtube_transcript_settings.get("fetch_captions", True)),
             key=youtube_transcript_captions_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "YouTube Transkript: Video-Infos aktiv",
             value=bool(youtube_transcript_settings.get("fetch_video_info", False)),
             key=youtube_transcript_video_info_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "YouTube Transkript: Timestamps aktiv",
             value=bool(youtube_transcript_settings.get("fetch_timestamps", True)),
             key=youtube_transcript_timestamps_key,
         )
-    if "duckduckgo" in selected_tools:
+    if adv_expert_mode and "duckduckgo" in selected_tools:
         duckduckgo_settings = tool_settings.get("duckduckgo", {})
-        container.checkbox(
+        tools_box.checkbox(
             "DuckDuckGo Suche aktiv",
             value=bool(duckduckgo_settings.get("enable_search", True)),
             key=duckduckgo_search_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "DuckDuckGo News aktiv",
             value=bool(duckduckgo_settings.get("enable_news", True)),
             key=duckduckgo_news_key,
         )
-        container.number_input(
+        tools_box.number_input(
             "DuckDuckGo Max Results",
             min_value=1,
             value=int(duckduckgo_settings.get("fixed_max_results") or 5),
             key=duckduckgo_results_key,
         )
-        container.number_input(
+        tools_box.number_input(
             "DuckDuckGo Timeout (Sek)",
             min_value=1,
             value=int(duckduckgo_settings.get("timeout") or 10),
             key=duckduckgo_timeout_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "DuckDuckGo SSL verifizieren",
             value=bool(duckduckgo_settings.get("verify_ssl", True)),
             key=duckduckgo_ssl_key,
         )
-    if "arxiv" in selected_tools:
+    if adv_expert_mode and "arxiv" in selected_tools:
         arxiv_settings = (
             tool_settings.get("arxiv", {})
             if isinstance(tool_settings.get("arxiv"), dict)
@@ -2508,40 +2640,40 @@ def _render_advanced_configuration(
         arxiv_sort_default = str(arxiv_settings.get("sort_by", ""))
         if arxiv_sort_default not in arxiv_sort_options:
             arxiv_sort_default = ""
-        container.number_input(
+        tools_box.number_input(
             "arXiv Max Results",
             min_value=1,
             max_value=50,
             value=int(arxiv_settings.get("max_results") or 5),
             key=arxiv_max_results_key,
         )
-        container.selectbox(
+        tools_box.selectbox(
             "arXiv Sortierung",
             options=arxiv_sort_options,
             index=arxiv_sort_options.index(arxiv_sort_default),
             key=arxiv_sort_by_key,
         )
-    if "website" in selected_tools:
+    if adv_expert_mode and "website" in selected_tools:
         website_settings = (
             tool_settings.get("website", {})
             if isinstance(tool_settings.get("website"), dict)
             else {}
         )
-        container.number_input(
+        tools_box.number_input(
             "Website Max Pages",
             min_value=1,
             max_value=20,
             value=max(1, min(20, int(website_settings.get("max_pages") or 5))),
             key=website_max_pages_key,
         )
-        container.number_input(
+        tools_box.number_input(
             "Website Timeout (Sek)",
             min_value=1,
             max_value=120,
             value=max(1, min(120, int(website_settings.get("timeout") or 10))),
             key=website_timeout_key,
         )
-        container.text_area(
+        tools_box.text_area(
             "Website erlaubte Domains (eine pro Zeile)",
             value="\n".join(
                 str(domain).strip()
@@ -2550,37 +2682,40 @@ def _render_advanced_configuration(
             ),
             key=website_domains_key,
         )
-    if "hackernews" in selected_tools:
+    if adv_expert_mode and "hackernews" in selected_tools:
         hackernews_settings = tool_settings.get("hackernews", {})
-        container.checkbox(
+        tools_box.checkbox(
             "HackerNews Top Stories aktiv",
             value=bool(hackernews_settings.get("enable_get_top_stories", True)),
             key=hackernews_top_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "HackerNews User-Details aktiv",
             value=bool(hackernews_settings.get("enable_get_user_details", True)),
             key=hackernews_user_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "HackerNews Alle Funktionen",
             value=bool(hackernews_settings.get("all", False)),
             key=hackernews_all_key,
         )
-    if "yfinance" in selected_tools:
+    if adv_expert_mode and "yfinance" in selected_tools:
         yfinance_settings = tool_settings.get("yfinance", {})
-        container.checkbox(
+        tools_box.checkbox(
             "YFinance Aktienkurs aktiv",
             value=bool(yfinance_settings.get("stock_price", True)),
             key=yfinance_price_key,
         )
-        container.checkbox(
+        tools_box.checkbox(
             "YFinance Analystenempfehlungen aktiv",
             value=bool(yfinance_settings.get("analyst_recommendations", True)),
             key=yfinance_analyst_key,
         )
-    container.multiselect(
-        "Team-Mitglieder",
+
+    team_box = container.container(border=True)
+    team_box.markdown("**Team-Mitglieder**")
+    team_box.multiselect(
+        "Mitglieder (Delegation)",
         options=member_options,
         default=(
             selected_agent.get("members", [])
@@ -2589,50 +2724,77 @@ def _render_advanced_configuration(
         ),
         key=members_key,
     )
-    container.text_area(
-        "MCP calls (eine pro Zeile)",
-        value="\n".join(
-            str(call).strip()
-            for call in selected_agent.get("mcp_calls", [])
-            if str(call).strip()
-        ),
-        key=mcp_calls_key,
-        height=120,
-    )
+
+    mcp_box = container.container(border=True)
+    mcp_box.markdown("**MCP Konfiguration**")
+    if not adv_expert_mode:
+        mcp_box.caption(
+            "MCP-Server JSON und MCP-Calls sind im Expertenmodus verfügbar."
+        )
+    else:
+        mcp_box.text_area(
+            "MCP calls (eine pro Zeile)",
+            value="\n".join(
+                str(call).strip()
+                for call in selected_agent.get("mcp_calls", [])
+                if str(call).strip()
+            ),
+            key=mcp_calls_key,
+            height=120,
+        )
     if mcp_servers_key not in st.session_state:
         st.session_state[mcp_servers_key] = json.dumps(
             selected_agent.get("mcp_servers", []), indent=2
         )
-    if container.button("➕ Add Agno Docs MCP", key=f"{mcp_servers_key}_add_agno"):
+    if adv_expert_mode:
+        if mcp_box.button("➕ Add Agno Docs MCP", key=f"{mcp_servers_key}_add_agno"):
+            try:
+                mcp_servers_payload = json.loads(
+                    str(st.session_state.get(mcp_servers_key, "[]")) or "[]"
+                )
+            except json.JSONDecodeError:
+                mcp_servers_payload = []
+            if not isinstance(mcp_servers_payload, list):
+                mcp_servers_payload = []
+            if not any(
+                isinstance(item, dict)
+                and str(item.get("name", "")).strip() == "agno-docs"
+                for item in mcp_servers_payload
+            ):
+                mcp_servers_payload.append(
+                    {
+                        "name": "agno-docs",
+                        "enabled": False,
+                        "transport": "streamable-http",
+                        "url": "https://docs.agno.com/mcp",
+                        "allowed_tools": [],
+                    }
+                )
+                st.session_state[mcp_servers_key] = json.dumps(
+                    mcp_servers_payload, indent=2
+                )
+        mcp_box.text_area(
+            "MCP servers (JSON)",
+            key=mcp_servers_key,
+            height=160,
+        )
+        _mcp_raw = str(st.session_state.get(mcp_servers_key, "[]") or "[]").strip()
         try:
-            mcp_servers_payload = json.loads(
-                str(st.session_state.get(mcp_servers_key, "[]")) or "[]"
-            )
-        except json.JSONDecodeError:
-            mcp_servers_payload = []
-        if not isinstance(mcp_servers_payload, list):
-            mcp_servers_payload = []
-        if not any(
-            isinstance(item, dict) and str(item.get("name", "")).strip() == "agno-docs"
-            for item in mcp_servers_payload
-        ):
-            mcp_servers_payload.append(
-                {
-                    "name": "agno-docs",
-                    "enabled": False,
-                    "transport": "streamable-http",
-                    "url": "https://docs.agno.com/mcp",
-                    "allowed_tools": [],
-                }
-            )
-            st.session_state[mcp_servers_key] = json.dumps(
-                mcp_servers_payload, indent=2
-            )
-    container.text_area(
-        "MCP servers (JSON)",
-        key=mcp_servers_key,
-        height=160,
-    )
+            _mcp_parsed = json.loads(_mcp_raw)
+            if not isinstance(_mcp_parsed, list):
+                mcp_box.warning("⚠️ MCP servers muss ein JSON-Array `[...]` sein.")
+            elif _mcp_parsed:
+                _enabled_count = sum(
+                    1
+                    for s in _mcp_parsed
+                    if isinstance(s, dict) and s.get("enabled", False)
+                )
+                mcp_box.caption(
+                    f"✅ Gültiges JSON · {len(_mcp_parsed)} Server"
+                    f"{f' · {_enabled_count} aktiv' if _enabled_count else ' · keiner aktiv'}"
+                )
+        except json.JSONDecodeError as _mcp_exc:
+            mcp_box.error(f"❌ JSON-Fehler: {_mcp_exc}")
     advanced_payload = {
         "agent_id": selected_agent_id,
         "enabled": bool(
@@ -4337,6 +4499,11 @@ def _render_studio_configuration(
     container: st.delta_generator.DeltaGenerator,
 ) -> None:
     container.subheader("Studio Vorlagen")
+    container.caption(
+        "Studio-Vorlagen definieren vorgefertigte Ausgabe-Workflows (z.B. Berichte, Zusammenfassungen). "
+        "Jede Vorlage hat eigene Standardwerte für Sprache, Ton und Anweisungen. "
+        "Änderungen hier beeinflussen nur das Studio – nicht den regulären Chat."
+    )
     templates = st.session_state.get("studio_templates", [])
     if not isinstance(templates, list) or not templates:
         container.caption("Keine Studio-Vorlagen verfügbar.")
