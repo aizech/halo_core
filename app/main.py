@@ -1702,6 +1702,41 @@ def _render_app_design_configuration(
         st.session_state[_MENU_EDITOR_ITEMS_KEY] = next_items
         st.rerun()
 
+    app_menu_payload = {
+        "sidebar_bg": sidebar_bg,
+        "sidebar_text_color": sidebar_text,
+        "sidebar_icon_color": sidebar_icon,
+        "sidebar_hover_bg": sidebar_hover,
+        "sidebar_hover_text_color": sidebar_hover_text,
+        "sidebar_active_bg": sidebar_active,
+        "sidebar_focus_outline": sidebar_focus,
+        "sidebar_separator_color": sidebar_separator,
+        "sidebar_separator_color_light": sidebar_separator_light,
+        "sidebar_separator_color_dark": sidebar_separator_dark,
+        "sidebar_font_size_px": sidebar_font_size,
+        "sidebar_icon_size_px": sidebar_icon_size,
+        "sidebar_collapsed_width_px": sidebar_collapsed_width,
+        "sidebar_hover_width_px": sidebar_hover_width,
+        "sidebar_item_gap_px": sidebar_item_gap,
+        "theme_mode": theme_mode,
+        "theme_preset_light": theme_preset_light,
+        "theme_preset_dark": theme_preset_dark,
+        "logo_src_light": logo_src_light,
+        "logo_src_dark": logo_src_dark,
+        "icon_src_light": icon_src_light,
+        "icon_src_dark": icon_src_dark,
+        "logo_height_px": logo_height_px,
+        "logo_render_height_px": logo_render_height_px,
+        "icon_render_height_px": icon_render_height_px,
+        "items": _strip_editor_metadata(editor_items),
+    }
+    _render_config_dirty_hint(
+        container,
+        "app_menu",
+        app_menu_payload,
+        "Ungespeicherte Menü-/Design-Änderungen.",
+    )
+
     if container.button("Sidebar Menu speichern", key="save_sidebar_menu"):
         updated_items: List[Dict[str, object]] = []
         for item in editor_items:
@@ -1828,7 +1863,12 @@ def _render_app_design_configuration(
         st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = _menu_items_signature(
             _strip_editor_metadata(st.session_state[_MENU_EDITOR_ITEMS_KEY])
         )
-        _mark_config_saved(container, "app_menu", "Sidebar Menu gespeichert")
+        _mark_config_saved(
+            container,
+            "app_menu",
+            "Sidebar Menu gespeichert",
+            payload=app_menu_payload,
+        )
 
     if container.button("Sidebar Menu zurücksetzen", key="reset_sidebar_menu"):
         reset_menu = menu_settings.save_menu_settings(
@@ -1845,6 +1885,7 @@ def _render_app_design_configuration(
             container,
             "app_menu",
             "Sidebar Menu auf Standard zurückgesetzt",
+            payload=menu_settings.DEFAULT_MENU_SETTINGS,
         )
 
 
@@ -2004,7 +2045,22 @@ def _render_chat_memory_configuration(
                 agent_configs = st.session_state.get("agent_configs", {})
                 agent_configs["chat"] = updated
                 st.session_state["agent_configs"] = agent_configs
-                _mark_config_saved(container, "chat", "Chat-Preset angewendet")
+                preset_payload = {
+                    "chat_preset": selected_preset,
+                    "model": str(updated.get("model", "openai:gpt-5.2")),
+                    "members": (
+                        updated.get("members", [])
+                        if isinstance(updated.get("members"), list)
+                        else []
+                    ),
+                    "tools": _normalize_agent_tools(updated.get("tools", [])),
+                }
+                _mark_config_saved(
+                    container,
+                    "chat",
+                    "Chat-Preset angewendet",
+                    payload=preset_payload,
+                )
     else:
         container.caption("Keine Presets gefunden (presets.json fehlt).")
 
