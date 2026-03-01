@@ -1267,12 +1267,63 @@ def _render_app_design_configuration(
         key="cfg_auth_provider",
         help="z.B. auth0",
     )
+    auth_provider_value = str(auth_provider).strip()
+    auth_preview_config = {
+        **st.session_state["config"],
+        "auth_mode": auth_mode,
+        "enable_auth_services": bool(enable_auth_services),
+        "enable_auth_ui": bool(enable_auth_ui),
+        "enable_access_guards": bool(enable_access_guards),
+    }
+    if auth_provider_value:
+        auth_preview_config["auth_provider"] = auth_provider_value
+    elif "auth_provider" in auth_preview_config:
+        del auth_preview_config["auth_provider"]
+
+    auth_runtime_enabled_preview = auth_service.is_auth_enabled(auth_preview_config)
+    if auth_mode == "local_only":
+        auth_box.info(
+            "Auth ist auf local_only gesetzt. Login/Logout und Access Guards bleiben inaktiv."
+        )
+    elif not bool(enable_auth_services):
+        auth_box.warning(
+            "Auth-Modus aktiv, aber Auth-Services sind deaktiviert. Aktiviere sie für Login/Logout."
+        )
+    elif not bool(enable_auth_ui):
+        auth_box.warning(
+            "Auth-Services sind aktiv, aber die Login/Logout UI ist ausgeblendet."
+        )
+    elif auth_runtime_enabled_preview:
+        auth_box.success(
+            "Auth-Setup ist aktiv. Login/Logout UI und Guards können verwendet werden."
+        )
+    else:
+        auth_box.warning(
+            "Auth ist teilweise konfiguriert. Pruefe Provider und Streamlit Auth-Konfiguration."
+        )
+
+    auth_box.markdown("**Auth Readiness**")
+    auth_box.markdown(
+        f"- [{'x' if auth_mode != 'local_only' else ' '}] Auth mode ist nicht `local_only`"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(enable_auth_services) else ' '}] `enable_auth_services` ist aktiv"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(enable_auth_ui) else ' '}] `enable_auth_ui` ist aktiv"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(enable_access_guards) else ' '}] `enable_access_guards` ist aktiv (optional)"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(auth_provider_value) else ' '}] Auth Provider ist gesetzt"
+    )
     auth_payload = {
         "auth_mode": auth_mode,
         "enable_auth_services": bool(enable_auth_services),
         "enable_auth_ui": bool(enable_auth_ui),
         "enable_access_guards": bool(enable_access_guards),
-        "auth_provider": str(auth_provider).strip(),
+        "auth_provider": auth_provider_value,
     }
     _render_config_dirty_hint(
         auth_box,
