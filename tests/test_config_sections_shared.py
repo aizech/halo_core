@@ -21,7 +21,7 @@ def test_save_payload_updates_in_place_and_persists(monkeypatch) -> None:
 
     monkeypatch.setattr(shared.storage, "save_config", _fake_save_config)
 
-    config = {"enabled_connectors": ["drive"], "image_model": "gpt-image-1"}
+    config = {"enabled_connectors": ["drive"], "image_model": "gpt-image-1.5"}
     updates = {"enabled_connectors": ["notion"], "log_agent_payload": True}
 
     result = shared.save_payload(config, updates)
@@ -29,7 +29,7 @@ def test_save_payload_updates_in_place_and_persists(monkeypatch) -> None:
     assert result is config
     assert config == {
         "enabled_connectors": ["notion"],
-        "image_model": "gpt-image-1",
+        "image_model": "gpt-image-1.5",
         "log_agent_payload": True,
     }
     assert saved == [config]
@@ -45,12 +45,12 @@ def test_reset_payload_applies_selected_default_keys(monkeypatch) -> None:
 
     config = {
         "enabled_connectors": ["notion"],
-        "image_model": "dall-e-3",
+        "image_model": "gpt-image-1.5",
         "log_agent_payload": False,
     }
     defaults = {
         "enabled_connectors": ["drive"],
-        "image_model": "gpt-image-1",
+        "image_model": "gpt-image-1.5",
         "log_agent_payload": True,
     }
 
@@ -58,7 +58,7 @@ def test_reset_payload_applies_selected_default_keys(monkeypatch) -> None:
 
     assert config == {
         "enabled_connectors": ["drive"],
-        "image_model": "gpt-image-1",
+        "image_model": "gpt-image-1.5",
         "log_agent_payload": False,
     }
     assert saved == [config]

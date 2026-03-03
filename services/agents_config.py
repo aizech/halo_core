@@ -245,7 +245,12 @@ def _default_chat_config() -> Dict[str, object]:
         "role": "assistant",
         "instructions": DEFAULT_CHAT_INSTRUCTIONS,
         "members": ["reports", "infographic"],
-        "tools": [],
+        "tools": ["image"],
+        "tool_settings": {
+            "image": {
+                "image_model": "gpt-image-1.5",
+            }
+        },
         "mcp_servers": list(DEFAULT_MCP_SERVERS),
         "model": "openai:gpt-5.2",
         "stream_events": True,

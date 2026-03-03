@@ -17,10 +17,8 @@ def render(container: st.delta_generator.DeltaGenerator) -> None:
     container.subheader("Bildgenerierung")
     image_model = container.selectbox(
         "Bildmodell",
-        options=["gpt-image-1", "dall-e-3"],
-        index=["gpt-image-1", "dall-e-3"].index(
-            st.session_state["config"].get("image_model", "gpt-image-1")
-        ),
+        options=["gpt-image-1.5"],
+        index=0,
     )
     if container.button("Speichern", key="cfg_sources_save_connectors"):
         updates = {

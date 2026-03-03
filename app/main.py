@@ -2073,10 +2073,8 @@ def _render_sources_configuration(
     container.subheader("Bildgenerierung")
     image_model = container.selectbox(
         "Bildmodell",
-        options=["gpt-image-1", "dall-e-3"],
-        index=["gpt-image-1", "dall-e-3"].index(
-            st.session_state["config"].get("image_model", "gpt-image-1")
-        ),
+        options=["gpt-image-1.5"],
+        index=0,
     )
     sources_payload = {
         "enabled_connectors": list(enabled),
@@ -2278,6 +2276,7 @@ def _render_chat_memory_configuration(
         "calculator": "Calculator",
         "wikipedia": "Wikipedia Suche",
         "mermaid": "Mermaid Diagramme",
+        "image": "Bildgenerierung (GPT Image)",
     }
     chat_model_key = "chat_cfg_model"
     chat_members_key = "chat_cfg_members"
@@ -4440,7 +4439,7 @@ def _render_studio_template_card(
                     context_chunks,
                     agent_config,
                     image_model=st.session_state.get("config", {}).get(
-                        "image_model", "gpt-image-1"
+                        "image_model", "gpt-image-1.5"
                     ),
                 )
             else:

@@ -40,14 +40,14 @@ def test_default_chat_history_returns_new_list():
 
 def test_load_or_default_config_uses_defaults():
     config = chat_state.load_or_default_config()
-    assert config["image_model"] == "gpt-image-1"
+    assert config["image_model"] == "gpt-image-1.5"
     assert config["log_stream_events"] is False
 
 
 def test_load_or_default_config_merges_stored():
-    stored = {"image_model": "dall-e-3", "custom_key": "value"}
+    stored = {"image_model": "gpt-image-1.5", "custom_key": "value"}
     config = chat_state.load_or_default_config(stored_config=stored)
-    assert config["image_model"] == "dall-e-3"
+    assert config["image_model"] == "gpt-image-1.5"
     assert config["custom_key"] == "value"
     assert config["chat_preset"] == "Default"  # default preserved
 

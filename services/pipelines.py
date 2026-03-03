@@ -36,7 +36,7 @@ def generate_infographic_artifact(
     sources: List[str],
     context_text: str,
     agent_config: Dict[str, str] | None = None,
-    image_model: str = "gpt-image-1",
+    image_model: str = "gpt-image-1.5",
 ) -> Dict[str, object]:
     return agents.render_infographic_output(
         template_name,

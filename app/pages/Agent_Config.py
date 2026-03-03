@@ -78,6 +78,7 @@ def _render_mcp_servers_ui(
         "calculator": "Calculator",
         "wikipedia": "Wikipedia Suche",
         "mermaid": "Mermaid Diagramme",
+        "image": "Bildgenerierung (GPT Image)",
     }
     configured_tools = [
         str(tool)
@@ -521,6 +522,21 @@ def _render_mcp_servers_ui(
             "YFinance Analystenempfehlungen aktiv",
             value=bool(yfinance_settings.get("analyst_recommendations", True)),
         )
+    if "image" in selected_tools:
+        image_settings = (
+            tool_settings.get("image", {})
+            if isinstance(tool_settings.get("image"), dict)
+            else {}
+        )
+        image_model_options = ["gpt-image-1.5"]
+        current_image_model = str(image_settings.get("image_model", "gpt-image-1.5"))
+        if current_image_model not in image_model_options:
+            image_model_options.append(current_image_model)
+        image_model = st.selectbox(
+            "GPT Image Model",
+            options=image_model_options,
+            index=image_model_options.index(current_image_model),
+        )
     st.subheader("Routing & Runtime")
     model = st.text_input("Model override", value=str(current.get("model", "")))
     memory_scope = st.text_input(
@@ -617,6 +633,10 @@ def _render_mcp_servers_ui(
             updated_tool_settings["yfinance"] = {
                 "stock_price": yfinance_stock_price,
                 "analyst_recommendations": yfinance_analyst_recommendations,
+            }
+        if "image" in selected_tools:
+            updated_tool_settings["image"] = {
+                "image_model": image_model,
             }
         updated = {
             **current,

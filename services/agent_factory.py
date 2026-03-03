@@ -6,10 +6,13 @@ import logging
 from typing import Dict, List
 
 from agno.models.openai import OpenAIChat
+from agno.tools.openai import OpenAITools
 from agno.tools.pubmed import PubmedTools
 from agno.tools.websearch import WebSearchTools
 from agno.tools.youtube import YouTubeTools
 from agno.tools.wikipedia import WikipediaTools
+
+from services.settings import get_settings
 
 try:  # Optional MCP tool kit
     from agno.tools.mcp import MCPTools
@@ -66,6 +69,8 @@ try:  # Optional model providers
 except ImportError:  # pragma: no cover - optional dependency
     Groq = None
 
+_SETTINGS = get_settings()
+
 
 def normalize_model_id(raw: object, default_model_id: str = "openai:gpt-5.2") -> str:
     if not raw:
@@ -115,6 +120,15 @@ def build_tools(
     for tool_id in tool_ids:
         if tool_id == "shell":
             logger.warning("Shell tool is disabled by default")
+            continue
+        if tool_id == "image":
+            image_settings = tool_settings.get("image") if tool_settings else None
+            image_model = "gpt-image-1.5"
+            if isinstance(image_settings, dict):
+                image_model = str(image_settings.get("image_model", "gpt-image-1.5"))
+            api_key = _SETTINGS.openai_api_key
+            if api_key:
+                tools.append(OpenAITools(image_model=image_model, api_key=api_key))
             continue
         if tool_id == "pubmed":
             pubmed_settings = tool_settings.get("pubmed")

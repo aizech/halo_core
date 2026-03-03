@@ -10,7 +10,8 @@ from services import storage
 # ── Default configuration values (single source of truth) ──────────────
 
 DEFAULT_CONFIG: Dict[str, Any] = {
-    "image_model": "gpt-image-1",
+    "image_model": "gpt-image-1.5",
+    "enable_image_generation": True,
     "log_agent_payload": False,
     "log_agent_response": True,
     "log_agent_errors": True,
