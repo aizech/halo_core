@@ -530,6 +530,7 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
     images: List[Dict[str, str]] = []
 
     if tool_calls is None:
+        _LOGGER.debug("tool_calls is None, no images to extract")
         return images
 
     tool_list = []
@@ -539,7 +540,10 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
         try:
             tool_list = list(tool_calls)
         except (TypeError, ValueError):
+            _LOGGER.debug("tool_calls could not be converted to list")
             return images
+
+    _LOGGER.debug("Extracting images from %d tool calls", len(tool_list))
 
     for tool_call in tool_list:
         if tool_call is None:
@@ -557,7 +561,16 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
             )
             tool_content = getattr(tool_call, "content", None)
 
+        _LOGGER.debug(
+            "Tool call: name=%s, content_type=%s",
+            tool_name,
+            type(tool_content).__name__ if tool_content else "None",
+        )
+
         if tool_name and "image" in tool_name.lower():
+            _LOGGER.debug(
+                "Tool '%s' matches image criteria, extracting content", tool_name
+            )
             if tool_content:
                 if isinstance(tool_content, list):
                     for item in tool_content:
@@ -568,6 +581,7 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
                                 or item.get("base64")
                             )
                             if image_data:
+                                _LOGGER.debug("Found base64 image data in list item")
                                 saved = _save_generated_image(image_data)
                                 if saved:
                                     images.append(saved)
@@ -578,18 +592,39 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
                         or tool_content.get("base64")
                     )
                     if image_data:
+                        _LOGGER.debug("Found base64 image data in dict")
                         saved = _save_generated_image(image_data)
                         if saved:
                             images.append(saved)
                 elif isinstance(tool_content, str):
                     try:
                         data = base64.b64decode(tool_content)
+                        _LOGGER.debug("Found base64 string content")
                         saved = _save_generated_image(data)
                         if saved:
                             images.append(saved)
                     except (ValueError, TypeError):
                         pass
 
+        if not images:
+            _LOGGER.debug(
+                "No images extracted from tool '%s', checking all attributes for base64",
+                tool_name,
+            )
+            if hasattr(tool_call, "__dict__"):
+                for attr_name, attr_val in vars(tool_call).items():
+                    if attr_val and isinstance(attr_val, str) and len(attr_val) > 100:
+                        try:
+                            base64.b64decode(attr_val)
+                            _LOGGER.debug("Found base64 in attribute '%s'", attr_name)
+                            saved = _save_generated_image(attr_val)
+                            if saved:
+                                images.append(saved)
+                                break
+                        except (ValueError, TypeError):
+                            pass
+
+    _LOGGER.debug("Total images extracted: %d", len(images))
     return images
 
 
