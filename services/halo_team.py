@@ -130,6 +130,7 @@ def build_master_team_from_config(
         master_config.get("tool_settings"),
         logger=_LOGGER,
     )
+    _LOGGER.info("Built tools for master agent: %s", [str(t) for t in tools])
     tools.extend(build_mcp_tools(master_config.get("mcp_servers"), logger=_LOGGER))
 
     active_master_mcp_names: List[str] = []

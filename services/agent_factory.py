@@ -129,6 +129,9 @@ def build_tools(
             api_key = _SETTINGS.openai_api_key
             if api_key:
                 tools.append(OpenAITools(image_model=image_model, api_key=api_key))
+                logger.info("Added image generation tool with model: %s", image_model)
+            else:
+                logger.warning("Cannot add image tool: OpenAI API key not configured")
             continue
         if tool_id == "pubmed":
             pubmed_settings = tool_settings.get("pubmed")

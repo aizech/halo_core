@@ -581,7 +581,7 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
                                 or item.get("base64")
                             )
                             if image_data:
-                                _LOGGER.debug("Found base64 image data in list item")
+                                _LOGGER.info("Found base64 image data in list item")
                                 saved = _save_generated_image(image_data)
                                 if saved:
                                     images.append(saved)
@@ -592,7 +592,7 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
                         or tool_content.get("base64")
                     )
                     if image_data:
-                        _LOGGER.debug("Found base64 image data in dict")
+                        _LOGGER.info("Found base64 image data in dict")
                         saved = _save_generated_image(image_data)
                         if saved:
                             images.append(saved)
