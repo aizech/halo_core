@@ -8,6 +8,47 @@ Guidance for AI coding agents in the HALO Core repository.
 - **Reproduce bugs**: Always verify failures locally before fixing
 - **Minimal diffs**: Prefer surgical edits; avoid unnecessary changes
 
+## Problem Solving (1-3-1)
+
+When stuck OR when multiple valid architectural approaches exist:
+1. Define the problem clearly
+2. Present 3 potential options with tradeoffs
+3. Recommend 1 option
+
+Do NOT proceed implementing until user confirms.
+
+## Development Rules
+
+- **DRY**: Don't repeat yourself. If the same logic appears 2+ times, refactor. Grep before writing new utilities — prefer extending existing ones.
+- **TDD (Backend)**: Always write test first. Check existing tests before writing code. Create or adjust tests for new features. Confirm test with user before implementing. Frontend is exempt.
+- **Clarify Before Implementing**: If requirements are ambiguous, ask one focused clarifying question. Don't infer intent on consequential decisions.
+- **YAGNI**: Don't add abstractions, configs, or features not needed now. Solve the current problem cleanly.
+- **Planning**: For complex tasks, create a plan and todo list before writing code. Wait for confirmation before proceeding.
+- **Clarity Over Brevity**: Favor understandable code over clever tricks. Prioritize legibility.
+- **Single-Responsibility**: Keep functions small and focused on one thing.
+- **Fail Fast**: Validate assumptions early. Throw clear errors that identify root cause.
+
+## Commit Convention
+
+Format: `<prefix>: <description>` (lowercase)
+- feat: introduce a new feature
+- fix: fix a bug or issue
+- tweak: minor adjustments or improvements
+- style: update code style or formatting
+- refactor: restructure code without changing functionality
+- perf: improve performance or efficiency
+- test: add or update tests
+- docs: update documentation
+- chore: maintenance tasks or updates
+- ci: change CI/CD configuration
+- build: modify build system or dependencies
+- revert: revert a previous commit
+- hotfix: urgent bug fix
+- init: initialize a new project or feature
+- merge: merge branches
+- wip: work in progress
+- release: prepare for a release
+
 ## Commands
 
 ```bash

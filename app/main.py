@@ -4124,6 +4124,7 @@ def render_chat_panel() -> None:
             result.response,
             trace=result.trace,
             tool_calls=result.tool_calls,
+            images=result.generated_images,
         )
         st.toast("Antwort generiert – siehe Chat")
         st.rerun()

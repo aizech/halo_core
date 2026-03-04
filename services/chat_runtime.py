@@ -6,16 +6,20 @@ Keeps Streamlit rendering concerns out of the business logic.
 
 from __future__ import annotations
 
-import logging
 import asyncio
+import base64
+import logging
 import re
 import time
 from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
+from pathlib import Path
 from time import perf_counter
 from typing import Callable, Dict, List
+from uuid import uuid4
 
 from services import agents, pipelines, retrieval
+from services.settings import get_settings
 
 try:
     from agno.agent import RunEvent
@@ -272,6 +276,7 @@ class ChatTurnResult:
     tool_calls: object = None
     trace: Dict[str, object] | None = None
     used_fallback: bool = False
+    generated_images: List[Dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -495,6 +500,99 @@ def _fallback_reply(turn: ChatTurnInput, contexts: List[dict]) -> str:
         )
 
 
+def _save_generated_image(
+    image_data: object, suffix: str = ".png"
+) -> Dict[str, str] | None:
+    """Save generated image from tool result and return dict with filepath and name."""
+    if image_data is None:
+        return None
+    if isinstance(image_data, (bytes, bytearray)):
+        image_bytes = bytes(image_data)
+    elif isinstance(image_data, str):
+        try:
+            image_bytes = base64.b64decode(image_data)
+        except (ValueError, TypeError):
+            return None
+    else:
+        return None
+
+    settings = get_settings()
+    output_dir = Path(settings.data_dir) / "chat_images"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    image_id = uuid4().hex[:8]
+    filename = output_dir / f"generated_{image_id}{suffix}"
+    filename.write_bytes(image_bytes)
+    return {"filepath": str(filename), "name": f"Generated Image {image_id}"}
+
+
+def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
+    """Extract generated images from tool call results."""
+    images: List[Dict[str, str]] = []
+
+    if tool_calls is None:
+        return images
+
+    tool_list = []
+    if isinstance(tool_calls, list):
+        tool_list = tool_calls
+    elif hasattr(tool_calls, "__iter__"):
+        try:
+            tool_list = list(tool_calls)
+        except (TypeError, ValueError):
+            return images
+
+    for tool_call in tool_list:
+        if tool_call is None:
+            continue
+
+        tool_name = None
+        tool_content = None
+
+        if hasattr(tool_call, "get"):
+            tool_name = tool_call.get("tool_name") or tool_call.get("name")
+            tool_content = tool_call.get("content")
+        else:
+            tool_name = getattr(tool_call, "tool_name", None) or getattr(
+                tool_call, "name", None
+            )
+            tool_content = getattr(tool_call, "content", None)
+
+        if tool_name and "image" in tool_name.lower():
+            if tool_content:
+                if isinstance(tool_content, list):
+                    for item in tool_content:
+                        if isinstance(item, dict):
+                            image_data = (
+                                item.get("image")
+                                or item.get("b64_json")
+                                or item.get("base64")
+                            )
+                            if image_data:
+                                saved = _save_generated_image(image_data)
+                                if saved:
+                                    images.append(saved)
+                elif isinstance(tool_content, dict):
+                    image_data = (
+                        tool_content.get("image")
+                        or tool_content.get("b64_json")
+                        or tool_content.get("base64")
+                    )
+                    if image_data:
+                        saved = _save_generated_image(image_data)
+                        if saved:
+                            images.append(saved)
+                elif isinstance(tool_content, str):
+                    try:
+                        data = base64.b64decode(tool_content)
+                        saved = _save_generated_image(data)
+                        if saved:
+                            images.append(saved)
+                    except (ValueError, TypeError):
+                        pass
+
+    return images
+
+
 def run_chat_turn(turn: ChatTurnInput) -> ChatTurnResult:
     """Execute a full chat turn: payload → agent → stream → fallback → result.
 
@@ -571,8 +669,11 @@ def run_chat_turn(turn: ChatTurnInput) -> ChatTurnResult:
             used_fallback=True,
         )
 
+    generated_images = _extract_generated_images(tool_calls)
+
     return ChatTurnResult(
         response=response,
         tool_calls=tool_calls,
         trace=trace,
+        generated_images=generated_images,
     )
