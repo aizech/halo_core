@@ -121,6 +121,37 @@ Model Context Protocol (MCP) servers provide additional tools:
 2. Enable/disable servers
 3. Configure server credentials
 
+### MCP Connector Credentials
+
+To connect external systems, configure credentials in `.env` or `.streamlit/secrets.toml`:
+
+| Connector | Environment Variables |
+|----------|---------------------|
+| **Notion** | `NOTION_API_KEY` |
+| **Google Drive** | `GOOGLE_OAUTH_CREDENTIALS` (path to JSON) |
+| **Microsoft 365** | `MSAL_TENANT_ID`, `MSAL_CLIENT_ID`, `MSAL_CLIENT_SECRET` |
+
+#### Notion Setup
+
+1. Go to [Notion Integrations](https://www.notion.so/my-integrations)
+2. Create a new integration
+3. Copy the API key
+4. Set `NOTION_API_KEY` in your secrets
+
+#### Google Drive Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create OAuth 2.0 credentials
+3. Download the JSON file
+4. Set `GOOGLE_OAUTH_CREDENTIALS` to the file path
+
+#### Microsoft 365 Setup
+
+1. Register an app in [Azure AD](https://entra.microsoft.com/)
+2. Note the Tenant ID and Client ID
+3. Create a client secret
+4. Set `MSAL_TENANT_ID`, `MSAL_CLIENT_ID`, `MSAL_CLIENT_SECRET`
+
 ### Coordination Modes
 
 | Mode | Behavior |

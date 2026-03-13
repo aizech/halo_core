@@ -29,6 +29,7 @@ Source selection controls what the AI can use for grounded responses. Without se
 | Images | `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp` |
 | Audio | `.mp3`, `.wav`, `.m4a`, `.ogg` |
 | Video | `.mp4`, `.mov`, `.avi`, `.mkv` |
+| Medical Imaging | `.dcm`, `.dicom` |
 
 ---
 
@@ -166,3 +167,4 @@ Try this:
 - [Chat](chat.md) — Use selected sources in conversations
 - [Studio](studio.md) — Generate outputs from source context
 - [Notes](notes.md) — Convert notes into sources
+- [DICOM Tools](dicom-tools.md) — Anonymize medical imaging files

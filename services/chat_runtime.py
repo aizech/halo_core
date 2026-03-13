@@ -285,6 +285,7 @@ class ChatTurnInput:
 
     prompt: str
     sources: List[str] = field(default_factory=list)
+    source_ids: List[str] = field(default_factory=list)
     notes: List[dict] = field(default_factory=list)
     session_id: str | None = None
     user_id: str | None = None
@@ -301,7 +302,9 @@ def build_chat_payload(turn: ChatTurnInput) -> tuple[str, List[dict]]:
 
     Returns (payload_text, contexts).
     """
-    contexts = retrieval.query_similar(turn.prompt)
+    # Filter RAG results to selected sources only
+    source_ids = turn.source_ids if turn.source_ids else None
+    contexts = retrieval.query_similar(turn.prompt, source_ids=source_ids)
     payload = agents.build_chat_payload(
         turn.prompt,
         turn.sources,

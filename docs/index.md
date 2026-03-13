@@ -109,6 +109,7 @@ streamlit run app/main.py
 
 ## Resources
 
+- [Changelog](changelog.md) — Version history and changes
 - [GitHub Repository](https://github.com/aizech/halo_core)
 - [Live Demo](https://halocore.streamlit.app/)
 - [Corpus Analytica](https://www.corpusanalytica.com/)

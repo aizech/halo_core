@@ -26,6 +26,25 @@ HALO Core uses multiple configuration layers:
 | `HALO_TEMPLATES_DIR` | Templates directory | `templates/` |
 | `HALO_AGENT_DB` | Memory backend connection string | None |
 
+### DICOM Settings
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DICOM_ANONYMIZE_ON_UPLOAD` | Auto-anonymize DICOM on upload | `false` |
+| `DICOM_PACS_HOST` | PACS server hostname | None |
+| `DICOM_PACS_PORT` | PACS server port | None |
+| `DICOM_PACS_AE_TITLE` | PACS Application Entity title | None |
+
+### MCP Connector Credentials
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NOTION_API_KEY` | Notion integration API key | None |
+| `GOOGLE_OAUTH_CREDENTIALS` | Path to Google OAuth JSON | None |
+| `MSAL_TENANT_ID` | Microsoft 365 tenant ID | None |
+| `MSAL_CLIENT_ID` | Microsoft 365 client ID | None |
+| `MSAL_CLIENT_SECRET` | Microsoft 365 client secret | None |
+
 ### Setting Environment Variables
 
 **Windows PowerShell:**

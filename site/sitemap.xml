@@ -5,6 +5,10 @@
          <lastmod>2026-03-13</lastmod>
     </url>
     <url>
+         <loc>https://docs.corpusanalytica.com/changelog/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
          <loc>https://docs.corpusanalytica.com/admin/</loc>
          <lastmod>2026-03-13</lastmod>
     </url>
@@ -14,6 +18,10 @@
     </url>
     <url>
          <loc>https://docs.corpusanalytica.com/admin/deployment/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.corpusanalytica.com/admin/dicom-configuration/</loc>
          <lastmod>2026-03-13</lastmod>
     </url>
     <url>
@@ -46,6 +54,10 @@
     </url>
     <url>
          <loc>https://docs.corpusanalytica.com/handbook/configuration/</loc>
+         <lastmod>2026-03-13</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.corpusanalytica.com/handbook/dicom-tools/</loc>
          <lastmod>2026-03-13</lastmod>
     </url>
     <url>

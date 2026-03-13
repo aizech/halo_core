@@ -56,6 +56,7 @@ extra:
 
 nav:
   - Home: index.md
+  - Changelog: changelog.md
   - User Handbook:
     - Overview: handbook/index.md
     - Getting Started: handbook/getting-started.md
@@ -63,6 +64,7 @@ nav:
     - Chat: handbook/chat.md
     - Studio: handbook/studio.md
     - Notes: handbook/notes.md
+    - DICOM Tools: handbook/dicom-tools.md
     - Configuration: handbook/configuration.md
     - Advanced Usage: handbook/advanced.md
     - Workflows: handbook/workflows.md
@@ -73,6 +75,7 @@ nav:
     - Overview: admin/index.md
     - Deployment: admin/deployment.md
     - Configuration: admin/configuration.md
+    - DICOM Configuration: admin/dicom-configuration.md
     - User Management: admin/user-management.md
     - Security: admin/security.md
     - Monitoring: admin/monitoring.md

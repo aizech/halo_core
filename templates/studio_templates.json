@@ -7,8 +7,14 @@
       "icon": "📌",
       "color": "#E8F4FD",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen prägnanten Executive Brief auf maximal 1–2 Seiten. Struktur: 1) Situation & Kontext (2–3 Sätze), 2) Kernerkenntnisse als Aufzählung (max. 5 Punkte), 3) Handlungsempfehlung(en) mit Begründung, 4) Offene Risiken oder Datenlücken. Schreibe direkt, ohne Fülltext. Verwende keine Fachbegriffe ohne Erklärung. Ton: sachlich, präzise."
@@ -26,8 +32,14 @@
       "icon": "🔬",
       "color": "#EAF5EA",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen wissenschaftlichen Literaturüberblick. Struktur: 1) Fragestellung und Scope, 2) Methodischer Überblick der einbezogenen Quellen (Studientypen, Zeitraum, N), 3) Konsolidierte Kernbefunde mit Quellenangaben, 4) Widersprüche oder Forschungslücken, 5) Schlussfolgerung und weiterer Forschungsbedarf. Zitiere Quellen namentlich. Verwende akademischen Stil. Kein Editorializing."
@@ -45,8 +57,14 @@
       "icon": "🏥",
       "color": "#FFF0F0",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten klinischen Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine strukturierte Patientenzusammenfassung. Struktur: 1) Diagnose(n) und ICD-Codes falls vorhanden, 2) Anamnese-Kurzfassung, 3) Aktuelle Medikation und Therapie, 4) Relevante Befunde und Laborwerte (tabellarisch falls möglich), 5) Verlauf und nächste Schritte. Schreibe klar und klinisch präzise. Keine Spekulationen. Markiere fehlende oder unklare Informationen explizit als '[Nicht dokumentiert]'."
@@ -64,8 +82,14 @@
       "icon": "📝",
       "color": "#FFFBE6",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein strukturiertes Gesprächsprotokoll. Struktur: 1) Teilnehmer (soweit erkennbar), 2) Besprochene Themen als nummerierte Liste, 3) Beschlüsse und Einigungen (fett markiert), 4) Offene Punkte und Diskussionen ohne Ergebnis, 5) Aufgaben (To-Dos) mit Verantwortlichen und Terminen falls vorhanden. Halte dich strikt an das, was in den Quellen steht. Keine Interpretationen oder Ergänzungen."
@@ -83,8 +107,14 @@
       "icon": "📖",
       "color": "#F0F4FF",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Glossar der wichtigsten Fachbegriffe. Format: alphabetisch sortierte Liste, jeder Eintrag mit: **Begriff** — kurze, präzise Definition (1–3 Sätze) basierend auf dem Kontext der Quellen. Wenn ein Begriff in den Quellen unterschiedlich verwendet wird, weise auf die Varianz hin. Ziel: ein Leser ohne Fachkenntnisse soll die Texte damit verstehen können. Maximal 30 Begriffe, priorisiere nach Relevanz und Häufigkeit."
@@ -102,8 +132,14 @@
       "icon": "🧪",
       "color": "#F5F0FF",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Forschungsmemo. Struktur: 1) Fragestellung (1 Satz), 2) Quellenbasis (Anzahl, Typen, Qualitätsbewertung: hoch/mittel/niedrig), 3) Kernbefunde geordnet nach Evidenzstärke, 4) Praktische Implikationen für den konkreten Anwendungskontext, 5) Empfehlung: weitere Recherche nötig / ausreichend Grundlage für Entscheidung. Verwende klare Sprache, kein akademischer Jargon. Länge: max. 600 Wörter."
@@ -121,8 +157,14 @@
       "icon": "📊",
       "color": "#E7F0FF",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle einen professionellen Bericht. Struktur: 1) Zusammenfassung (Executive Summary, 3–5 Sätze), 2) Hintergrund und Kontext, 3) Haupterkenntnisse mit Quellenbelegen, 4) Analyse und Bewertung, 5) Schlussfolgerung. Nutze Überschriften, Absätze und bei Bedarf Aufzählungen. Ton und Sprache passen sich der Konfiguration an."
@@ -142,8 +184,14 @@
       "color": "#FFF4E0",
       "badge": "BETA",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine Präsentationsstruktur. Format: Gliederung als nummerierte Folienübersicht. Jede Folie erhält: Titel, 3–5 Stichpunkte, optionalen Sprecherhinweis in Kursivschrift. Beginne mit Titelfolie und Agenda, schließe mit Zusammenfassung und nächsten Schritten. Maximal 12 Folien. Ton und Sprache gemäß Konfiguration."
@@ -161,8 +209,14 @@
       "icon": "📋",
       "color": "#F1F5F9",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und extrahiere alle relevanten Fakten, Kennzahlen und Vergleichspunkte. Gib das Ergebnis als Markdown-Tabelle aus. Spalten: Kategorie | Wert / Befund | Quelle | Anmerkung. Ergänze unter der Tabelle eine kurze Interpretation der auffälligsten Muster (max. 3 Sätze). Falls keine tabellierbaren Daten vorhanden: strukturiere als Liste von Fakten mit Quellenangaben."
@@ -182,8 +236,14 @@
       "color": "#F3ECFF",
       "badge": "BETA",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Podcast-Skript als Dialog zwischen zwei Sprechern (Host und Experte). Struktur: Intro (Teaser + Themenvorstellung), 3–4 inhaltliche Segmente mit natürlichem Gesprächsfluss, Outro mit Zusammenfassung und Call-to-Action. Ton: informativ aber locker, keine akademische Sprache. Länge: ca. 8–12 Minuten Sprechzeit (ca. 1200–1800 Wörter). Markiere Sprecherwechsel klar."
@@ -203,8 +263,14 @@
       "color": "#EDE7FF",
       "badge": "BETA",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle eine Infografik-Textvorlage. Format: 1) Headline (max. 10 Wörter, Kernaussage), 2) 3–5 visuelle Blöcke mit je: Überschrift, 1 prägnante Kennzahl oder Aussage, 1 Erklärungssatz, 3) Fußzeile mit Quellenangaben. Verwende kurze, plakative Sprache. Vermeide Fließtext. Alle Zahlen direkt aus den Quellen — keine Schätzungen."
@@ -222,8 +288,14 @@
       "icon": "🎬",
       "color": "#DFF5EC",
       "actions": [
-        {"id": "generate", "label": "Generieren"},
-        {"id": "configure", "label": "Konfigurieren"}
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
       ],
       "agent": {
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Video-Storyboard. Format: nummerierte Szenenübersicht, jede Szene mit: Szene Nr. | Visual-Beschreibung | Sprecher-Text (Voice-over) | Dauer (Sek.). Gesamtlänge: 60–120 Sekunden. Beginne mit Hook-Szene, schließe mit klarem Call-to-Action. Sprache des Sprecher-Textes: klar, direkt, für gesprochene Sprache optimiert."
@@ -243,8 +315,14 @@
       "team_id": "medical_team",
       "agent_id": "chief_doctor",
       "actions": [
-        {"id": "generate", "label": "Generate"},
-        {"id": "configure", "label": "Configure"}
+        {
+          "id": "generate",
+          "label": "Generate"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
       ],
       "agent": {
         "instructions": "Analyze the clinical presentation and generate a structured differential diagnosis. Structure: 1) Chief complaint summary, 2) Key clinical findings, 3) Differential diagnosis ranked by likelihood (with ICD-10 codes), 4) Evidence supporting each diagnosis, 5) Recommended diagnostic workup to narrow differentials, 6) Red flags requiring urgent evaluation. Cite PubMed sources when available. Respond in the same language as the input."
@@ -264,8 +342,14 @@
       "team_id": "medical_team",
       "agent_id": "medical_scribe",
       "actions": [
-        {"id": "generate", "label": "Generate"},
-        {"id": "configure", "label": "Configure"}
+        {
+          "id": "generate",
+          "label": "Generate"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
       ],
       "agent": {
         "instructions": "Create a formal case report following CARE guidelines. Structure: 1) Title (descriptive with key clinical elements), 2) Abstract (structured: introduction, case presentation, discussion, conclusion), 3) Introduction (background and clinical context), 4) Case Presentation (patient demographics, history, examination, investigations, treatment, outcomes), 5) Discussion (differential diagnosis, literature review, clinical lessons), 6) Conclusion and patient perspective. Ensure patient anonymity. Use medical terminology appropriately. Respond in the same language as the input."
@@ -285,8 +369,14 @@
       "team_id": "medical_team",
       "agent_id": "pharmacist",
       "actions": [
-        {"id": "generate", "label": "Generate"},
-        {"id": "configure", "label": "Configure"}
+        {
+          "id": "generate",
+          "label": "Generate"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
       ],
       "agent": {
         "instructions": "Analyze the provided medication list for drug-drug and drug-condition interactions. Structure: 1) Medication summary table (drug, dose, indication), 2) Interactions identified (drug pair, mechanism, severity: contraindicated/major/moderate/minor, clinical effects), 3) Drug-disease contraindications, 4) Management recommendations for each significant interaction, 5) Monitoring parameters, 6) Therapeutic alternatives if needed. Cite evidence sources. Respond in the same language as the input."
@@ -306,8 +396,14 @@
       "team_id": "medical_team",
       "agent_id": "radiologist",
       "actions": [
-        {"id": "generate", "label": "Generate"},
-        {"id": "configure", "label": "Configure"}
+        {
+          "id": "generate",
+          "label": "Generate"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
       ],
       "agent": {
         "instructions": "Generate a structured radiology report from the provided imaging description. Structure: 1) EXAMINATION (modality, body part, technique), 2) COMPARISON (prior studies if mentioned), 3) FINDINGS (organized by anatomical region, use standard terminology), 4) IMPRESSION (numbered list of findings with differential considerations), 5) RECOMMENDATIONS (follow-up imaging or clinical correlation if needed). Use standardized reporting lexicon (BI-RADS, TI-RADS, PI-RADS, etc.) when applicable. Highlight urgent findings. Respond in the same language as the input."
@@ -327,8 +423,14 @@
       "team_id": "medical_team",
       "agent_id": "medical_researcher",
       "actions": [
-        {"id": "generate", "label": "Generate"},
-        {"id": "configure", "label": "Configure"}
+        {
+          "id": "generate",
+          "label": "Generate"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
       ],
       "agent": {
         "instructions": "Synthesize the provided clinical question and literature into an evidence summary. Structure: 1) Clinical question (PICO format), 2) Search summary (databases, date range, number of studies), 3) Evidence by study type (systematic reviews, RCTs, observational studies), 4) Quality assessment (GRADE rating, risk of bias), 5) Key findings with confidence intervals and NNT where applicable, 6) Clinical implications, 7) Research gaps. Provide PMID/DOI citations. Respond in the same language as the input."
@@ -348,8 +450,14 @@
       "team_id": "medical_team",
       "agent_id": "chief_doctor",
       "actions": [
-        {"id": "generate", "label": "Generate"},
-        {"id": "configure", "label": "Configure"}
+        {
+          "id": "generate",
+          "label": "Generate"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
       ],
       "agent": {
         "instructions": "Develop a comprehensive treatment protocol for the specified condition. Structure: 1) Diagnosis confirmation criteria, 2) Treatment goals (short-term and long-term), 3) First-line therapy (medications, dosing, duration, administration), 4) Monitoring parameters and frequency, 5) Treatment modifications (dose adjustments, alternatives for non-response), 6) Adverse effect management, 7) Follow-up schedule, 8) Patient education points, 9) Referral criteria. Reference current guidelines (ACC/AHA, ESC, etc.). Respond in the same language as the input."
@@ -369,8 +477,14 @@
       "team_id": "medical_team",
       "agent_id": "cardiologist",
       "actions": [
-        {"id": "generate", "label": "Generate"},
-        {"id": "configure", "label": "Configure"}
+        {
+          "id": "generate",
+          "label": "Generate"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
       ],
       "agent": {
         "instructions": "Perform cardiovascular risk assessment using the provided patient data. Structure: 1) Risk factor summary, 2) Risk score calculation (Framingham, ASCVD, SCORE, or QRISK as appropriate), 3) Risk category interpretation, 4) 10-year and lifetime risk estimation, 5) Modifiable risk factors with intervention targets, 6) Recommended screening schedule, 7) Prevention strategy (lifestyle, pharmacotherapy if indicated), 8) Referral recommendations. Show calculation steps. Cite guideline sources. Respond in the same language as the input."
@@ -379,6 +493,32 @@
         "language": "Auto",
         "tone": "Clinical",
         "instructions": "Perform cardiovascular risk assessment using the provided patient data. Structure: 1) Risk factor summary, 2) Risk score calculation (Framingham, ASCVD, SCORE, or QRISK as appropriate), 3) Risk category interpretation, 4) 10-year and lifetime risk estimation, 5) Modifiable risk factors with intervention targets, 6) Recommended screening schedule, 7) Prevention strategy (lifestyle, pharmacotherapy if indicated), 8) Referral recommendations. Show calculation steps. Cite guideline sources. Respond in the same language as the input."
+      }
+    },
+    {
+      "id": "medical_image_analysis",
+      "title": "Medical Image Analysis",
+      "description": "Analyzes medical images (X-ray, MRI, CT, Ultrasound, DICOM) with structured findings and evidence-based context.",
+      "icon": "🩺",
+      "color": "#E8F4F8",
+      "agent_id": "medical_imaging",
+      "actions": [
+        {
+          "id": "generate",
+          "label": "Analyze"
+        },
+        {
+          "id": "configure",
+          "label": "Configure"
+        }
+      ],
+      "agent": {
+        "instructions": "Analyze the provided medical image systematically. Structure: 1) Image Technical Assessment (modality, anatomical region, quality), 2) Professional Analysis (findings, measurements, severity), 3) Clinical Interpretation (diagnosis with confidence, differentials), 4) Patient Education (jargon-free explanation), 5) Evidence-Based Context (PubMed references, guidelines), 6) Medical Disclaimer. Always include the disclaimer. Respond in the same language as the user."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Clinical",
+        "instructions": "Analyze the provided medical image systematically. Structure: 1) Image Technical Assessment (modality, anatomical region, quality), 2) Professional Analysis (findings, measurements, severity), 3) Clinical Interpretation (diagnosis with confidence, differentials), 4) Patient Education (jargon-free explanation), 5) Evidence-Based Context (PubMed references, guidelines), 6) Medical Disclaimer. Always include the disclaimer. Respond in the same language as the user."
       }
     }
   ]

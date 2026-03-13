@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://docs.corpusanalytica.com/handbook/glossary/">
+        <link rel="canonical" href="https://docs.corpusanalytica.com/handbook/dicom-tools/">
       
       
-        <link rel="prev" href="../faq/">
+        <link rel="prev" href="../notes/">
       
       
-        <link rel="next" href="../../admin/">
+        <link rel="next" href="../configuration/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Glossary - HALO Core Docs</title>
+        <title>DICOM Tools - HALO Core Docs</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#glossary" class="md-skip">
+        <a href="#dicom-tools" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Glossary
+              DICOM Tools
             
           </span>
         </div>
@@ -664,10 +664,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../dicom-tools/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DICOM Tools
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -683,6 +710,342 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Does
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why It Matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-dicom-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessing DICOM Tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anonymization-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymization Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Anonymization Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-gets-anonymized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Gets Anonymized
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uid-regeneration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UID Regeneration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#private-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private Tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-dicom-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using DICOM Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using DICOM Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-upload-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Upload Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-configure-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Configure Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-anonymize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Anonymize
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Download
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expected-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected Results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anonymization-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymization Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-anonymization-on-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Anonymization on Upload
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Anonymization on Upload">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-in-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable in .env:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-not-recognized-as-dicom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "File not recognized as DICOM"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anonymization-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Anonymization fails"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#download-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Download fails"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-anonymizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before Anonymizing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-anonymizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After Anonymizing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -832,37 +1195,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Glossary
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../glossary/" class="md-nav__link">
         
   
   
@@ -878,661 +1214,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#a" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="A">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agent-config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent Config
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#c" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        C
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="C">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#chat-history" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chat History
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#connector" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Connector
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#coordination-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coordination Mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#d" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        D
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="D">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#data-directory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data Directory
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#f" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        F
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="F">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fallback" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fallback
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#g" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        G
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="G">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#grounded-answer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Grounded Answer
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#h" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        H
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="H">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#halo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HALO
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#k" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        K
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="K">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#knowledge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Knowledge
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#l" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        L
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="L">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#lancedb" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LanceDB
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#m" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        M
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="M">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#master-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Master Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memory-backend" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory Backend
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multimodal" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multimodal
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#n" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        N
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="N">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#note" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Note
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#p" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        P
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="P">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#preset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Preset
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#r" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        R
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="R">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RAG
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#s" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        S
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="S">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#session" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Source
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Source Summary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stream-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stream Events
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#studio" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Studio
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#studio-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Studio Output
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#t" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        T
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="T">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#team-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Team Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#template" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Template
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trace
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        V
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="V">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#vector-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vector Search
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#w" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        W
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="W">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment Variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#file-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Types
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Files
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2144,22 +1825,55 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#a" class="md-nav__link">
+  <a href="#what-it-does" class="md-nav__link">
     <span class="md-ellipsis">
       
-        A
+        What It Does
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="A">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why It Matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-dicom-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessing DICOM Tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anonymization-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymization Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Anonymization Options">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#agent" class="md-nav__link">
+  <a href="#what-gets-anonymized" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent
+        What Gets Anonymized
       
     </span>
   </a>
@@ -2167,10 +1881,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#agent-config" class="md-nav__link">
+  <a href="#uid-regeneration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent Config
+        UID Regeneration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#private-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private Tags
       
     </span>
   </a>
@@ -2183,22 +1908,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#c" class="md-nav__link">
+  <a href="#using-dicom-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C
+        Using DICOM Tools
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="C">
+    <nav class="md-nav" aria-label="Using DICOM Tools">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#chat-history" class="md-nav__link">
+  <a href="#step-1-upload-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Chat History
+        Step 1: Upload Files
       
     </span>
   </a>
@@ -2206,10 +1931,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#connector" class="md-nav__link">
+  <a href="#step-2-configure-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connector
+        Step 2: Configure Options
       
     </span>
   </a>
@@ -2217,10 +1942,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#coordination-mode" class="md-nav__link">
+  <a href="#step-3-anonymize" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Coordination Mode
+        Step 3: Anonymize
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Download
       
     </span>
   </a>
@@ -2233,22 +1969,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#d" class="md-nav__link">
+  <a href="#expected-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        D
+        Expected Results
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="D">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anonymization-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymization Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-anonymization-on-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Anonymization on Upload
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Anonymization on Upload">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#data-directory" class="md-nav__link">
+  <a href="#enable-in-env" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Directory
+        Enable in .env:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
       
     </span>
   </a>
@@ -2261,22 +2030,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#f" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        F
+        Troubleshooting
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="F">
+    <nav class="md-nav" aria-label="Troubleshooting">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fallback" class="md-nav__link">
+  <a href="#file-not-recognized-as-dicom" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fallback
+        "File not recognized as DICOM"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anonymization-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Anonymization fails"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#download-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Download fails"
       
     </span>
   </a>
@@ -2289,22 +2080,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#g" class="md-nav__link">
+  <a href="#best-practices" class="md-nav__link">
     <span class="md-ellipsis">
       
-        G
+        Best Practices
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="G">
+    <nav class="md-nav" aria-label="Best Practices">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#grounded-answer" class="md-nav__link">
+  <a href="#before-anonymizing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Grounded Answer
+        Before Anonymizing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-anonymizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After Anonymizing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Research
       
     </span>
   </a>
@@ -2317,461 +2130,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#h" class="md-nav__link">
+  <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        H
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="H">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#halo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HALO
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#k" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        K
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="K">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#knowledge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Knowledge
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#l" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        L
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="L">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#lancedb" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LanceDB
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#m" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        M
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="M">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#master-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Master Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memory-backend" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory Backend
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multimodal" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multimodal
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#n" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        N
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="N">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#note" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Note
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#p" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        P
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="P">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#preset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Preset
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#r" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        R
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="R">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RAG
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#s" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        S
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="S">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#session" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Source
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Source Summary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stream-events" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stream Events
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#studio" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Studio
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#studio-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Studio Output
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#t" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        T
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="T">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#team-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Team Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#template" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Template
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trace
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        V
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="V">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#vector-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vector Search
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#w" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        W
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="W">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment Variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#file-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Types
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Files
+        Next Steps
       
     </span>
   </a>
@@ -2798,196 +2160,235 @@
   
 
 
-<h1 id="glossary">Glossary</h1>
-<p>Definitions of terms used throughout HALO Core documentation.</p>
+<h1 id="dicom-tools">DICOM Tools</h1>
+<p>DICOM Tools provides medical imaging anonymization for privacy-compliant handling of DICOM files.</p>
 <hr />
-<h2 id="a">A</h2>
-<h3 id="agent">Agent</h3>
-<p>An AI role with its own instructions, tools, and settings. Agents can work independently or as part of a team.</p>
-<h3 id="agent-config">Agent Config</h3>
-<p>The configuration page for advanced agent-level settings including tools, MCP servers, and coordination mode.</p>
+<h2 id="what-it-does">What It Does</h2>
+<ul>
+<li><strong>Anonymize DICOM files</strong> — Remove Protected Health Information (PHI)</li>
+<li><strong>Regenerate UIDs</strong> — Create new unique identifiers for studies, series, and instances</li>
+<li><strong>Remove private tags</strong> — Strip manufacturer-specific metadata</li>
+<li><strong>Export mapping</strong> — Save anonymization mapping as CSV for reference</li>
+</ul>
 <hr />
-<h2 id="c">C</h2>
-<h3 id="chat-history">Chat History</h3>
-<p>Stored conversation records, persisted in <code>data/chat_history/</code>.</p>
-<h3 id="connector">Connector</h3>
-<p>An integration path to external systems for source discovery. Examples include Drive and Notion connectors.</p>
-<h3 id="coordination-mode">Coordination Mode</h3>
-<p>A rule for how master and team agents collaborate. Options: <code>direct_only</code>, <code>delegate_on_complexity</code>, <code>always_delegate</code>, <code>coordinated_rag</code>.</p>
+<h2 id="why-it-matters">Why It Matters</h2>
+<p>Medical imaging files (DICOM) contain sensitive patient information. Sharing these files for:</p>
+<ul>
+<li>Research collaboration</li>
+<li>Teaching and presentations</li>
+<li>Second opinions</li>
+<li>Publications</li>
+</ul>
+<p>...requires removing identifiable information to comply with HIPAA, GDPR, and other privacy regulations.</p>
 <hr />
-<h2 id="d">D</h2>
-<h3 id="data-directory">Data Directory</h3>
-<p>The folder where HALO stores all persistent data. Default: <code>data/</code>. Configurable via <code>HALO_DATA_DIR</code>.</p>
+<h2 id="accessing-dicom-tools">Accessing DICOM Tools</h2>
+<ol>
+<li>Open HALO Core</li>
+<li>Navigate to <strong>DICOM Tools</strong> in the sidebar</li>
+<li>The page displays anonymization options</li>
+</ol>
 <hr />
-<h2 id="f">F</h2>
-<h3 id="fallback">Fallback</h3>
-<p>Alternative generation path when primary streaming fails. HALO has built-in fallback behavior.</p>
-<hr />
-<h2 id="g">G</h2>
-<h3 id="grounded-answer">Grounded Answer</h3>
-<p>A response tied to selected sources rather than pure free-form output. Grounded answers cite actual source content.</p>
-<hr />
-<h2 id="h">H</h2>
-<h3 id="halo">HALO</h3>
-<p><strong>Holistic Agent Logical Orchestrator</strong> — the full name of the HALO Core system.</p>
-<hr />
-<h2 id="k">K</h2>
-<h3 id="knowledge">Knowledge</h3>
-<p>The indexed content from sources, stored in LanceDB for retrieval. Enables RAG (Retrieval-Augmented Generation).</p>
-<hr />
-<h2 id="l">L</h2>
-<h3 id="lancedb">LanceDB</h3>
-<p>A vector database used by HALO for knowledge storage and similarity search.</p>
-<hr />
-<h2 id="m">M</h2>
-<h3 id="master-agent">Master Agent</h3>
-<p>The primary agent that receives user queries and optionally delegates to team members.</p>
-<h3 id="mcp-server">MCP Server</h3>
-<p>Model Context Protocol server — an external capability endpoint that provides additional tools to agents.</p>
-<h3 id="memory-backend">Memory Backend</h3>
-<p>An optional database layer for persistent user/agent memory. Enabled via <code>HALO_AGENT_DB</code>.</p>
-<h3 id="multimodal">Multimodal</h3>
-<p>Input that combines multiple types: text, images, and audio.</p>
-<hr />
-<h2 id="n">N</h2>
-<h3 id="note">Note</h3>
-<p>A saved text snippet from chat, summary, or manual input. Notes can be converted to sources.</p>
-<hr />
-<h2 id="p">P</h2>
-<h3 id="preset">Preset</h3>
-<p>A saved chat setup bundle containing model, tools, and team member configuration.</p>
-<hr />
-<h2 id="r">R</h2>
-<h3 id="rag">RAG</h3>
-<p>Retrieval-Augmented Generation — using retrieved knowledge to ground AI responses in source content.</p>
-<hr />
-<h2 id="s">S</h2>
-<h3 id="session">Session</h3>
-<p>A single continuous interaction with HALO. Sessions maintain context and history.</p>
-<h3 id="source">Source</h3>
-<p>Any imported content item used as knowledge input for chat and studio.</p>
-<h3 id="source-summary">Source Summary</h3>
-<p>A generated overview of all sources in the library, available in the Chat panel.</p>
-<h3 id="stream-events">Stream Events</h3>
-<p>Real-time internal events shown during response generation. Controlled by <code>stream_events</code> setting.</p>
-<h3 id="studio">Studio</h3>
-<p>The panel for template-driven output generation (reports, presentations, etc.).</p>
-<h3 id="studio-output">Studio Output</h3>
-<p>A generated artifact saved in Studio-Ergebnisse.</p>
-<hr />
-<h2 id="t">T</h2>
-<h3 id="team-agent">Team Agent</h3>
-<p>A specialized agent that works alongside the master agent. Team members have specific roles and skills.</p>
-<h3 id="template">Template</h3>
-<p>A predefined studio output type (report, infographic, podcast, presentation, data table).</p>
-<h3 id="tool">Tool</h3>
-<p>A capability available to agents, such as web search, calculator, or file operations.</p>
-<h3 id="trace">Trace</h3>
-<p>Structured information about agent actions, tool calls, and reasoning during generation.</p>
-<hr />
-<h2 id="v">V</h2>
-<h3 id="vector-search">Vector Search</h3>
-<p>Similarity-based search using vector embeddings. Used for knowledge retrieval.</p>
-<hr />
-<h2 id="w">W</h2>
-<h3 id="workflow">Workflow</h3>
-<p>A structured sequence of steps to accomplish a specific task in HALO.</p>
-<hr />
-<h2 id="environment-variables">Environment Variables</h2>
+<h2 id="anonymization-options">Anonymization Options</h2>
+<h3 id="what-gets-anonymized">What Gets Anonymized</h3>
+<p>By default, HIPAA Safe Harbor identifiers are removed:</p>
 <table>
 <thead>
 <tr>
-<th>Variable</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>OPENAI_API_KEY</code></td>
-<td>OpenAI API authentication</td>
-</tr>
-<tr>
-<td><code>HALO_DATA_DIR</code></td>
-<td>Custom data directory path</td>
-</tr>
-<tr>
-<td><code>HALO_TEMPLATES_DIR</code></td>
-<td>Custom templates directory</td>
-</tr>
-<tr>
-<td><code>HALO_AGENT_DB</code></td>
-<td>Memory backend database path</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="file-types">File Types</h2>
-<table>
-<thead>
-<tr>
-<th>Extension</th>
 <th>Category</th>
+<th>Tags Anonymized</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>.pdf</code>, <code>.docx</code>, <code>.txt</code>, <code>.md</code></td>
-<td>Documents</td>
+<td><strong>Patient Data</strong></td>
+<td>Name, ID, Birth Date, Sex, Age, Address, Weight, Phone, Other IDs</td>
 </tr>
 <tr>
-<td><code>.csv</code>, <code>.xlsx</code>, <code>.xls</code></td>
-<td>Spreadsheets</td>
+<td><strong>Institution Data</strong></td>
+<td>Name, Address, Referring Physician</td>
 </tr>
 <tr>
-<td><code>.pptx</code></td>
-<td>Presentations</td>
+<td><strong>Physician Data</strong></td>
+<td>Performing Physician, Operators</td>
 </tr>
 <tr>
-<td><code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.gif</code>, <code>.webp</code></td>
-<td>Images</td>
+<td><strong>Study Data</strong></td>
+<td>Study ID, Accession Number, Dates, Times</td>
 </tr>
 <tr>
-<td><code>.mp3</code>, <code>.wav</code>, <code>.m4a</code>, <code>.ogg</code></td>
-<td>Audio</td>
-</tr>
-<tr>
-<td><code>.mp4</code>, <code>.mov</code>, <code>.avi</code>, <code>.mkv</code></td>
-<td>Video</td>
+<td><strong>Series Data</strong></td>
+<td>Series Date/Time, Acquisition Date/Time</td>
 </tr>
 </tbody>
 </table>
+<h3 id="uid-regeneration">UID Regeneration</h3>
+<p>When enabled (default), new UIDs are generated for:</p>
+<ul>
+<li>Study Instance UID</li>
+<li>Series Instance UID</li>
+<li>SOP Instance UID</li>
+<li>Frame of Reference UID</li>
+</ul>
+<p>This ensures anonymized files don't link back to original studies.</p>
+<h3 id="private-tags">Private Tags</h3>
+<p>Private tags are manufacturer-specific and may contain identifying information. They are removed by default.</p>
 <hr />
-<h2 id="configuration-files">Configuration Files</h2>
+<h2 id="using-dicom-tools">Using DICOM Tools</h2>
+<h3 id="step-1-upload-files">Step 1: Upload Files</h3>
+<ol>
+<li>Click <strong>Dateien hochladen</strong></li>
+<li>Select DICOM files (<code>.dcm</code>, <code>.dicom</code>, or files without extension)</li>
+<li>Multiple files can be uploaded at once</li>
+</ol>
+<h3 id="step-2-configure-options">Step 2: Configure Options</h3>
+<p>Select what to anonymize:</p>
+<ul>
+<li><strong>UIDs neu generieren</strong> — Regenerate unique identifiers (recommended)</li>
+<li><strong>Private Tags entfernen</strong> — Remove manufacturer-specific tags (recommended)</li>
+<li><strong>Patientendaten</strong> — Patient name, ID, birth date, etc.</li>
+<li><strong>Institutionsdaten</strong> — Hospital/clinic information</li>
+<li><strong>Studiendaten</strong> — Study ID, accession number</li>
+<li><strong>Datumsangaben</strong> — All date/time fields</li>
+</ul>
+<h3 id="step-3-anonymize">Step 3: Anonymize</h3>
+<ol>
+<li>Click <strong>Anonymisieren</strong></li>
+<li>Wait for processing to complete</li>
+<li>Review results in the output section</li>
+</ol>
+<h3 id="step-4-download">Step 4: Download</h3>
+<ol>
+<li>Download anonymized files as ZIP</li>
+<li>Optionally download the anonymization mapping CSV</li>
+</ol>
+<hr />
+<h2 id="expected-results">Expected Results</h2>
+<p>After anonymization:</p>
+<ul>
+<li>All selected tags are cleared or replaced with placeholder values</li>
+<li>New UIDs are generated (if enabled)</li>
+<li>Private tags are removed (if enabled)</li>
+<li>Files are functionally identical for clinical review</li>
+<li>Files can be shared without exposing patient identity</li>
+</ul>
+<hr />
+<h2 id="anonymization-mapping">Anonymization Mapping</h2>
+<p>The mapping CSV contains:</p>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Content</th>
+<th>Column</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>config.json</code></td>
-<td>App settings</td>
+<td>Original Filename</td>
+<td>Original file name</td>
 </tr>
 <tr>
-<td><code>presets.json</code></td>
-<td>Chat presets</td>
+<td>Anonymized Filename</td>
+<td>New file name</td>
 </tr>
 <tr>
-<td><code>data/agents/*.json</code></td>
-<td>Agent configurations</td>
+<td>Original Patient ID</td>
+<td>Original patient identifier</td>
 </tr>
 <tr>
-<td><code>templates/studio_templates.json</code></td>
-<td>Studio templates</td>
+<td>Anonymized ID</td>
+<td>New anonymized identifier</td>
 </tr>
 <tr>
-<td><code>.streamlit/secrets.toml</code></td>
-<td>API keys and secrets</td>
+<td>Tags Anonymized</td>
+<td>List of cleared tags</td>
+</tr>
+<tr>
+<td>UIDs Regenerated</td>
+<td>List of regenerated UIDs</td>
 </tr>
 </tbody>
 </table>
+<p>Keep this mapping secure — it links anonymized files to original patients.</p>
+<hr />
+<h2 id="auto-anonymization-on-upload">Auto-Anonymization on Upload</h2>
+<p>When enabled in configuration, DICOM files uploaded to Sources are automatically anonymized.</p>
+<h3 id="enable-in-env">Enable in <code>.env</code>:</h3>
+<pre><code class="language-bash">DICOM_ANONYMIZE_ON_UPLOAD=true
+</code></pre>
+<h3 id="behavior">Behavior</h3>
+<ul>
+<li>Files are anonymized before being added to Sources</li>
+<li>Original files are not stored</li>
+<li>Mapping is saved for reference</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="file-not-recognized-as-dicom">"File not recognized as DICOM"</h3>
+<p>Possible causes:</p>
+<ul>
+<li>File is not a valid DICOM file</li>
+<li>File is corrupted</li>
+<li>Unsupported DICOM format</li>
+</ul>
+<p>Try this:</p>
+<ol>
+<li>Verify file is a valid DICOM file</li>
+<li>Try opening in a DICOM viewer first</li>
+<li>Check file integrity</li>
+</ol>
+<h3 id="anonymization-fails">"Anonymization fails"</h3>
+<p>Possible causes:</p>
+<ul>
+<li>File is write-protected</li>
+<li>Missing dependencies</li>
+<li>Invalid DICOM structure</li>
+</ul>
+<p>Try this:</p>
+<ol>
+<li>Check file permissions</li>
+<li>Verify <code>pydicom</code> is installed</li>
+<li>Try a different DICOM file</li>
+</ol>
+<h3 id="download-fails">"Download fails"</h3>
+<p>Possible causes:</p>
+<ul>
+<li>Browser blocking download</li>
+<li>Large file size</li>
+<li>Disk space issue</li>
+</ul>
+<p>Try this:</p>
+<ol>
+<li>Enable pop-ups/downloads for the site</li>
+<li>Process fewer files at once</li>
+<li>Check available disk space</li>
+</ol>
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="before-anonymizing">Before Anonymizing</h3>
+<ul>
+<li>Verify files are correct DICOM format</li>
+<li>Note any critical metadata that may be needed later</li>
+<li>Consider which tags are necessary for your use case</li>
+</ul>
+<h3 id="after-anonymizing">After Anonymizing</h3>
+<ul>
+<li>Verify anonymized files open correctly</li>
+<li>Check that clinical utility is preserved</li>
+<li>Securely store mapping file if patient linkage is needed</li>
+<li>Delete original files if no longer needed</li>
+</ul>
+<h3 id="for-research">For Research</h3>
+<ul>
+<li>Document anonymization process for IRB compliance</li>
+<li>Store mapping separately from anonymized files</li>
+<li>Consider de-identification beyond HIPAA Safe Harbor if needed</li>
+</ul>
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><a href="../sources/">Sources</a> — Upload anonymized files to your library</li>
+<li><a href="../../admin/dicom-configuration/">DICOM Configuration</a> — Admin setup</li>
+</ul>
 
 
 

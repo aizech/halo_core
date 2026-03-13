@@ -3041,6 +3041,11 @@ def _selected_source_names() -> List[str]:
     return [src.name for src in st.session_state["sources"] if src.selected]
 
 
+def _selected_source_ids() -> List[str]:
+    """Return IDs of selected sources for RAG filtering."""
+    return [src.id for src in st.session_state["sources"] if src.selected]
+
+
 def _all_source_names() -> List[str]:
     return [src.name for src in st.session_state["sources"]]
 
@@ -4217,6 +4222,7 @@ def render_chat_panel() -> None:
                 turn = ChatTurnInput(
                     prompt=pending_prompt,
                     sources=_selected_source_names(),
+                    source_ids=_selected_source_ids(),
                     notes=st.session_state["notes"],
                     session_id=st.session_state.get("session_id"),
                     user_id=user_memory.resolve_user_id(st.session_state),
@@ -4529,7 +4535,8 @@ def _render_studio_template_card(
                     "Strukturiere mit Überschriften und fasse Kernaussagen zusammen."
                 )
                 contexts = retrieval.query_similar(
-                    "Zusammenfassung der ausgewählten Quellen"
+                    "Zusammenfassung der ausgewählten Quellen",
+                    source_ids=_selected_source_ids(),
                 )
                 context_chunks = "\n\n".join(
                     f"Snippet: {ctx.get('text')}\nMeta: {ctx.get('meta')}"
@@ -4540,10 +4547,12 @@ def _render_studio_template_card(
                     f"Kontext (RAG):\n{context_chunks or '-'}"
                 )
             selected_sources = _selected_source_names()
+            selected_source_ids = _selected_source_ids()
             if template.template_id == "infographic":
                 agent_config = _get_agent_config(template.template_id) or template.agent
                 contexts = retrieval.query_similar(
-                    "Zusammenfassung der ausgewählten Quellen für eine Infografik"
+                    "Zusammenfassung der ausgewählten Quellen für eine Infografik",
+                    source_ids=selected_source_ids,
                 )
                 context_chunks = "\n\n".join(
                     f"Snippet: {ctx.get('text')}\nMeta: {ctx.get('meta')}"

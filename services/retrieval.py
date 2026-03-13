@@ -209,7 +209,20 @@ def index_source_text(title: str, body: str, meta: Dict[str, str]) -> None:
     table.add([record])
 
 
-def query_similar(text: str, limit: int = 5) -> List[dict]:
+def query_similar(
+    text: str, limit: int = 5, source_ids: List[str] | None = None
+) -> List[dict]:
+    """Query LanceDB for similar chunks, optionally filtered by source IDs.
+
+    Args:
+        text: Query text to search for
+        limit: Maximum number of results
+        source_ids: Optional list of source IDs to filter results. If provided,
+            only chunks from these sources are returned.
+
+    Returns:
+        List of matching chunks with text, meta, and score.
+    """
     db = _connect_db()
     if _TABLE_NAME not in db.table_names():
         return []
@@ -228,18 +241,30 @@ def query_similar(text: str, limit: int = 5) -> List[dict]:
                 payload = json.loads(payload_raw)
             except json.JSONDecodeError:
                 payload = {}
+            meta = payload.get("meta_data") or meta_value or {}
+            # Filter by source_ids if provided
+            if source_ids:
+                chunk_source_id = str(meta.get("source_id") or "") if isinstance(meta, dict) else ""
+                if chunk_source_id not in source_ids:
+                    continue
             normalized.append(
                 {
                     "text": payload.get("content") or match.get("text") or "",
-                    "meta": payload.get("meta_data") or meta_value or {},
+                    "meta": meta,
                     "score": match.get("_distance"),
                 }
             )
         else:
+            meta = meta_value or {}
+            # Filter by source_ids if provided
+            if source_ids:
+                chunk_source_id = str(meta.get("source_id") or "") if isinstance(meta, dict) else ""
+                if chunk_source_id not in source_ids:
+                    continue
             normalized.append(
                 {
                     "text": match.get("text") or "",
-                    "meta": meta_value or {},
+                    "meta": meta,
                     "score": match.get("_distance"),
                 }
             )
