@@ -21,13 +21,12 @@ _logger = logging.getLogger(__name__)
 
 # PDF generation is optional
 try:
-    from weasyprint import HTML, CSS
-    from weasyprint.text.fonts import FontConfiguration
+    from fpdf import FPDF
 
     PDF_AVAILABLE = True
 except ImportError:
     PDF_AVAILABLE = False
-    _logger.debug("weasyprint not available - PDF generation disabled")
+    _logger.debug("fpdf not available - PDF generation disabled")
 
 
 def is_pdf_available() -> bool:
@@ -413,9 +412,9 @@ def generate_pdf_report(
     result: SeriesAnalysisResult,
     include_raw_responses: bool = False,
 ) -> Optional[bytes]:
-    """Generate PDF report from analysis result.
+    """Generate PDF report from analysis result using fpdf2.
 
-    Requires weasyprint to be installed.
+    Pure Python solution - no system dependencies required.
 
     Args:
         result: Analysis result to report
@@ -425,321 +424,167 @@ def generate_pdf_report(
         PDF bytes or None if PDF generation unavailable
     """
     if not PDF_AVAILABLE:
-        _logger.warning("PDF generation unavailable - weasyprint not installed")
+        _logger.warning("PDF generation unavailable - fpdf2 not installed")
         return None
 
-    # Generate HTML from markdown-like content
-    html_content = _generate_html_report(result, include_raw_responses)
+    # A4 constants - explicit to avoid any dynamic margin drift
+    _LM = 15  # left margin mm
+    _RM = 15  # right margin mm
+    _TM = 15  # top margin mm
+    _CW = 180  # content width: A4 210mm - 2*15mm
 
-    # CSS styling
-    css_content = """
-    @page {
-        size: A4;
-        margin: 2cm;
-    }
-    
-    body {
-        font-family: 'Segoe UI', Arial, sans-serif;
-        font-size: 11pt;
-        line-height: 1.4;
-        color: #333;
-    }
-    
-    h1 {
-        color: #1a5276;
-        border-bottom: 2px solid #3498db;
-        padding-bottom: 10px;
-    }
-    
-    h2 {
-        color: #2874a6;
-        margin-top: 20px;
-    }
-    
-    h3 {
-        color: #1a5276;
-    }
-    
-    h4 {
-        color: #5d6d7e;
-    }
-    
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 10px 0;
-    }
-    
-    th, td {
-        border: 1px solid #bdc3c7;
-        padding: 8px;
-        text-align: left;
-    }
-    
-    th {
-        background-color: #eaf2f8;
-        font-weight: bold;
-    }
-    
-    tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
-    
-    .critical {
-        background-color: #f5b7b1;
-        padding: 10px;
-        border-left: 4px solid #e74c3c;
-        margin: 10px 0;
-    }
-    
-    .quality-good {
-        color: #27ae60;
-    }
-    
-    .quality-warning {
-        color: #e67e22;
-    }
-    
-    .severity-normal { color: #27ae60; }
-    .severity-mild { color: #f1c40f; }
-    .severity-moderate { color: #e67e22; }
-    .severity-severe { color: #e74c3c; }
-    .severity-critical { color: #c0392b; font-weight: bold; }
-    
-    code, pre {
-        background-color: #f4f4f4;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 10pt;
-    }
-    
-    pre {
-        padding: 10px;
-        overflow-x: auto;
-    }
-    
-    .metric-box {
-        display: inline-block;
-        background-color: #eaf2f8;
-        padding: 10px 20px;
-        margin: 5px;
-        border-radius: 5px;
-        text-align: center;
-    }
-    
-    .metric-value {
-        font-size: 24pt;
-        font-weight: bold;
-        color: #1a5276;
-    }
-    
-    .metric-label {
-        font-size: 9pt;
-        color: #5d6d7e;
-    }
-    """
+    def _mc(pdf_obj: "FPDF", h: float, text: str) -> None:
+        """Write wrapped text, always resetting X to left margin first."""
+        safe = str(text).strip() if text else " "
+        pdf_obj.set_x(_LM)
+        pdf_obj.multi_cell(_CW, h, safe)
 
     try:
-        font_config = FontConfiguration()
-        html = HTML(string=html_content)
-        css = CSS(string=css_content, font_config=font_config)
+        pdf = FPDF(orientation="P", unit="mm", format="A4")
+        pdf.set_margins(_LM, _TM, _RM)
+        pdf.set_auto_page_break(auto=True, margin=_TM)
 
-        pdf_bytes = html.write_pdf(stylesheets=[css], font_config=font_config)
-        return pdf_bytes
+        # Use built-in font with Unicode character replacement
+        pdf.set_font("helvetica", size=10)
+
+        pdf.add_page()
+
+        # Title
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(0, 10, _clean_text("DICOM Analyse-Report"), ln=True, align="C")
+        pdf.ln(5)
+
+        # Metadata
+        pdf.set_font("helvetica", "", 10)
+        pdf.cell(0, 6, f"Analyse-ID: {result.analysis_id}", ln=True)
+        pdf.cell(0, 6, f"Erstellt: {_format_datetime(result.created_at)}", ln=True)
+        pdf.cell(0, 6, f"Quelle: {result.analysis_source}", ln=True)
+        pdf.ln(5)
+
+        # Summary metrics
+        pdf.set_font("helvetica", "B", 12)
+        pdf.cell(0, 8, "Zusammenfassung", ln=True)
+        pdf.set_font("helvetica", "", 10)
+        pdf.cell(0, 6, f"DICOM-Dateien: {len(result.dicom_results)}", ln=True)
+        pdf.cell(0, 6, f"Gesamt-Anomalien: {result.total_anomalies}", ln=True)
+        pdf.cell(0, 6, f"Durchschn. Qualitat: {result.avg_quality:.1f}/5", ln=True)
+        pdf.cell(0, 6, f"Kritische Befunde: {len(result.critical_findings)}", ln=True)
+        pdf.ln(5)
+
+        # Critical findings
+        if result.critical_findings:
+            pdf.set_font("helvetica", "B", 12)
+            pdf.set_text_color(220, 20, 60)
+            pdf.cell(0, 8, "Kritische Befunde", ln=True)
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_font("helvetica", "", 10)
+            for finding in result.critical_findings:
+                text = f"- {finding.anomaly_type} in {finding.location}: {finding.description}"
+                _mc(pdf, 6, _clean_text(text))
+            pdf.ln(5)
+
+        # Severity distribution
+        pdf.set_font("helvetica", "B", 12)
+        pdf.cell(0, 8, "Schweregrad-Verteilung", ln=True)
+        pdf.set_font("helvetica", "", 10)
+        for severity in Severity:
+            label = severity.to_label()
+            count = result.anomaly_distribution.get(label, 0)
+            pdf.cell(0, 6, f"  {label}: {count}", ln=True)
+        pdf.ln(5)
+
+        # Per-file details
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 12)
+        pdf.cell(0, 8, "Detailergebnisse", ln=True)
+        pdf.ln(3)
+
+        for i, dicom_result in enumerate(result.dicom_results, 1):
+            filename = Path(dicom_result.file_path).name
+            pdf.set_font("helvetica", "B", 11)
+            pdf.cell(0, 7, _clean_text(f"{i}. {filename}"), ln=True)
+
+            if dicom_result.error:
+                pdf.set_font("helvetica", "", 10)
+                pdf.set_text_color(220, 20, 60)
+                pdf.cell(0, 6, _clean_text(f"Fehler: {dicom_result.error}"), ln=True)
+                pdf.set_text_color(0, 0, 0)
+                continue
+
+            # Quality
+            pdf.set_font("helvetica", "B", 10)
+            pdf.cell(0, 6, "Qualitatsbewertung:", ln=True)
+            pdf.set_font("helvetica", "", 10)
+            quality = dicom_result.quality
+            quality_text = f"Gesamt: {quality.overall:.1f}/5"
+            if quality.is_diagnostic():
+                pdf.set_text_color(0, 128, 0)
+                quality_text += " (Diagnostisch)"
+            else:
+                pdf.set_text_color(255, 140, 0)
+                quality_text += " (Eingeschrankt)"
+            pdf.cell(0, 6, quality_text, ln=True)
+            pdf.set_text_color(0, 0, 0)
+            pdf.cell(0, 5, f"Positionierung: {quality.positioning}/5", ln=True)
+            pdf.cell(0, 5, f"Kontrast: {quality.contrast}/5", ln=True)
+            pdf.cell(0, 5, f"Artefakte: {quality.artifacts}/5", ln=True)
+            pdf.cell(0, 5, f"Rauschen: {quality.noise_level}/5", ln=True)
+            pdf.cell(0, 5, f"Bewegung: {quality.motion_blur}/5", ln=True)
+            pdf.ln(3)
+
+            # Anomalies
+            if dicom_result.anomalies:
+                pdf.set_font("helvetica", "B", 10)
+                pdf.cell(0, 6, "Anomalien:", ln=True)
+                pdf.set_font("helvetica", "", 9)
+                for a in dicom_result.anomalies:
+                    severity_color = {
+                        Severity.NORMAL: (0, 128, 0),
+                        Severity.MILD: (0, 0, 255),
+                        Severity.MODERATE: (255, 140, 0),
+                        Severity.SEVERE: (255, 69, 0),
+                        Severity.CRITICAL: (220, 20, 60),
+                    }.get(a.severity, (0, 0, 0))
+                    pdf.set_text_color(*severity_color)
+                    # Anomaly type and severity
+                    text1 = _clean_text(f"- {a.anomaly_type} ({a.severity.to_label()})")
+                    _mc(pdf, 5, text1)
+                    pdf.set_text_color(0, 0, 0)
+                    # Location and confidence
+                    text_loc = _clean_text(
+                        f"  {a.location}, Konfidenz: {a.confidence:.0%}"
+                    )
+                    _mc(pdf, 5, text_loc)
+                    # Description with proper wrapping
+                    text2 = _clean_text(f"  {a.description}")
+                    _mc(pdf, 5, text2)
+                pdf.ln(3)
+
+            # Summary
+            if dicom_result.summary:
+                pdf.set_font("helvetica", "B", 10)
+                pdf.cell(0, 6, "Zusammenfassung:", ln=True)
+                pdf.set_font("helvetica", "", 10)
+                _mc(pdf, 5, _clean_text(dicom_result.summary))
+                pdf.ln(3)
+
+            pdf.ln(5)
+
+        # Footer
+        pdf.ln(10)
+        pdf.set_font("helvetica", "I", 8)
+        pdf.cell(
+            0,
+            10,
+            f"HALO Core - {_format_datetime(datetime.now().isoformat())}",
+            align="C",
+        )
+
+        return bytes(pdf.output())
 
     except Exception as e:
         _logger.error("PDF generation failed: %s", e)
         return None
-
-
-def _generate_html_report(
-    result: SeriesAnalysisResult,
-    include_raw_responses: bool = False,
-) -> str:
-    """Generate HTML content for PDF report."""
-    lines: List[str] = []
-
-    # HTML header
-    lines.extend(
-        [
-            "<!DOCTYPE html>",
-            "<html>",
-            "<head>",
-            "<meta charset='utf-8'>",
-            f"<title>DICOM Analyse-Report - {result.analysis_id}</title>",
-            "</head>",
-            "<body>",
-            "",
-            "<h1>DICOM Analyse-Report</h1>",
-            "",
-            "<p>",
-            f"<strong>Analyse-ID:</strong> {result.analysis_id}<br>",
-            f"<strong>Erstellt:</strong> {_format_datetime(result.created_at)}<br>",
-            f"<strong>Quelle:</strong> {result.analysis_source}",
-            "</p>",
-            "",
-        ]
-    )
-
-    # Metrics boxes
-    lines.extend(
-        [
-            "<h2>Übersicht</h2>",
-            "",
-            "<div class='metrics'>",
-            f"<div class='metric-box'><div class='metric-value'>{len(result.dicom_results)}</div><div class='metric-label'>DICOM-Dateien</div></div>",
-            f"<div class='metric-box'><div class='metric-value'>{result.total_anomalies}</div><div class='metric-label'>Anomalien</div></div>",
-            f"<div class='metric-box'><div class='metric-value'>{result.avg_quality:.1f}</div><div class='metric-label'>Ø Qualität</div></div>",
-            f"<div class='metric-box'><div class='metric-value'>{len(result.critical_findings)}</div><div class='metric-label'>Kritisch</div></div>",
-            "</div>",
-            "",
-        ]
-    )
-
-    # Critical findings
-    if result.critical_findings:
-        lines.extend(
-            [
-                "<div class='critical'>",
-                "<h3>⚠️ Kritische Befunde</h3>",
-                "<ul>",
-            ]
-        )
-        for finding in result.critical_findings:
-            lines.append(
-                f"<li><strong>{finding.anomaly_type}</strong> in {finding.location}: {finding.description}</li>"
-            )
-        lines.extend(
-            [
-                "</ul>",
-                "</div>",
-                "",
-            ]
-        )
-
-    # Severity distribution table
-    lines.extend(
-        [
-            "<h2>Schweregrad-Verteilung</h2>",
-            "",
-            "<table>",
-            "<tr><th>Schweregrad</th><th>Anzahl</th></tr>",
-        ]
-    )
-
-    for severity in Severity:
-        label = severity.to_label()
-        count = result.anomaly_distribution.get(label, 0)
-        css_class = f"severity-{label.lower()}"
-        lines.append(f"<tr><td class='{css_class}'>{label}</td><td>{count}</td></tr>")
-
-    lines.extend(
-        [
-            "</table>",
-            "",
-        ]
-    )
-
-    # Detailed results
-    lines.extend(
-        [
-            "<h2>Detailergebnisse</h2>",
-            "",
-        ]
-    )
-
-    for i, dicom_result in enumerate(result.dicom_results, 1):
-        filename = Path(dicom_result.file_path).name
-
-        lines.extend(
-            [
-                f"<h3>{i}. {filename}</h3>",
-                "",
-            ]
-        )
-
-        if dicom_result.error:
-            lines.extend(
-                [
-                    f"<p class='severity-critical'>Fehler: {dicom_result.error}</p>",
-                    "",
-                ]
-            )
-            continue
-
-        # Quality
-        quality = dicom_result.quality
-        quality_class = "quality-good" if quality.is_diagnostic() else "quality-warning"
-
-        lines.extend(
-            [
-                "<h4>Qualitätsbewertung</h4>",
-                f"<p class='{quality_class}'>Gesamt: {quality.overall:.1f}/5</p>",
-                "<table>",
-                "<tr><th>Kriterium</th><th>Bewertung</th></tr>",
-                f"<tr><td>Positionierung</td><td>{quality.positioning}/5</td></tr>",
-                f"<tr><td>Kontrast</td><td>{quality.contrast}/5</td></tr>",
-                f"<tr><td>Artefakte</td><td>{quality.artifacts}/5</td></tr>",
-                f"<tr><td>Rauschen</td><td>{quality.noise_level}/5</td></tr>",
-                f"<tr><td>Bewegungsunschärfe</td><td>{quality.motion_blur}/5</td></tr>",
-                "</table>",
-                "",
-            ]
-        )
-
-        # Anomalies
-        if dicom_result.anomalies:
-            lines.extend(
-                [
-                    "<h4>Anomalien</h4>",
-                    "<table>",
-                    "<tr><th>Typ</th><th>Ort</th><th>Schweregrad</th><th>Konfidenz</th></tr>",
-                ]
-            )
-
-            for a in dicom_result.anomalies:
-                css_class = f"severity-{a.severity.to_label().lower()}"
-                lines.append(
-                    f"<tr><td>{a.anomaly_type}</td><td>{a.location}</td>"
-                    f"<td class='{css_class}'>{a.severity.to_label()}</td>"
-                    f"<td>{a.confidence:.0%}</td></tr>"
-                )
-
-            lines.extend(
-                [
-                    "</table>",
-                    "",
-                ]
-            )
-        else:
-            lines.extend(
-                [
-                    "<p>Keine Anomalien gefunden.</p>",
-                    "",
-                ]
-            )
-
-        # Summary
-        if dicom_result.summary:
-            lines.extend(
-                [
-                    "<h4>Zusammenfassung</h4>",
-                    f"<p>{dicom_result.summary}</p>",
-                    "",
-                ]
-            )
-
-    # Footer
-    lines.extend(
-        [
-            "<hr>",
-            f"<p><em>Report generiert von HALO Core am {_format_datetime(datetime.now().isoformat())}</em></p>",
-            "</body>",
-            "</html>",
-        ]
-    )
-
-    return "\n".join(lines)
 
 
 def _format_datetime(iso_string: str) -> str:
@@ -749,6 +594,37 @@ def _format_datetime(iso_string: str) -> str:
         return dt.strftime("%d.%m.%Y %H:%M")
     except Exception:
         return iso_string
+
+
+def _clean_text(text: str) -> str:
+    """Replace Unicode characters with ASCII equivalents for PDF compatibility."""
+    if not text:
+        return text
+    replacements = {
+        "–": "-",  # en-dash
+        "—": "-",  # em-dash
+        """: '"',  # left double quote
+        """: '"',  # right double quote
+        "'": "'",  # left single quote
+        "'": "'",  # right single quote
+        "…": "...",  # ellipsis
+        "×": "x",  # multiplication sign
+        "•": "-",  # bullet
+        "°": " deg",  # degree
+        "±": "+/-",  # plus-minus
+        "µ": "u",  # micro
+        "ä": "ae",  # German umlauts
+        "ö": "oe",
+        "ü": "ue",
+        "Ä": "Ae",
+        "Ö": "Oe",
+        "Ü": "Ue",
+        "ß": "ss",
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    # Remove any remaining non-ASCII characters
+    return text.encode("ascii", "replace").decode("ascii")
 
 
 def save_report_files(

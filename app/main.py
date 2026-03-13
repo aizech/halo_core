@@ -4794,6 +4794,26 @@ def _render_studio_outputs_section() -> None:
 
         _dialog()
 
+    def _open_view_output_dialog(
+        output_id: str,
+        output_title: str,
+        output_content: str,
+        image_path: Optional[str] = None,
+    ) -> None:
+        @st.dialog(output_title, width="large")
+        def _dialog():
+            if image_path:
+                try:
+                    st.image(image_path, width="stretch")
+                except Exception:
+                    st.caption("Infografik konnte nicht geladen werden.")
+            st.markdown(output_content)
+            if st.button("Schließen", key=f"close_view_{output_id}", width="stretch"):
+                st.session_state["view_output_id"] = None
+                st.rerun()
+
+        _dialog()
+
     for entry in ordered_outputs:
         template_id = str(entry.get("template_id", ""))
         template = _get_studio_template(template_id)
@@ -4826,17 +4846,12 @@ def _render_studio_outputs_section() -> None:
                             icon_position="left",
                             width="stretch",
                         ):
-                            st.session_state[f"view_output_{output_id}"] = True
-                        if st.session_state.get(f"view_output_{output_id}", False):
-                            with st.dialog(title, width="large"):
-                                st.markdown(content)
-                                if st.button(
-                                    "Schließen",
-                                    key=f"close_view_{output_id}",
-                                    width="stretch",
-                                ):
-                                    st.session_state[f"view_output_{output_id}"] = False
-                                    st.rerun()
+                            st.session_state["view_output_id"] = output_id
+                            st.rerun()
+                        elif st.session_state.get("view_output_id") == output_id:
+                            _open_view_output_dialog(
+                                output_id, title, content, image_path
+                            )
                         if st.button(
                             "Umbenennen",
                             key=f"studio_output_rename_{output_id}",
@@ -5040,6 +5055,42 @@ def _render_studio_notes_section() -> None:
 
         _dialog()
 
+    def _open_view_note_dialog(
+        note_index: int,
+        note_title: str,
+        note_content: str,
+        note_images: Optional[List] = None,
+    ) -> None:
+        @st.dialog(note_title, width="large")
+        def _dialog():
+            _render_chat_markdown(note_content)
+            # Display images if present
+            if note_images:
+                img_cols = st.columns(2)
+                for img_idx, image in enumerate(note_images):
+                    image_path = (
+                        image.get("filepath") if isinstance(image, dict) else None
+                    )
+                    image_url = image.get("url") if isinstance(image, dict) else None
+                    image_src = image_path or image_url
+                    if not image_src:
+                        continue
+                    with img_cols[img_idx % 2]:
+                        st.image(
+                            image_src,
+                            caption=(
+                                image.get("name") if isinstance(image, dict) else None
+                            ),
+                            width="stretch",
+                        )
+            if st.button(
+                "Schließen", key=f"close_note_view_{note_index}", width="stretch"
+            ):
+                st.session_state["view_note_idx"] = None
+                st.rerun()
+
+        _dialog()
+
     for idx, note in enumerate(notes):
         content = note.get("content", "")
         note.setdefault("created_at", _now_iso())
@@ -5065,17 +5116,10 @@ def _render_studio_notes_section() -> None:
                         icon_position="left",
                         width="stretch",
                     ):
-                        st.session_state[f"view_note_{idx}"] = True
-                    if st.session_state.get(f"view_note_{idx}", False):
-                        with st.dialog(title, width="large"):
-                            _render_chat_markdown(content)
-                            if st.button(
-                                "Schließen",
-                                key=f"close_note_view_{idx}",
-                                width="stretch",
-                            ):
-                                st.session_state[f"view_note_{idx}"] = False
-                                st.rerun()
+                        st.session_state["view_note_idx"] = idx
+                        st.rerun()
+                    elif st.session_state.get("view_note_idx") == idx:
+                        _open_view_note_dialog(idx, title, content, note.get("images"))
                     if st.button(
                         "Umbenennen",
                         key=f"note_rename_button_{idx}",

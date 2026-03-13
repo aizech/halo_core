@@ -22,6 +22,9 @@ data/*
 # uploads
 uploads/
 
+# created docs in site
+site/
+
 # Docs internal
 docs_internal/
 

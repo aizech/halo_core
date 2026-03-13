@@ -629,11 +629,11 @@ def _render_analysis_results(result: SeriesAnalysisResult):
                     st.markdown("**Anomalien:**")
                     for anomaly in dicom_result.anomalies:
                         severity_color = {
-                            Severity.NORMAL: ":material/check_circle:",
-                            Severity.MILD: ":material/info:",
-                            Severity.MODERATE: ":material/warning:",
-                            Severity.SEVERE: ":material/error:",
-                            Severity.CRITICAL: ":material/crisis_alert:",
+                            Severity.NORMAL: "🟢",
+                            Severity.MILD: "🟡",
+                            Severity.MODERATE: "🟠",
+                            Severity.SEVERE: "🔴",
+                            Severity.CRITICAL: "🚨",
                         }.get(anomaly.severity, ":material/help:")
                         st.markdown(f"""
                         {severity_color} **{anomaly.anomaly_type}** ({anomaly.severity.to_label()})
@@ -708,7 +708,7 @@ def _render_export_section(result: SeriesAnalysisResult):
             else:
                 st.info("PDF-Generierung nicht verfügbar")
         else:
-            st.info("PDF erfordert weasyprint")
+            st.info("PDF erfordert fpdf2")
 
     # Add to notes/sources section
     st.markdown("---")
