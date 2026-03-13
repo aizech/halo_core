@@ -244,7 +244,9 @@ def query_similar(
             meta = payload.get("meta_data") or meta_value or {}
             # Filter by source_ids if provided
             if source_ids:
-                chunk_source_id = str(meta.get("source_id") or "") if isinstance(meta, dict) else ""
+                chunk_source_id = (
+                    str(meta.get("source_id") or "") if isinstance(meta, dict) else ""
+                )
                 if chunk_source_id not in source_ids:
                     continue
             normalized.append(
@@ -258,7 +260,9 @@ def query_similar(
             meta = meta_value or {}
             # Filter by source_ids if provided
             if source_ids:
-                chunk_source_id = str(meta.get("source_id") or "") if isinstance(meta, dict) else ""
+                chunk_source_id = (
+                    str(meta.get("source_id") or "") if isinstance(meta, dict) else ""
+                )
                 if chunk_source_id not in source_ids:
                     continue
             normalized.append(

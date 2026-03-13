@@ -14,19 +14,34 @@ class TestMedicalImagingAgentConfig:
 
     def test_medical_imaging_config_exists(self) -> None:
         """Medical imaging agent config file exists."""
-        config_path = Path(__file__).parent.parent / "services" / "agents" / "medical_imaging.json"
+        config_path = (
+            Path(__file__).parent.parent
+            / "services"
+            / "agents"
+            / "medical_imaging.json"
+        )
         assert config_path.exists(), "medical_imaging.json should exist"
 
     def test_medical_imaging_config_valid_json(self) -> None:
         """Medical imaging config is valid JSON."""
-        config_path = Path(__file__).parent.parent / "services" / "agents" / "medical_imaging.json"
+        config_path = (
+            Path(__file__).parent.parent
+            / "services"
+            / "agents"
+            / "medical_imaging.json"
+        )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
         assert isinstance(config, dict)
 
     def test_medical_imaging_config_has_required_fields(self) -> None:
         """Medical imaging config has all required fields."""
-        config_path = Path(__file__).parent.parent / "services" / "agents" / "medical_imaging.json"
+        config_path = (
+            Path(__file__).parent.parent
+            / "services"
+            / "agents"
+            / "medical_imaging.json"
+        )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
 
@@ -38,17 +53,31 @@ class TestMedicalImagingAgentConfig:
 
     def test_medical_imaging_uses_vision_model(self) -> None:
         """Medical imaging agent uses a vision-capable model."""
-        config_path = Path(__file__).parent.parent / "services" / "agents" / "medical_imaging.json"
+        config_path = (
+            Path(__file__).parent.parent
+            / "services"
+            / "agents"
+            / "medical_imaging.json"
+        )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
 
         model = config.get("model", "")
         # Should use a vision-capable model
-        assert "gpt" in model.lower() or "vision" in model.lower() or "claude" in model.lower()
+        assert (
+            "gpt" in model.lower()
+            or "vision" in model.lower()
+            or "claude" in model.lower()
+        )
 
     def test_medical_imaging_has_pubmed_tools(self) -> None:
         """Medical imaging agent has PubMed tools for literature search."""
-        config_path = Path(__file__).parent.parent / "services" / "agents" / "medical_imaging.json"
+        config_path = (
+            Path(__file__).parent.parent
+            / "services"
+            / "agents"
+            / "medical_imaging.json"
+        )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
 
@@ -57,12 +86,16 @@ class TestMedicalImagingAgentConfig:
 
     def test_medical_imaging_in_chat_members(self) -> None:
         """Medical imaging agent is registered in chat team members."""
-        chat_config_path = Path(__file__).parent.parent / "services" / "agents" / "chat.json"
+        chat_config_path = (
+            Path(__file__).parent.parent / "services" / "agents" / "chat.json"
+        )
         with chat_config_path.open("r", encoding="utf-8") as f:
             chat_config = json.load(f)
 
         members = chat_config.get("members", [])
-        assert "medical_imaging" in members, "medical_imaging should be in chat team members"
+        assert (
+            "medical_imaging" in members
+        ), "medical_imaging should be in chat team members"
 
 
 class TestMedicalImageTools:
@@ -199,7 +232,9 @@ class TestMedicalImageStudioTemplate:
 
     def test_medical_image_template_exists(self) -> None:
         """Medical Image Analysis template exists in studio_templates.json."""
-        template_path = Path(__file__).parent.parent / "templates" / "studio_templates.json"
+        template_path = (
+            Path(__file__).parent.parent / "templates" / "studio_templates.json"
+        )
         with template_path.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -210,7 +245,9 @@ class TestMedicalImageStudioTemplate:
 
     def test_medical_image_template_has_correct_agent(self) -> None:
         """Medical Image Analysis template uses medical_imaging agent."""
-        template_path = Path(__file__).parent.parent / "templates" / "studio_templates.json"
+        template_path = (
+            Path(__file__).parent.parent / "templates" / "studio_templates.json"
+        )
         with template_path.open("r", encoding="utf-8") as f:
             data = json.load(f)
 

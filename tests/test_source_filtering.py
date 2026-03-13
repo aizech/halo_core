@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 
 class TestQuerySimilarSourceFiltering:
@@ -61,7 +60,9 @@ class TestQuerySimilarSourceFiltering:
             ]
             mock_table.search.return_value = mock_search
 
-            with patch.object(retrieval, "_ensure_sources_table", return_value=mock_table):
+            with patch.object(
+                retrieval, "_ensure_sources_table", return_value=mock_table
+            ):
                 with patch.object(retrieval, "_embed", return_value=[0.1] * 1536):
                     # Filter to only source1 and source2
                     result = retrieval.query_similar(
@@ -72,7 +73,9 @@ class TestQuerySimilarSourceFiltering:
             # Should only return chunks from source1 and source2
             assert len(result) == 2
             source_ids_in_result = [
-                r["meta"].get("source_id") for r in result if isinstance(r["meta"], dict)
+                r["meta"].get("source_id")
+                for r in result
+                if isinstance(r["meta"], dict)
             ]
             assert "source1" in source_ids_in_result
             assert "source2" in source_ids_in_result
@@ -107,7 +110,9 @@ class TestQuerySimilarSourceFiltering:
             ]
             mock_table.search.return_value = mock_search
 
-            with patch.object(retrieval, "_ensure_sources_table", return_value=mock_table):
+            with patch.object(
+                retrieval, "_ensure_sources_table", return_value=mock_table
+            ):
                 with patch.object(retrieval, "_embed", return_value=[0.1] * 1536):
                     result = retrieval.query_similar("test query", source_ids=None)
 
@@ -159,4 +164,6 @@ class TestChatTurnInputSourceIds:
             mock_query.assert_called_once()
             call_kwargs = mock_query.call_args
             assert call_kwargs[0][0] == "test query"
-            assert call_kwargs[1].get("source_ids") == ["id_a"] or call_kwargs.kwargs.get("source_ids") == ["id_a"]
+            assert call_kwargs[1].get("source_ids") == [
+                "id_a"
+            ] or call_kwargs.kwargs.get("source_ids") == ["id_a"]
