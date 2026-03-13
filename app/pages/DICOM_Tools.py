@@ -156,7 +156,7 @@ def render():
                             )
                             if will_anon:
                                 st.markdown(
-                                    f"- **{tag}**: `{value}` ✓ wird anonymisiert"
+                                    f"- **{tag}**: `{value}` :material/check: wird anonymisiert"
                                 )
                             else:
                                 st.markdown(f"- {tag}: `{value}`")
@@ -217,7 +217,7 @@ def render():
         col1.metric("Erfolgreich", success_count)
         col2.metric("Fehler", error_count)
         with col3:
-            if st.button("🔄 Neue Dateien", key="reset_dicom"):
+            if st.button(":material/refresh: Neue Dateien", key="reset_dicom"):
                 st.session_state.dicom_results = None
                 st.session_state.dicom_config = None
                 st.rerun()
@@ -240,7 +240,7 @@ def render():
 
             with col1:
                 st.download_button(
-                    label="📥 Anonymisierte Dateien (ZIP)",
+                    label=":material/download: Anonymisierte Dateien (ZIP)",
                     data=zip_data,
                     file_name=f"anonymized_dicom_{config.anonymization_id}.zip",
                     mime="application/zip",
@@ -275,7 +275,7 @@ def render():
                         )
 
                 st.download_button(
-                    label="📋 Mapping-CSV",
+                    label=":material/table_chart: Mapping-CSV",
                     data=csv_buffer.getvalue(),
                     file_name=f"anonymization_mapping_{config.anonymization_id}.csv",
                     mime="text/csv",

@@ -9,7 +9,7 @@ def render_help_page() -> None:
     main._init_state()
     main.render_sidebar()
     st.title("HALO Core - User Handbook")
-    st.caption("Made with ❤️ by Corpus Analytica")
+    st.caption("Made with :material/favorite: by Corpus Analytica")
     st.markdown("""
 
 ## Welcome to HALO Core
@@ -243,7 +243,7 @@ HALO is strongest when you use it as a **collaborative intelligence system**, no
 
 Curate evidence. Ask sharper questions. Capture winning outputs. Then ship.
 
-Made with ❤️ by Corpus Analytica
+Made with :material/favorite: by Corpus Analytica
         """)
 
 

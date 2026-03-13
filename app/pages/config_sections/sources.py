@@ -19,7 +19,7 @@ def render(container: st.delta_generator.DeltaGenerator) -> None:
 
     if test_mode:
         container.caption(
-            "⚠️ Test-Modus aktiv. Credentials werden in der Session gespeichert, nicht persistent. "
+            ":material/warning: Test-Modus aktiv. Credentials werden in der Session gespeichert, nicht persistent. "
             "Für Produktion verwende die .env-Datei."
         )
     else:
@@ -41,9 +41,9 @@ def render(container: st.delta_generator.DeltaGenerator) -> None:
             col1, col2 = st.columns([1, 2])
             with col1:
                 if info["configured"]:
-                    st.markdown(f"✅ **{info['name']}**")
+                    st.markdown(f":material/check_circle: **{info['name']}**")
                 else:
-                    st.markdown(f"⚠️ **{info['name']}**")
+                    st.markdown(f":material/warning: **{info['name']}**")
             with col2:
                 if info["configured"]:
                     st.caption("Bereit für Sync")

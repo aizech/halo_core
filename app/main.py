@@ -148,7 +148,7 @@ class StudioTemplate:
     title: str
     description: str
     status: str = ""
-    icon: str = "🧩"
+    icon: str = ":material/extension:"
     color: str = "#f5f5f5"
     badge: Optional[str] = None
     actions: List[StudioAction] = field(default_factory=list)
@@ -166,7 +166,7 @@ class StudioTemplateConfig(BaseModel):
     title: str
     description: str
     status: str = ""
-    icon: str = "🧩"
+    icon: str = ":material/extension:"
     color: str = "#f5f5f5"
     badge: Optional[str] = None
     actions: list[StudioActionConfig] = Field(default_factory=list)
@@ -215,7 +215,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Podcast",
             description="Konvertiere Erkenntnisse in Hörstücke.",
             status="BETA",
-            icon="🎧",
+            icon=":material/headphones:",
             color="#F3ECFF",
             badge="BETA",
             actions=default_actions,
@@ -225,7 +225,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             template_id="video_overview",
             title="Videoübersicht",
             description="Erstelle ein kurzes Drehbuch für Clips.",
-            icon="🎬",
+            icon=":material/movie:",
             color="#DFF5EC",
             actions=default_actions,
             agent={"instructions": "Erstelle ein Clip-Storyboard mit Szenen."},
@@ -234,7 +234,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             template_id="mindmap",
             title="Mindmap",
             description="Visualisiere Kernthemen und Beziehungen.",
-            icon="🕸️",
+            icon=":material/hub:",
             color="#FFEEDB",
             actions=default_actions,
             agent={"instructions": "Extrahiere Hauptthemen und Beziehungen."},
@@ -243,7 +243,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             template_id="reports",
             title="Berichte",
             description="Fasse Erkenntnisse in professionellen Reports zusammen.",
-            icon="📊",
+            icon=":material/bar_chart:",
             color="#E7F0FF",
             actions=default_actions,
             agent={"instructions": "Erstelle einen Bericht mit klaren Abschnitten."},
@@ -252,7 +252,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             template_id="flashcards",
             title="Karteikarten",
             description="Lerne mit automatisch generierten Fragen.",
-            icon="🗂️",
+            icon=":material/folder_open:",
             color="#FFE4E2",
             actions=default_actions,
             agent={"instructions": "Erzeuge Q&A-Karteikarten."},
@@ -261,7 +261,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             template_id="quiz",
             title="Quiz",
             description="Teste dein Wissen mit individuellen Quizfragen.",
-            icon="❔",
+            icon=":material/quiz:",
             color="#E0F4FF",
             actions=default_actions,
             agent={"instructions": "Erstelle Quizfragen mit Lösungen."},
@@ -271,7 +271,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Infografik",
             description="Stelle Statistiken grafisch dar.",
             status="BETA",
-            icon="📈",
+            icon=":material/trending_up:",
             color="#EDE7FF",
             badge="BETA",
             actions=default_actions,
@@ -282,7 +282,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Präsentation",
             description="Erstelle Slides als Grundlage für Vorträge.",
             status="BETA",
-            icon="🖥️",
+            icon=":material/computer:",
             color="#FFF4E0",
             badge="BETA",
             actions=default_actions,
@@ -292,7 +292,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             template_id="datatable",
             title="Datentabelle",
             description="Strukturiere Fakten in tabellarischer Form.",
-            icon="📋",
+            icon=":material/table_chart:",
             color="#F1F5F9",
             actions=default_actions,
             agent={"instructions": "Erstelle eine tabellarische Zusammenfassung."},
@@ -461,7 +461,7 @@ def _build_download_filename(
 def configure_page() -> None:
     st.set_page_config(
         page_title="HALO NotebookLM",
-        page_icon="📓",
+        page_icon=":material/book:",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -913,7 +913,7 @@ def render_sidebar() -> None:
                 page,
                 label=label,
                 icon=icon_token,
-                use_container_width=True,
+                width="stretch",
             )
             continue
         except Exception:
@@ -1660,9 +1660,11 @@ def _render_app_design_configuration(
                     _summary_parts.append(f"**{_row_label}**")
                 if _row_page:
                     _summary_parts.append(f"→ `{_row_page}`")
-                _access_badge = {"public": "🌐", "logged_in": "🔒", "admin": "🔑"}.get(
-                    _row_access, "🌐"
-                )
+                _access_badge = {
+                    "public": ":material/public:",
+                    "logged_in": ":material/lock:",
+                    "admin": ":material/key:",
+                }.get(_row_access, ":material/public:")
                 _summary_parts.append(_access_badge)
                 item_box.caption(" · ".join(_summary_parts))
             elif current_kind in {"spacer", "separator", "theme_toggle"}:
@@ -4174,7 +4176,7 @@ def render_chat_panel() -> None:
                                         if isinstance(image, dict)
                                         else None
                                     ),
-                                    use_container_width=True,
+                                    width="stretch",
                                 )
                     if st.button("In Notiz speichern", key=f"save_note_{idx}"):
                         # Include images from preceding user message (uploaded files)
@@ -4215,7 +4217,7 @@ def render_chat_panel() -> None:
                                         if isinstance(image, dict)
                                         else None
                                     ),
-                                    use_container_width=True,
+                                    width="stretch",
                                 )
     pending_prompt = st.session_state.pop("pending_chat_prompt", None)
     pending_images = st.session_state.pop("pending_chat_images", None)
@@ -4805,9 +4807,104 @@ def _render_studio_outputs_section() -> None:
             meta_bits.append(f"{len(sources)} Quellen")
         meta_bits.append(_format_relative_timestamp(generated_at))
         with st.expander(f"{icon} {title}", expanded=output_id == open_id):
-            st.caption(" • ".join(meta_bits))
+            # Content section
             content = str(entry.get("content", ""))
             image_path = entry.get("image_path")
+            # First line: timestamp + menu popover
+            header_cols = st.columns([0.92, 0.08])
+            with header_cols[0]:
+                st.caption(" • ".join(meta_bits))
+            with header_cols[1]:
+                # Use a container to reduce height and align with caption
+                compact_menu = st.container()
+                with compact_menu:
+                    with st.popover("", width="stretch"):
+                        if st.button(
+                            "Ansehen",
+                            key=f"studio_output_view_{output_id}",
+                            icon=":material/visibility:",
+                            icon_position="left",
+                            width="stretch",
+                        ):
+                            st.session_state[f"view_output_{output_id}"] = True
+                        if st.session_state.get(f"view_output_{output_id}", False):
+                            with st.dialog(title, width="large"):
+                                st.markdown(content)
+                                if st.button(
+                                    "Schließen",
+                                    key=f"close_view_{output_id}",
+                                    width="stretch",
+                                ):
+                                    st.session_state[f"view_output_{output_id}"] = False
+                                    st.rerun()
+                        if st.button(
+                            "Umbenennen",
+                            key=f"studio_output_rename_{output_id}",
+                            icon=":material/edit:",
+                            icon_position="left",
+                            width="stretch",
+                        ):
+                            st.session_state["confirm_rename_output_id"] = output_id
+                            _open_rename_output_dialog(output_id, title)
+                        elif (
+                            st.session_state.get("confirm_rename_output_id")
+                            == output_id
+                        ):
+                            _open_rename_output_dialog(output_id, title)
+                        if st.button(
+                            "Als Quelle nutzen",
+                            key=f"studio_output_source_{output_id}",
+                            icon=":material/push_pin:",
+                            icon_position="left",
+                            width="stretch",
+                        ):
+                            output_title = f"Studio: {title}"
+                            _add_source(
+                                output_title,
+                                "Studio Output",
+                                _format_absolute_date(generated_at),
+                                content,
+                            )
+                            st.toast("Studio-Ausgabe als Quelle hinzugefügt")
+                            st.rerun()
+                        st.download_button(
+                            ":material/download: Herunterladen",
+                            data=exports.render_markdown(title, content),
+                            file_name=_build_download_filename(
+                                title, generated_at, "md"
+                            ),
+                            mime="text/markdown",
+                            key=f"studio_output_download_{output_id}",
+                            width="stretch",
+                        )
+                        st.markdown(
+                            "<div class='menu-divider'></div>", unsafe_allow_html=True
+                        )
+                        if st.button(
+                            "Teilen",
+                            key=f"studio_output_share_{output_id}",
+                            icon=":material/share:",
+                            icon_position="left",
+                            width="stretch",
+                        ):
+                            st.toast("Teilen ist bald verfügbar")
+                        if st.button(
+                            "Löschen",
+                            key=f"studio_output_delete_{output_id}",
+                            icon=":material/delete:",
+                            icon_position="left",
+                            width="stretch",
+                            help="menu-danger",
+                        ):
+                            st.session_state["confirm_delete_output_id"] = output_id
+                            st.session_state["confirm_delete_output_title"] = title
+                            _open_delete_output_dialog(output_id, title)
+                        elif (
+                            st.session_state.get("confirm_delete_output_id")
+                            == output_id
+                        ):
+                            _open_delete_output_dialog(output_id, title)
+            # Render content
             if image_path:
                 try:
                     st.image(image_path, width="stretch")
@@ -4817,68 +4914,6 @@ def _render_studio_outputs_section() -> None:
                 st.markdown(content)
             else:
                 st.caption("Keine Inhalte verfügbar.")
-            menu_cols = st.columns([0.82, 0.18])
-            with menu_cols[1]:
-                with st.popover("", width="stretch"):
-                    if st.button(
-                        "Umbenennen",
-                        key=f"studio_output_rename_{output_id}",
-                        icon=":material/edit:",
-                        icon_position="left",
-                        width="stretch",
-                    ):
-                        st.session_state["confirm_rename_output_id"] = output_id
-                        _open_rename_output_dialog(output_id, title)
-                    elif st.session_state.get("confirm_rename_output_id") == output_id:
-                        _open_rename_output_dialog(output_id, title)
-                    if st.button(
-                        "Als Quelle nutzen",
-                        key=f"studio_output_source_{output_id}",
-                        icon=":material/push_pin:",
-                        icon_position="left",
-                        width="stretch",
-                    ):
-                        output_title = f"Studio: {title}"
-                        _add_source(
-                            output_title,
-                            "Studio Output",
-                            _format_absolute_date(generated_at),
-                            content,
-                        )
-                        st.toast("Studio-Ausgabe als Quelle hinzugefügt")
-                        st.rerun()
-                    st.download_button(
-                        ":material/download: Herunterladen",
-                        data=exports.render_markdown(title, content),
-                        file_name=_build_download_filename(title, generated_at, "md"),
-                        mime="text/markdown",
-                        key=f"studio_output_download_{output_id}",
-                        width="stretch",
-                    )
-                    st.markdown(
-                        "<div class='menu-divider'></div>", unsafe_allow_html=True
-                    )
-                    if st.button(
-                        "Teilen",
-                        key=f"studio_output_share_{output_id}",
-                        icon=":material/share:",
-                        icon_position="left",
-                        width="stretch",
-                    ):
-                        st.toast("Teilen ist bald verfügbar")
-                    if st.button(
-                        "Löschen",
-                        key=f"studio_output_delete_{output_id}",
-                        icon=":material/delete:",
-                        icon_position="left",
-                        width="stretch",
-                        help="menu-danger",
-                    ):
-                        st.session_state["confirm_delete_output_id"] = output_id
-                        st.session_state["confirm_delete_output_title"] = title
-                        _open_delete_output_dialog(output_id, title)
-                    elif st.session_state.get("confirm_delete_output_id") == output_id:
-                        _open_delete_output_dialog(output_id, title)
 
 
 def _render_studio_notes_section() -> None:
@@ -5015,103 +5050,121 @@ def _render_studio_notes_section() -> None:
         sources = note.get("sources", [])
         created_label = _format_absolute_date(note.get("created_at"))
         meta_label = f"{created_label} • {len(sources) or 0} Quelle(n)"
-        cols = st.columns([0.9, 0.1], gap="small")
-        with cols[0]:
-            st.markdown('<div class="note-block">', unsafe_allow_html=True)
-            with st.expander(truncated_title, expanded=False):
+        st.markdown('<div class="note-block">', unsafe_allow_html=True)
+        with st.expander(truncated_title, expanded=False):
+            # First line: timestamp + menu popover
+            header_cols = st.columns([0.92, 0.08])
+            with header_cols[0]:
                 st.caption(meta_label)
-                if content.strip():
-                    _render_chat_markdown(content)
-                else:
-                    st.write("Keine Inhalte verfügbar.")
-                # Display images if present
-                note_images = note.get("images")
-                if note_images:
-                    img_cols = st.columns(2)
-                    for img_idx, image in enumerate(note_images):
-                        image_path = (
-                            image.get("filepath") if isinstance(image, dict) else None
+            with header_cols[1]:
+                with st.popover("", width="stretch"):
+                    if st.button(
+                        "Ansehen",
+                        key=f"note_view_{idx}",
+                        icon=":material/visibility:",
+                        icon_position="left",
+                        width="stretch",
+                    ):
+                        st.session_state[f"view_note_{idx}"] = True
+                    if st.session_state.get(f"view_note_{idx}", False):
+                        with st.dialog(title, width="large"):
+                            _render_chat_markdown(content)
+                            if st.button(
+                                "Schließen",
+                                key=f"close_note_view_{idx}",
+                                width="stretch",
+                            ):
+                                st.session_state[f"view_note_{idx}"] = False
+                                st.rerun()
+                    if st.button(
+                        "Umbenennen",
+                        key=f"note_rename_button_{idx}",
+                        icon=":material/edit:",
+                        icon_position="left",
+                        width="stretch",
+                    ):
+                        st.session_state["confirm_rename_note_index"] = idx
+                        _open_rename_note_dialog(idx, title)
+                    elif st.session_state.get("confirm_rename_note_index") == idx:
+                        _open_rename_note_dialog(idx, title)
+                    if st.button(
+                        "Als Quelle nutzen",
+                        key=f"note_source_{idx}",
+                        icon=":material/push_pin:",
+                        icon_position="left",
+                        width="stretch",
+                    ):
+                        note_title = f"Notiz: {title}"
+                        _add_source(
+                            note_title,
+                            "Notiz",
+                            _format_absolute_date(note.get("created_at")),
+                            content,
                         )
-                        image_url = (
-                            image.get("url") if isinstance(image, dict) else None
-                        )
-                        image_src = image_path or image_url
-                        if not image_src:
-                            continue
-                        with img_cols[img_idx % 2]:
-                            st.image(
-                                image_src,
-                                caption=(
-                                    image.get("name")
-                                    if isinstance(image, dict)
-                                    else None
-                                ),
-                                use_container_width=True,
-                            )
-                source_names = sources or ["Alle Quellen"]
-                st.caption("Quellen: " + ", ".join(source_names))
-            st.markdown("</div>", unsafe_allow_html=True)
-        with cols[1]:
-            st.markdown('<div class="note-actions">', unsafe_allow_html=True)
-            with st.popover(""):
-                if st.button(
-                    "Umbenennen",
-                    key=f"note_rename_button_{idx}",
-                    icon=":material/edit:",
-                    icon_position="left",
-                    width="stretch",
-                ):
-                    st.session_state["confirm_rename_note_index"] = idx
-                    _open_rename_note_dialog(idx, title)
-                elif st.session_state.get("confirm_rename_note_index") == idx:
-                    _open_rename_note_dialog(idx, title)
-                if st.button(
-                    "Als Quelle nutzen",
-                    key=f"note_source_{idx}",
-                    icon=":material/push_pin:",
-                    icon_position="left",
-                    width="stretch",
-                ):
-                    note_title = f"Notiz: {title}"
-                    _add_source(
-                        note_title,
-                        "Notiz",
-                        _format_absolute_date(note.get("created_at")),
-                        content,
+                        st.toast("Notiz als Quelle hinzugefügt")
+                        st.rerun()
+                    st.download_button(
+                        ":material/download: Herunterladen",
+                        data=content,
+                        file_name=_build_download_filename(
+                            title, note.get("created_at"), "md"
+                        ),
+                        mime="text/markdown",
+                        key=f"note_export_{idx}",
+                        width="stretch",
                     )
-                    st.toast("Notiz als Quelle hinzugefügt")
-                    st.rerun()
-                st.download_button(
-                    ":material/download: Herunterladen",
-                    data=content,
-                    file_name=_build_download_filename(
-                        title, note.get("created_at"), "md"
-                    ),
-                    mime="text/markdown",
-                    key=f"note_export_{idx}",
-                    width="stretch",
-                )
-                st.markdown("<div class='menu-divider'></div>", unsafe_allow_html=True)
-                if st.button(
-                    "Teilen",
-                    key=f"note_share_{idx}",
-                    icon=":material/share:",
-                    icon_position="left",
-                    width="stretch",
-                ):
-                    st.toast("Teilen ist bald verfügbar")
-                if st.button(
-                    "Löschen",
-                    key=f"note_delete_{idx}",
-                    icon=":material/delete:",
-                    icon_position="left",
-                    width="stretch",
-                ):
-                    st.session_state["confirm_delete_note_index"] = idx
-                    _open_delete_note_dialog(idx, title)
-                elif st.session_state.get("confirm_delete_note_index") == idx:
-                    _open_delete_note_dialog(idx, title)
-            st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown(
+                        "<div class='menu-divider'></div>", unsafe_allow_html=True
+                    )
+                    if st.button(
+                        "Teilen",
+                        key=f"note_share_{idx}",
+                        icon=":material/share:",
+                        icon_position="left",
+                        width="stretch",
+                    ):
+                        st.toast("Teilen ist bald verfügbar")
+                    if st.button(
+                        "Löschen",
+                        key=f"note_delete_{idx}",
+                        icon=":material/delete:",
+                        icon_position="left",
+                        width="stretch",
+                        help="menu-danger",
+                    ):
+                        st.session_state["confirm_delete_note_index"] = idx
+                        st.session_state["confirm_delete_note_title"] = title
+                        _open_delete_note_dialog(idx, title)
+                    elif st.session_state.get("confirm_delete_note_index") == idx:
+                        _open_delete_note_dialog(idx, title)
+            # Content section
+            if content.strip():
+                _render_chat_markdown(content)
+            else:
+                st.write("Keine Inhalte verfügbar.")
+            # Display images if present
+            note_images = note.get("images")
+            if note_images:
+                img_cols = st.columns(2)
+                for img_idx, image in enumerate(note_images):
+                    image_path = (
+                        image.get("filepath") if isinstance(image, dict) else None
+                    )
+                    image_url = image.get("url") if isinstance(image, dict) else None
+                    image_src = image_path or image_url
+                    if not image_src:
+                        continue
+                    with img_cols[img_idx % 2]:
+                        st.image(
+                            image_src,
+                            caption=(
+                                image.get("name") if isinstance(image, dict) else None
+                            ),
+                            width="stretch",
+                        )
+            source_names = sources or ["Alle Quellen"]
+            st.caption("Quellen: " + ", ".join(source_names))
+        st.markdown("</div>", unsafe_allow_html=True)
 
     def _open_add_note_dialog() -> None:
         @st.dialog("Notiz hinzufügen")
