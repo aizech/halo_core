@@ -8,6 +8,12 @@ All notable changes to HALO Core are documented on this page.
 
 ### Added
 
+- **Agents and Teams**: Comprehensive agent documentation with 15 pre-configured agents and 4 teams
+  - Medical specialists: Radiologist, Cardiologist, Pharmacist, Medical Researcher, Medical Scribe, Chief Doctor
+  - Content agents: Content Writer, SEO Optimizer, Image Creator
+  - Research agents: Web Researcher, Data Analyst
+  - General agents: General Assistant, Note Taker, Summarizer
+  - Teams: Medical AI Team, General Team, Marketing Team, Showcase Team
 - **DICOM Tools**: Medical imaging anonymization page with HIPAA Safe Harbor compliant tag removal
   - Configurable anonymization (patient, institution, study data)
   - UID regeneration for Study/Series/SOP Instance

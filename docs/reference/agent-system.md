@@ -227,7 +227,52 @@ Capabilities include:
 - adjusting model and coordination mode
 - toggling stream events
 
-## 14) Adding a new agent (recommended path)
+## 14) Available agents and teams
+
+### 14.1 Single agents
+
+| Agent ID | Role | Tools | Model |
+|----------|------|-------|-------|
+| `general_assistant` | Everyday tasks | DuckDuckGo, Calculator | gpt-4.1-mini |
+| `chat` | Fallback conversation | — | gpt-4.1-mini |
+| `note_taker` | Summarization | — | gpt-4.1-mini |
+| `summarizer` | Content condensing | — | gpt-4.1-mini |
+| `radiologist` | Medical imaging analysis | PubMed, Web Search | gpt-5.2 |
+| `cardiologist` | Cardiovascular cases | PubMed, Calculator | gpt-4.1 |
+| `pharmacist` | Medication expertise | PubMed | gpt-4.1 |
+| `medical_researcher` | Literature synthesis | PubMed | gpt-4.1 |
+| `medical_scribe` | Clinical documentation | — | gpt-4.1-mini |
+| `chief_doctor` | Clinical coordination | PubMed, Calculator | gpt-4.1 |
+| `content_writer` | Blog/copy writing | Web Search | gpt-4.1 |
+| `seo_optimizer` | Search optimization | Web Search | gpt-4.1 |
+| `image_creator` | DALL-E image generation | — | gpt-4.1 |
+| `web_researcher` | Internet research | DuckDuckGo | gpt-4.1 |
+| `data_analyst` | Data analysis | Calculator | gpt-4.1 |
+
+### 14.2 Team configurations
+
+| Team ID | Members | Coordination Mode |
+|---------|---------|-------------------|
+| `medical_team` | chief_doctor, radiologist, cardiologist, pharmacist, medical_researcher, medical_scribe | delegate_on_complexity |
+| `general_team` | general_assistant, web_researcher, content_writer | delegate_on_complexity |
+| `marketing_team` | content_writer, seo_optimizer, web_researcher | delegate_on_complexity |
+| `showcase_team` | showcase_assistant, web_researcher | delegate_on_complexity |
+
+### 14.3 Skill tags for delegation
+
+| Skill | Associated Agents |
+|-------|-------------------|
+| `imaging_interpretation`, `ct_mri_analysis`, `dicom_interpretation` | radiologist |
+| `cardiovascular`, `ecg_interpretation` | cardiologist |
+| `medication`, `pharmacology`, `drug_interactions` | pharmacist |
+| `research`, `literature_review`, `evidence_synthesis` | medical_researcher |
+| `writing`, `content_creation`, `blog_writing` | content_writer |
+| `seo`, `optimization`, `keywords` | seo_optimizer |
+| `data_analysis`, `statistics`, `visualization` | data_analyst |
+
+---
+
+## 15) Adding a new agent (recommended path)
 
 1. Create `HALO_DATA_DIR/agents/<agent_id>.json` with schema-compliant payload.
 2. Set `enabled: true`.
@@ -236,7 +281,7 @@ Capabilities include:
 5. If needed, add supported tool ID and tool settings.
 6. Validate behavior in chat with relevant coordination mode.
 
-## 15) Common troubleshooting
+## 16) Common troubleshooting
 
 ### Team not delegating as expected
 
@@ -259,7 +304,7 @@ Capabilities include:
 - set `HALO_AGENT_DB` to a valid sqlite path
 - check logs for DB initialization warnings
 
-## 16) Governance notes
+## 17) Governance notes
 
 The current architecture intentionally keeps:
 

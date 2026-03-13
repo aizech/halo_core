@@ -65,6 +65,7 @@ nav:
     - Studio: handbook/studio.md
     - Notes: handbook/notes.md
     - DICOM Tools: handbook/dicom-tools.md
+    - Agents and Teams: handbook/agents-and-teams.md
     - Configuration: handbook/configuration.md
     - Advanced Usage: handbook/advanced.md
     - Workflows: handbook/workflows.md
