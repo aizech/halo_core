@@ -9,74 +9,61 @@ from unittest.mock import patch
 import pytest
 
 
-class TestMedicalImagingAgentConfig:
-    """Tests for medical_imaging agent configuration."""
+class TestRadiologistAgentConfig:
+    """Tests for radiologist agent configuration (merged from medical_imaging)."""
 
-    def test_medical_imaging_config_exists(self) -> None:
-        """Medical imaging agent config file exists."""
+    def test_radiologist_config_exists(self) -> None:
+        """Radiologist agent config file exists."""
         config_path = (
-            Path(__file__).parent.parent
-            / "services"
-            / "agents"
-            / "medical_imaging.json"
+            Path(__file__).parent.parent / "services" / "agents" / "radiologist.json"
         )
-        assert config_path.exists(), "medical_imaging.json should exist"
+        assert config_path.exists(), "radiologist.json should exist"
 
-    def test_medical_imaging_config_valid_json(self) -> None:
-        """Medical imaging config is valid JSON."""
+    def test_radiologist_config_valid_json(self) -> None:
+        """Radiologist config is valid JSON."""
         config_path = (
-            Path(__file__).parent.parent
-            / "services"
-            / "agents"
-            / "medical_imaging.json"
+            Path(__file__).parent.parent / "services" / "agents" / "radiologist.json"
         )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
         assert isinstance(config, dict)
 
-    def test_medical_imaging_config_has_required_fields(self) -> None:
-        """Medical imaging config has all required fields."""
+    def test_radiologist_config_has_required_fields(self) -> None:
+        """Radiologist config has all required fields."""
         config_path = (
-            Path(__file__).parent.parent
-            / "services"
-            / "agents"
-            / "medical_imaging.json"
+            Path(__file__).parent.parent / "services" / "agents" / "radiologist.json"
         )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
 
-        assert config.get("id") == "medical_imaging"
-        assert config.get("name") == "Medical Imaging Analyst"
-        assert config.get("role") == "radiologist"
+        assert config.get("id") == "radiologist"
+        assert "Radiology" in config.get("name", "")
+        assert config.get("role") == "imaging_specialist"
         assert "instructions" in config
         assert config.get("enabled") is True
 
-    def test_medical_imaging_uses_vision_model(self) -> None:
-        """Medical imaging agent uses a vision-capable model."""
+    def test_radiologist_has_image_analysis_instructions(self) -> None:
+        """Radiologist has medical image analysis instructions (merged from medical_imaging)."""
         config_path = (
-            Path(__file__).parent.parent
-            / "services"
-            / "agents"
-            / "medical_imaging.json"
+            Path(__file__).parent.parent / "services" / "agents" / "radiologist.json"
         )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
 
-        model = config.get("model", "")
-        # Should use a vision-capable model
+        instructions = config.get("instructions", [])
+        # Should have image analysis capability merged from medical_imaging
+        instructions_text = (
+            " ".join(instructions) if isinstance(instructions, list) else instructions
+        )
         assert (
-            "gpt" in model.lower()
-            or "vision" in model.lower()
-            or "claude" in model.lower()
+            "image" in instructions_text.lower()
+            or "imaging" in instructions_text.lower()
         )
 
-    def test_medical_imaging_has_pubmed_tools(self) -> None:
-        """Medical imaging agent has PubMed tools for literature search."""
+    def test_radiologist_has_pubmed_tools(self) -> None:
+        """Radiologist agent has PubMed tools for literature search."""
         config_path = (
-            Path(__file__).parent.parent
-            / "services"
-            / "agents"
-            / "medical_imaging.json"
+            Path(__file__).parent.parent / "services" / "agents" / "radiologist.json"
         )
         with config_path.open("r", encoding="utf-8") as f:
             config = json.load(f)
@@ -84,18 +71,16 @@ class TestMedicalImagingAgentConfig:
         tools = config.get("tools", [])
         assert "pubmed" in tools, "Should have pubmed tool for literature search"
 
-    def test_medical_imaging_in_chat_members(self) -> None:
-        """Medical imaging agent is registered in chat team members."""
-        chat_config_path = (
-            Path(__file__).parent.parent / "services" / "agents" / "chat.json"
+    def test_radiologist_in_medical_team_members(self) -> None:
+        """Radiologist agent is registered in medical team members."""
+        medical_team_path = (
+            Path(__file__).parent.parent / "services" / "agents" / "medical_team.json"
         )
-        with chat_config_path.open("r", encoding="utf-8") as f:
-            chat_config = json.load(f)
+        with medical_team_path.open("r", encoding="utf-8") as f:
+            team_config = json.load(f)
 
-        members = chat_config.get("members", [])
-        assert (
-            "medical_imaging" in members
-        ), "medical_imaging should be in chat team members"
+        members = team_config.get("members", [])
+        assert "radiologist" in members, "radiologist should be in medical team members"
 
 
 class TestMedicalImageTools:
@@ -244,7 +229,7 @@ class TestMedicalImageStudioTemplate:
         assert "medical_image_analysis" in template_ids
 
     def test_medical_image_template_has_correct_agent(self) -> None:
-        """Medical Image Analysis template uses medical_imaging agent."""
+        """Medical Image Analysis template uses radiologist agent."""
         template_path = (
             Path(__file__).parent.parent / "templates" / "studio_templates.json"
         )
@@ -257,5 +242,5 @@ class TestMedicalImageStudioTemplate:
         )
 
         assert medical_template is not None
-        assert medical_template.get("agent_id") == "medical_imaging"
-        assert "🩺" in medical_template.get("icon", "")
+        assert medical_template.get("agent_id") == "radiologist"
+        assert medical_template.get("team_id") == "medical_team"

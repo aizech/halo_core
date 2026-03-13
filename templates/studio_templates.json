@@ -1,10 +1,33 @@
 {
+  "teams": [
+    {
+      "id": "general_team",
+      "name": "General Assistant",
+      "description": "Everyday tasks and summaries"
+    },
+    {
+      "id": "showcase_team",
+      "name": "Showcase Demo",
+      "description": "Full capability demonstration"
+    },
+    {
+      "id": "medical_team",
+      "name": "Gods in White",
+      "description": "Medical AI specialists"
+    },
+    {
+      "id": "marketing_team",
+      "name": "Marketing",
+      "description": "Content creation with images"
+    }
+  ],
   "templates": [
     {
       "id": "executive_brief",
+      "team_id": "general_team",
       "title": "Executive Brief",
       "description": "Verdichtet ausgewählte Quellen zu einem entscheidungsreifen Kurzüberblick für Führungskräfte.",
-      "icon": "📌",
+      "icon": "",
       "color": "#E8F4FD",
       "actions": [
         {
@@ -27,9 +50,10 @@
     },
     {
       "id": "literature_review",
+      "team_id": "general_team",
       "title": "Literaturüberblick",
       "description": "Synthetisiert wissenschaftliche Quellen zu einem strukturierten Stand der Forschung.",
-      "icon": "🔬",
+      "icon": "",
       "color": "#EAF5EA",
       "actions": [
         {
@@ -52,9 +76,10 @@
     },
     {
       "id": "patient_summary",
+      "team_id": "medical_team",
       "title": "Patientenzusammenfassung",
       "description": "Strukturiert klinische Informationen aus Quellen in eine übersichtliche Patientenübersicht.",
-      "icon": "🏥",
+      "icon": "",
       "color": "#FFF0F0",
       "actions": [
         {
@@ -77,9 +102,10 @@
     },
     {
       "id": "meeting_minutes",
+      "team_id": "general_team",
       "title": "Protokoll",
       "description": "Extrahiert Beschlüsse, Aufgaben und nächste Schritte aus Gesprächs- oder Dokumentenquellen.",
-      "icon": "📝",
+      "icon": "",
       "color": "#FFFBE6",
       "actions": [
         {
@@ -102,9 +128,10 @@
     },
     {
       "id": "glossary",
+      "team_id": "general_team",
       "title": "Glossar",
       "description": "Extrahiert Fachbegriffe aus den Quellen und erklärt sie verständlich.",
-      "icon": "📖",
+      "icon": "",
       "color": "#F0F4FF",
       "actions": [
         {
@@ -127,9 +154,10 @@
     },
     {
       "id": "research_memo",
+      "team_id": "general_team",
       "title": "Forschungsmemo",
       "description": "Wandelt Quellenmaterial in ein kompaktes Recherche-Memo mit Bewertung und Handlungsrelevanz um.",
-      "icon": "🧪",
+      "icon": "",
       "color": "#F5F0FF",
       "actions": [
         {
@@ -152,9 +180,10 @@
     },
     {
       "id": "reports",
+      "team_id": "general_team",
       "title": "Bericht",
       "description": "Fasst Erkenntnisse aus ausgewählten Quellen in einem professionellen, strukturierten Report zusammen.",
-      "icon": "📊",
+      "icon": "",
       "color": "#E7F0FF",
       "actions": [
         {
@@ -177,10 +206,11 @@
     },
     {
       "id": "presentation",
+      "team_id": "showcase_team",
       "title": "Präsentation",
       "description": "Erstellt eine Folienstruktur mit Agenda aus den ausgewählten Quellen.",
       "status": "BETA",
-      "icon": "🖥️",
+      "icon": "",
       "color": "#FFF4E0",
       "badge": "BETA",
       "actions": [
@@ -204,9 +234,10 @@
     },
     {
       "id": "datatable",
+      "team_id": "general_team",
       "title": "Datentabelle",
       "description": "Strukturiert Fakten und Kennzahlen aus den Quellen in tabellarischer Form.",
-      "icon": "📋",
+      "icon": "",
       "color": "#F1F5F9",
       "actions": [
         {
@@ -229,10 +260,11 @@
     },
     {
       "id": "podcast",
+      "team_id": "showcase_team",
       "title": "Podcast",
       "description": "Konvertiert Quelleninhalte in ein gesprochenes, dialogisches Podcast-Skript.",
       "status": "BETA",
-      "icon": "🎧",
+      "icon": "",
       "color": "#F3ECFF",
       "badge": "BETA",
       "actions": [
@@ -256,10 +288,11 @@
     },
     {
       "id": "infographic",
+      "team_id": "showcase_team",
       "title": "Infografik",
       "description": "Verdichtet Statistiken und Kernbotschaften aus den Quellen als Infografik-Textvorlage.",
       "status": "BETA",
-      "icon": "📈",
+      "icon": "",
       "color": "#EDE7FF",
       "badge": "BETA",
       "actions": [
@@ -283,9 +316,10 @@
     },
     {
       "id": "video_overview",
+      "team_id": "showcase_team",
       "title": "Videoübersicht",
       "description": "Erstellt ein Storyboard mit Szenenstruktur aus den ausgewählten Quellen.",
-      "icon": "🎬",
+      "icon": "",
       "color": "#DFF5EC",
       "actions": [
         {
@@ -310,7 +344,7 @@
       "id": "medical_diagnosis",
       "title": "Differential Diagnosis",
       "description": "Generates a structured differential diagnosis from clinical presentation with evidence-based reasoning.",
-      "icon": "🩺",
+      "icon": "",
       "color": "#FFE4E1",
       "team_id": "medical_team",
       "agent_id": "chief_doctor",
@@ -337,7 +371,7 @@
       "id": "clinical_case_report",
       "title": "Case Report",
       "description": "Creates a formal clinical case report following CARE guidelines from patient information and clinical notes.",
-      "icon": "📄",
+      "icon": "",
       "color": "#F0FFF0",
       "team_id": "medical_team",
       "agent_id": "medical_scribe",
@@ -364,7 +398,7 @@
       "id": "drug_interaction_check",
       "title": "Drug Interaction Analysis",
       "description": "Comprehensive medication interaction analysis with severity grading and management recommendations.",
-      "icon": "💊",
+      "icon": "",
       "color": "#E6E6FA",
       "team_id": "medical_team",
       "agent_id": "pharmacist",
@@ -391,7 +425,7 @@
       "id": "radiology_report",
       "title": "Radiology Report",
       "description": "Generates structured radiology report from imaging findings with differential considerations.",
-      "icon": "📡",
+      "icon": "",
       "color": "#F5F5DC",
       "team_id": "medical_team",
       "agent_id": "radiologist",
@@ -418,7 +452,7 @@
       "id": "evidence_summary",
       "title": "Evidence Summary",
       "description": "Synthesizes medical literature into a structured evidence-based summary with quality assessment.",
-      "icon": "📚",
+      "icon": "",
       "color": "#E0FFFF",
       "team_id": "medical_team",
       "agent_id": "medical_researcher",
@@ -445,7 +479,7 @@
       "id": "treatment_protocol",
       "title": "Treatment Protocol",
       "description": "Develops comprehensive treatment protocol with step-by-step management plan and monitoring parameters.",
-      "icon": "📋",
+      "icon": "",
       "color": "#FFF8DC",
       "team_id": "medical_team",
       "agent_id": "chief_doctor",
@@ -472,7 +506,7 @@
       "id": "cardiac_risk_assessment",
       "title": "Cardiac Risk Assessment",
       "description": "Cardiovascular risk stratification using validated risk scores with prevention recommendations.",
-      "icon": "❤️",
+      "icon": "",
       "color": "#FFE4E9",
       "team_id": "medical_team",
       "agent_id": "cardiologist",
@@ -499,9 +533,10 @@
       "id": "medical_image_analysis",
       "title": "Medical Image Analysis",
       "description": "Analyzes medical images (X-ray, MRI, CT, Ultrasound, DICOM) with structured findings and evidence-based context.",
-      "icon": "🩺",
+      "icon": "",
       "color": "#E8F4F8",
-      "agent_id": "medical_imaging",
+      "team_id": "medical_team",
+      "agent_id": "radiologist",
       "actions": [
         {
           "id": "generate",
@@ -519,6 +554,87 @@
         "language": "Auto",
         "tone": "Clinical",
         "instructions": "Analyze the provided medical image systematically. Structure: 1) Image Technical Assessment (modality, anatomical region, quality), 2) Professional Analysis (findings, measurements, severity), 3) Clinical Interpretation (diagnosis with confidence, differentials), 4) Patient Education (jargon-free explanation), 5) Evidence-Based Context (PubMed references, guidelines), 6) Medical Disclaimer. Always include the disclaimer. Respond in the same language as the user."
+      }
+    },
+    {
+      "id": "blog_post",
+      "team_id": "marketing_team",
+      "agent_id": "content_writer",
+      "title": "Blog Post",
+      "description": "Erstellt einen vollständigen Blog-Artikel mit integrierten Bildern aus den ausgewählten Quellen.",
+      "icon": "✍️",
+      "color": "#E8F5E9",
+      "actions": [
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
+      ],
+      "agent": {
+        "instructions": "Erstelle einen ansprechenden Blog-Artikel aus den bereitgestellten Quellen. Struktur: 1) Aufmerksamkeitsstarker Titel, 2) Einleitung mit Hook, 3) Hauptteil mit 3-5 Abschnitten und Zwischenüberschriften, 4) Bildvorschläge mit Beschreibungen für jeden Abschnitt, 5) Fazit mit Call-to-Action. Ton: informativ, unterhaltsam, auf die Zielgruppe zugeschnitten. Länge: 800-1500 Wörter. Integriere Quellenangaben natürlich in den Text."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Locker",
+        "instructions": "Erstelle einen ansprechenden Blog-Artikel aus den bereitgestellten Quellen. Struktur: 1) Aufmerksamkeitsstarker Titel, 2) Einleitung mit Hook, 3) Hauptteil mit 3-5 Abschnitten und Zwischenüberschriften, 4) Bildvorschläge mit Beschreibungen für jeden Abschnitt, 5) Fazit mit Call-to-Action. Ton: informativ, unterhaltsam, auf die Zielgruppe zugeschnitten. Länge: 800-1500 Wörter. Integriere Quellenangaben natürlich in den Text."
+      }
+    },
+    {
+      "id": "social_media_post",
+      "team_id": "marketing_team",
+      "agent_id": "content_writer",
+      "title": "Social Media Post",
+      "description": "Erstellt kurze, ansprechende Social-Media-Beiträge mit Bildvorschlägen.",
+      "icon": "📱",
+      "color": "#FFF3E0",
+      "actions": [
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
+      ],
+      "agent": {
+        "instructions": "Erstelle Social-Media-Beiträge aus den Quellen. Format: 1) Post-Text (max. 280 Zeichen für Twitter/X, länger für LinkedIn/Instagram), 2) Bildvorschlag mit Beschreibung, 3) Hashtag-Vorschläge (5-10 relevante Tags), 4) Best Posting Time Empfehlung. Ton: je nach Plattform (Twitter: knackig, LinkedIn: professionell, Instagram: visuell/emotional). Erstelle 3 Varianten für verschiedene Plattformen."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Locker",
+        "instructions": "Erstelle Social-Media-Beiträge aus den Quellen. Format: 1) Post-Text (max. 280 Zeichen für Twitter/X, länger für LinkedIn/Instagram), 2) Bildvorschlag mit Beschreibung, 3) Hashtag-Vorschläge (5-10 relevante Tags), 4) Best Posting Time Empfehlung. Ton: je nach Plattform (Twitter: knackig, LinkedIn: professionell, Instagram: visuell/emotional). Erstelle 3 Varianten für verschiedene Plattformen."
+      }
+    },
+    {
+      "id": "newsletter",
+      "team_id": "marketing_team",
+      "agent_id": "content_writer",
+      "title": "Newsletter",
+      "description": "Erstellt einen E-Mail-Newsletter mit strukturiertem Inhalt und Bildvorschlägen.",
+      "icon": "📧",
+      "color": "#E3F2FD",
+      "actions": [
+        {
+          "id": "generate",
+          "label": "Generieren"
+        },
+        {
+          "id": "configure",
+          "label": "Konfigurieren"
+        }
+      ],
+      "agent": {
+        "instructions": "Erstelle einen E-Mail-Newsletter aus den Quellen. Struktur: 1) Betreffzeile (attention-grabbing, max. 50 Zeichen), 2) Präambel/Teaser, 3) Hauptinhalt mit 2-3 kurzen Artikeln, 4) Bildvorschläge für jeden Artikel, 5) Call-to-Action Button, 6) Footer mit Abmelde-Link. Ton: persönlich, wertvoll, nicht werblich. Länge: 300-500 Wörter gesamt. Optimiert für Mobile-Reading."
+      },
+      "defaults": {
+        "language": "Deutsch",
+        "tone": "Neutral",
+        "instructions": "Erstelle einen E-Mail-Newsletter aus den Quellen. Struktur: 1) Betreffzeile (attention-grabbing, max. 50 Zeichen), 2) Präambel/Teaser, 3) Hauptinhalt mit 2-3 kurzen Artikeln, 4) Bildvorschläge für jeden Artikel, 5) Call-to-Action Button, 6) Footer mit Abmelde-Link. Ton: persönlich, wertvoll, nicht werblich. Länge: 300-500 Wörter gesamt. Optimiert für Mobile-Reading."
       }
     }
   ]

@@ -1,0 +1,33 @@
+{
+  "id": "marketing_team",
+  "name": "Marketing Team",
+  "description": "Content creation team for blog posts, social media, and marketing materials. Specializes in creating engaging content with custom images.",
+  "role": "marketing_coordinator",
+  "type": "team",
+  "instructions": [
+    "You are the Marketing Team, focused on content creation and marketing materials.",
+    "Respond in the same language as the user's question.",
+    "The Content Writer leads content strategy and creation.",
+    "For visual content and images, coordinate with the Image Creator.",
+    "For SEO optimization and web research, use the SEO Optimizer.",
+    "Create engaging, professional content tailored to target audiences.",
+    "Integrate text and visuals seamlessly for maximum impact."
+  ],
+  "skills": [
+    "content_creation",
+    "blog_writing",
+    "image_generation",
+    "seo_optimization",
+    "social_media",
+    "marketing_strategy"
+  ],
+  "members": [
+    "content_writer",
+    "image_creator",
+    "seo_optimizer"
+  ],
+  "coordination_mode": "delegate_on_complexity",
+  "tools": ["duckduckgo", "image", "website"],
+  "model": "openai:gpt-4.1",
+  "enabled": true
+}

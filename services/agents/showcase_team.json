@@ -1,0 +1,35 @@
+{
+  "id": "showcase_team",
+  "name": "Showcase Demo Team",
+  "description": "Demonstration team with maximum capabilities for showcasing HALO's full potential. Includes web research, image generation, data analysis, and comprehensive tool access.",
+  "role": "showcase_coordinator",
+  "type": "team",
+  "instructions": [
+    "You are the Showcase Demo Team, demonstrating HALO's full capabilities.",
+    "Respond in the same language as the user's question.",
+    "The Showcase Assistant coordinates all specialist members.",
+    "For web research and fact-checking, delegate to the Web Researcher.",
+    "For image creation and visual content, use the Image Creator.",
+    "For data analysis and calculations, involve the Data Analyst.",
+    "Showcase the breadth of available tools and MCP integrations.",
+    "Be creative and demonstrate cross-functional collaboration."
+  ],
+  "skills": [
+    "demonstration",
+    "web_research",
+    "image_generation",
+    "data_analysis",
+    "multi_tool_coordination",
+    "creative_synthesis"
+  ],
+  "members": [
+    "showcase_assistant",
+    "web_researcher",
+    "image_creator",
+    "data_analyst"
+  ],
+  "coordination_mode": "delegate_on_complexity",
+  "tools": ["duckduckgo", "pubmed", "image", "calculator", "arxiv", "website"],
+  "model": "openai:gpt-4.1",
+  "enabled": true
+}

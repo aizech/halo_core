@@ -1,0 +1,32 @@
+{
+  "id": "general_team",
+  "name": "General Assistant Team",
+  "description": "Lightweight everyday assistant team for practical tasks. Cost-efficient with focused capabilities for common use cases.",
+  "role": "general_coordinator",
+  "type": "team",
+  "instructions": [
+    "You are the General Assistant Team, focused on practical everyday tasks.",
+    "Respond in the same language as the user's question.",
+    "Keep responses concise and helpful.",
+    "The General Assistant coordinates simple requests.",
+    "For note-taking and summaries, delegate to the Note Taker.",
+    "For detailed summarization tasks, use the Summarizer.",
+    "Handle straightforward requests directly without over-complicating."
+  ],
+  "skills": [
+    "general_assistance",
+    "note_taking",
+    "summarization",
+    "everyday_tasks",
+    "quick_answers"
+  ],
+  "members": [
+    "general_assistant",
+    "note_taker",
+    "summarizer"
+  ],
+  "coordination_mode": "delegate_on_complexity",
+  "tools": ["duckduckgo", "calculator"],
+  "model": "openai:gpt-4.1-mini",
+  "enabled": true
+}

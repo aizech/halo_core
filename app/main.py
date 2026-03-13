@@ -143,6 +143,13 @@ class StudioAction:
 
 
 @dataclass
+class StudioTeam:
+    team_id: str
+    name: str
+    description: str
+
+
+@dataclass
 class StudioTemplate:
     template_id: str
     title: str
@@ -151,6 +158,8 @@ class StudioTemplate:
     icon: str = ":material/extension:"
     color: str = "#f5f5f5"
     badge: Optional[str] = None
+    team_id: Optional[str] = None
+    agent_id: Optional[str] = None
     actions: List[StudioAction] = field(default_factory=list)
     agent: Dict[str, str] = field(default_factory=dict)
     defaults: Dict[str, str] = field(default_factory=dict)
@@ -161,6 +170,12 @@ class StudioActionConfig(BaseModel):
     label: str = "Generieren"
 
 
+class StudioTeamConfig(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+
+
 class StudioTemplateConfig(BaseModel):
     id: str
     title: str
@@ -169,12 +184,15 @@ class StudioTemplateConfig(BaseModel):
     icon: str = ":material/extension:"
     color: str = "#f5f5f5"
     badge: Optional[str] = None
+    team_id: Optional[str] = None
+    agent_id: Optional[str] = None
     actions: list[StudioActionConfig] = Field(default_factory=list)
     agent: dict[str, str] = Field(default_factory=dict)
     defaults: dict[str, str] = Field(default_factory=dict)
 
 
 class StudioTemplatesConfig(BaseModel):
+    teams: list[StudioTeamConfig] = Field(default_factory=list)
     templates: list[StudioTemplateConfig] = Field(default_factory=list)
 
 
@@ -300,6 +318,28 @@ def _default_studio_templates() -> List[StudioTemplate]:
     ]
 
 
+def _load_studio_teams() -> List[StudioTeam]:
+    """Load studio teams from templates config."""
+    templates_path = PROJECT_ROOT / "templates" / "studio_templates.json"
+    if not templates_path.exists():
+        return []
+    try:
+        payload = json.loads(templates_path.read_text(encoding="utf-8"))
+        parsed = StudioTemplatesConfig.model_validate(payload)
+    except (json.JSONDecodeError, ValidationError):
+        return []
+    teams: List[StudioTeam] = []
+    for team in parsed.teams:
+        teams.append(
+            StudioTeam(
+                team_id=team.id,
+                name=team.name,
+                description=team.description,
+            )
+        )
+    return teams
+
+
 def _load_studio_templates() -> List[StudioTemplate]:
     templates_path = PROJECT_ROOT / "templates" / "studio_templates.json"
     if not templates_path.exists():
@@ -321,6 +361,8 @@ def _load_studio_templates() -> List[StudioTemplate]:
                 icon=item.icon,
                 color=item.color,
                 badge=item.badge,
+                team_id=item.team_id,
+                agent_id=item.agent_id,
                 actions=actions,
                 agent=item.agent,
                 defaults=item.defaults,
@@ -4468,7 +4510,32 @@ def render_studio_panel() -> None:
         unsafe_allow_html=True,
     )
 
-    templates = st.session_state["studio_templates"]
+    # Load teams and add team selector
+    teams = _load_studio_teams()
+    all_templates = st.session_state["studio_templates"]
+
+    if teams:
+        # Team selector dropdown
+        team_options = {"Alle Teams": None}
+        for team in teams:
+            team_options[team.name] = team.team_id
+
+        selected_team_name = st.selectbox(
+            "Team-Filter",
+            options=list(team_options.keys()),
+            key="studio_team_filter",
+            label_visibility="collapsed",
+        )
+        selected_team_id = team_options.get(selected_team_name)
+
+        # Filter templates by team
+        if selected_team_id:
+            templates = [t for t in all_templates if t.team_id == selected_team_id]
+        else:
+            templates = all_templates
+    else:
+        templates = all_templates
+
     if templates:
         st.session_state.setdefault(
             "studio_selected_template", templates[0].template_id
@@ -4477,7 +4544,7 @@ def render_studio_panel() -> None:
         for idx, template in enumerate(templates):
             _render_studio_template_card(columns[idx % 2], template)
     else:
-        st.info("Noch keine Vorlagen definiert.")
+        st.info("Keine Vorlagen für das ausgewählte Team.")
 
     st.divider()
     _render_studio_outputs_section()
