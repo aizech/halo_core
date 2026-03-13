@@ -11,7 +11,7 @@ def test_build_tools_includes_websearch_with_settings(monkeypatch):
             self.backend = backend
             self.num_results = num_results
 
-    monkeypatch.setattr(agent_factory, "WebSearchTools", DummyWebSearchTools)
+    monkeypatch.setattr("agno.tools.websearch.WebSearchTools", DummyWebSearchTools)
 
     tools = agent_factory.build_tools(
         ["websearch"],
@@ -32,7 +32,7 @@ def test_build_tools_websearch_falls_back_when_settings_unsupported(monkeypatch)
                 raise TypeError("unexpected keyword")
             self.used_defaults = True
 
-    monkeypatch.setattr(agent_factory, "WebSearchTools", DummyWebSearchTools)
+    monkeypatch.setattr("agno.tools.websearch.WebSearchTools", DummyWebSearchTools)
 
     tools = agent_factory.build_tools(
         ["websearch"],
@@ -59,7 +59,7 @@ def test_build_tools_includes_youtube_with_settings(monkeypatch):
             self.enable_get_video_timestamps = enable_get_video_timestamps
             self.languages = languages
 
-    monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
+    monkeypatch.setattr("agno.tools.youtube.YouTubeTools", DummyYouTubeTools)
 
     tools = agent_factory.build_tools(
         ["youtube"],
@@ -94,7 +94,7 @@ def test_build_tools_includes_youtube_transcript_with_defaults(monkeypatch):
             self.enable_get_video_timestamps = enable_get_video_timestamps
             self.languages = languages
 
-    monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
+    monkeypatch.setattr("agno.tools.youtube.YouTubeTools", DummyYouTubeTools)
 
     tools = agent_factory.build_tools(
         ["youtube_transcript"],
@@ -124,7 +124,7 @@ def test_build_tools_includes_youtube_transcript_with_settings(monkeypatch):
             self.enable_get_video_timestamps = enable_get_video_timestamps
             self.languages = languages
 
-    monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
+    monkeypatch.setattr("agno.tools.youtube.YouTubeTools", DummyYouTubeTools)
 
     tools = agent_factory.build_tools(
         ["youtube_transcript"],
@@ -156,7 +156,7 @@ def test_build_tools_youtube_transcript_falls_back_to_noarg_when_kwargs_unsuppor
                 raise TypeError("unexpected keyword")
             self.used_noarg = True
 
-    monkeypatch.setattr(agent_factory, "YouTubeTools", DummyYouTubeTools)
+    monkeypatch.setattr("agno.tools.youtube.YouTubeTools", DummyYouTubeTools)
 
     tools = agent_factory.build_tools(
         ["youtube_transcript"],
@@ -191,7 +191,7 @@ def test_build_tools_includes_duckduckgo_with_settings(monkeypatch):
             self.timeout = timeout
             self.verify_ssl = verify_ssl
 
-    monkeypatch.setattr(agent_factory, "DuckDuckGoTools", DummyDuckDuckGoTools)
+    monkeypatch.setattr("agno.tools.duckduckgo.DuckDuckGoTools", DummyDuckDuckGoTools)
 
     tools = agent_factory.build_tools(
         ["duckduckgo"],
@@ -217,10 +217,15 @@ def test_build_tools_includes_duckduckgo_with_settings(monkeypatch):
 
 
 def test_build_tools_includes_arxiv_tool(monkeypatch):
+    """Test arxiv tool - requires arxiv package."""
+    import sys
+
     class DummyArxivTools:
         pass
 
-    monkeypatch.setattr(agent_factory, "ArxivTools", DummyArxivTools)
+    # Mock the module before it gets imported
+    sys.modules["agno.tools.arxiv"] = type(sys)("agno.tools.arxiv")
+    sys.modules["agno.tools.arxiv"].ArxivTools = DummyArxivTools
 
     tools = agent_factory.build_tools(
         ["arxiv"],
@@ -231,14 +236,22 @@ def test_build_tools_includes_arxiv_tool(monkeypatch):
     assert len(tools) == 1
     assert isinstance(tools[0], DummyArxivTools)
 
+    # Cleanup
+    del sys.modules["agno.tools.arxiv"]
+
 
 def test_build_tools_includes_arxiv_tool_with_settings(monkeypatch):
+    """Test arxiv tool with settings - requires arxiv package."""
+    import sys
+
     class DummyArxivTools:
         def __init__(self, max_results=5, sort_by=None):
             self.max_results = max_results
             self.sort_by = sort_by
 
-    monkeypatch.setattr(agent_factory, "ArxivTools", DummyArxivTools)
+    # Mock the module before it gets imported
+    sys.modules["agno.tools.arxiv"] = type(sys)("agno.tools.arxiv")
+    sys.modules["agno.tools.arxiv"].ArxivTools = DummyArxivTools
 
     tools = agent_factory.build_tools(
         ["arxiv"],
@@ -251,12 +264,15 @@ def test_build_tools_includes_arxiv_tool_with_settings(monkeypatch):
     assert tools[0].max_results == 12
     assert tools[0].sort_by == "relevance"
 
+    # Cleanup
+    del sys.modules["agno.tools.arxiv"]
+
 
 def test_build_tools_includes_website_tool(monkeypatch):
     class DummyWebsiteTools:
         pass
 
-    monkeypatch.setattr(agent_factory, "WebsiteTools", DummyWebsiteTools)
+    monkeypatch.setattr("agno.tools.website.WebsiteTools", DummyWebsiteTools)
 
     tools = agent_factory.build_tools(
         ["website"],
@@ -275,7 +291,7 @@ def test_build_tools_includes_website_tool_with_guardrails(monkeypatch):
             self.timeout = timeout
             self.allowed_domains = allowed_domains or []
 
-    monkeypatch.setattr(agent_factory, "WebsiteTools", DummyWebsiteTools)
+    monkeypatch.setattr("agno.tools.website.WebsiteTools", DummyWebsiteTools)
 
     tools = agent_factory.build_tools(
         ["website"],
@@ -300,7 +316,7 @@ def test_build_tools_ignores_shell_by_default(monkeypatch):
     class DummyCalculatorTools:
         pass
 
-    monkeypatch.setattr(agent_factory, "CalculatorTools", DummyCalculatorTools)
+    monkeypatch.setattr("agno.tools.calculator.CalculatorTools", DummyCalculatorTools)
 
     tools = agent_factory.build_tools(
         ["shell", "calculator"],
@@ -313,13 +329,22 @@ def test_build_tools_ignores_shell_by_default(monkeypatch):
 
 
 def test_build_mcp_tools_includes_streamable_http_server(monkeypatch):
+    import sys
+
     class DummyMCPTools:
         def __init__(self, transport=None, url=None, tools=None):
             self.transport = transport
             self.url = url
             self.tools = tools
 
-    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+    # Mock the module
+    sys.modules["agno.tools.mcp"] = type(sys)("agno.tools.mcp")
+    sys.modules["agno.tools.mcp"].MCPTools = DummyMCPTools
+
+    # Reload agent_factory to pick up the mock
+    import importlib
+
+    importlib.reload(agent_factory)
 
     tools = agent_factory.build_mcp_tools(
         [
@@ -339,15 +364,26 @@ def test_build_mcp_tools_includes_streamable_http_server(monkeypatch):
     assert tools[0].url == "https://docs.example.com/mcp"
     assert tools[0].tools == ["search_docs"]
 
+    # Cleanup
+    del sys.modules["agno.tools.mcp"]
+
 
 def test_build_mcp_tools_skips_unsupported_transport(monkeypatch):
+    import sys
+
     class DummyMCPTools:
         def __init__(self, transport=None, url=None, tools=None):
             self.transport = transport
             self.url = url
             self.tools = tools
 
-    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+    # Mock the module
+    sys.modules["agno.tools.mcp"] = type(sys)("agno.tools.mcp")
+    sys.modules["agno.tools.mcp"].MCPTools = DummyMCPTools
+
+    import importlib
+
+    importlib.reload(agent_factory)
 
     tools = agent_factory.build_mcp_tools(
         [
@@ -362,8 +398,12 @@ def test_build_mcp_tools_skips_unsupported_transport(monkeypatch):
 
     assert tools == []
 
+    del sys.modules["agno.tools.mcp"]
+
 
 def test_build_mcp_tools_includes_sse_server(monkeypatch):
+    import sys
+
     class DummyMCPTools:
         def __init__(self, transport=None, url=None, command=None, tools=None):
             self.transport = transport
@@ -371,7 +411,12 @@ def test_build_mcp_tools_includes_sse_server(monkeypatch):
             self.command = command
             self.tools = tools
 
-    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+    sys.modules["agno.tools.mcp"] = type(sys)("agno.tools.mcp")
+    sys.modules["agno.tools.mcp"].MCPTools = DummyMCPTools
+
+    import importlib
+
+    importlib.reload(agent_factory)
 
     tools = agent_factory.build_mcp_tools(
         [
@@ -389,8 +434,12 @@ def test_build_mcp_tools_includes_sse_server(monkeypatch):
     assert tools[0].transport == "sse"
     assert tools[0].url == "https://events.example.com/mcp"
 
+    del sys.modules["agno.tools.mcp"]
+
 
 def test_build_mcp_tools_includes_stdio_server(monkeypatch):
+    import sys
+
     class DummyMCPTools:
         def __init__(self, transport=None, url=None, command=None, tools=None):
             self.transport = transport
@@ -398,7 +447,12 @@ def test_build_mcp_tools_includes_stdio_server(monkeypatch):
             self.command = command
             self.tools = tools
 
-    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+    sys.modules["agno.tools.mcp"] = type(sys)("agno.tools.mcp")
+    sys.modules["agno.tools.mcp"].MCPTools = DummyMCPTools
+
+    import importlib
+
+    importlib.reload(agent_factory)
 
     tools = agent_factory.build_mcp_tools(
         [
@@ -416,8 +470,12 @@ def test_build_mcp_tools_includes_stdio_server(monkeypatch):
     assert tools[0].transport == "stdio"
     assert tools[0].command == "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt"
 
+    del sys.modules["agno.tools.mcp"]
+
 
 def test_build_mcp_tools_skips_stdio_server_without_command(monkeypatch):
+    import sys
+
     class DummyMCPTools:
         def __init__(self, transport=None, url=None, command=None, tools=None):
             self.transport = transport
@@ -425,7 +483,12 @@ def test_build_mcp_tools_skips_stdio_server_without_command(monkeypatch):
             self.command = command
             self.tools = tools
 
-    monkeypatch.setattr(agent_factory, "MCPTools", DummyMCPTools)
+    sys.modules["agno.tools.mcp"] = type(sys)("agno.tools.mcp")
+    sys.modules["agno.tools.mcp"].MCPTools = DummyMCPTools
+
+    import importlib
+
+    importlib.reload(agent_factory)
 
     tools = agent_factory.build_mcp_tools(
         [
@@ -440,6 +503,8 @@ def test_build_mcp_tools_skips_stdio_server_without_command(monkeypatch):
 
     assert tools == []
 
+    del sys.modules["agno.tools.mcp"]
+
 
 def test_build_tools_includes_hackernews_with_settings(monkeypatch):
     class DummyHackerNewsTools:
@@ -453,7 +518,7 @@ def test_build_tools_includes_hackernews_with_settings(monkeypatch):
             self.enable_get_user_details = enable_get_user_details
             self.all = all
 
-    monkeypatch.setattr(agent_factory, "HackerNewsTools", DummyHackerNewsTools)
+    monkeypatch.setattr("agno.tools.hackernews.HackerNewsTools", DummyHackerNewsTools)
 
     tools = agent_factory.build_tools(
         ["hackernews"],
@@ -475,12 +540,16 @@ def test_build_tools_includes_hackernews_with_settings(monkeypatch):
 
 
 def test_build_tools_includes_yfinance_with_settings(monkeypatch):
+    """Test yfinance tool - requires yfinance package."""
+    import sys
+
     class DummyYFinanceTools:
         def __init__(self, stock_price=True, analyst_recommendations=True):
             self.stock_price = stock_price
             self.analyst_recommendations = analyst_recommendations
 
-    monkeypatch.setattr(agent_factory, "YFinanceTools", DummyYFinanceTools)
+    sys.modules["agno.tools.yfinance"] = type(sys)("agno.tools.yfinance")
+    sys.modules["agno.tools.yfinance"].YFinanceTools = DummyYFinanceTools
 
     tools = agent_factory.build_tools(
         ["yfinance"],
@@ -493,12 +562,14 @@ def test_build_tools_includes_yfinance_with_settings(monkeypatch):
     assert tools[0].stock_price is True
     assert tools[0].analyst_recommendations is False
 
+    del sys.modules["agno.tools.yfinance"]
+
 
 def test_build_tools_includes_calculator_tool(monkeypatch):
     class DummyCalculatorTools:
         pass
 
-    monkeypatch.setattr(agent_factory, "CalculatorTools", DummyCalculatorTools)
+    monkeypatch.setattr("agno.tools.calculator.CalculatorTools", DummyCalculatorTools)
 
     tools = agent_factory.build_tools(
         ["calculator"],
