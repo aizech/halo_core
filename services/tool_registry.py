@@ -189,6 +189,60 @@ TOOL_METADATA: Dict[str, ToolMetadata] = {
             "num_results": {"type": "integer", "label": "Number of Results"},
         },
     ),
+    "dalle": ToolMetadata(
+        id="dalle",
+        display_name="DALL-E Image",
+        description="Generate images using OpenAI DALL-E",
+        category="creative",
+        requires_settings=False,
+    ),
+    "exa": ToolMetadata(
+        id="exa",
+        display_name="Exa Search",
+        description="AI-powered web search with Exa",
+        category="search",
+        requires_settings=True,
+        settings_schema={
+            "start_published_date": {"type": "string", "label": "Start Date"},
+            "type": {"type": "string", "label": "Search Type", "default": "keyword"},
+        },
+    ),
+    "tavily": ToolMetadata(
+        id="tavily",
+        display_name="Tavily Search",
+        description="Web search optimized for AI agents",
+        category="search",
+        requires_settings=True,
+        settings_schema={
+            "search_depth": {
+                "type": "string",
+                "label": "Search Depth",
+                "default": "basic",
+            },
+            "max_results": {"type": "integer", "label": "Max Results", "default": 5},
+        },
+    ),
+    "gemini_image": ToolMetadata(
+        id="gemini_image",
+        display_name="Gemini Imagen",
+        description="Generate images using Google Gemini Imagen",
+        category="creative",
+        requires_settings=False,
+    ),
+    "replicate": ToolMetadata(
+        id="replicate",
+        display_name="Replicate",
+        description="Generate images using Replicate models",
+        category="creative",
+        requires_settings=True,
+        settings_schema={
+            "model": {
+                "type": "string",
+                "label": "Model",
+                "default": "luma/photon-flash",
+            },
+        },
+    ),
 }
 
 
@@ -422,6 +476,87 @@ def _build_image(
     return tool
 
 
+def _build_dalle(settings: Dict[str, Any] | None) -> object | None:
+    """Build DALL-E image generation tool."""
+    try:
+        from agno.tools.dalle import DalleTools
+
+        return DalleTools()
+    except ImportError:
+        _LOGGER.warning("DALL-E tool not available")
+        return None
+
+
+def _build_exa(settings: Dict[str, Any] | None) -> object | None:
+    """Build Exa search tool with settings."""
+    try:
+        from agno.tools.exa import ExaTools
+    except ImportError:
+        _LOGGER.warning("Exa tool not available")
+        return None
+
+    if isinstance(settings, dict):
+        kwargs = {}
+        if settings.get("start_published_date"):
+            kwargs["start_published_date"] = settings["start_published_date"]
+        if settings.get("type"):
+            kwargs["type"] = settings["type"]
+        try:
+            return ExaTools(**kwargs)
+        except TypeError:
+            return ExaTools()
+    return ExaTools()
+
+
+def _build_tavily(settings: Dict[str, Any] | None) -> object | None:
+    """Build Tavily search tool with settings."""
+    try:
+        from agno.tools.tavily import TavilyTools
+    except ImportError:
+        _LOGGER.warning("Tavily tool not available")
+        return None
+
+    if isinstance(settings, dict):
+        kwargs = {}
+        if settings.get("search_depth"):
+            kwargs["search_depth"] = settings["search_depth"]
+        if settings.get("max_results"):
+            kwargs["max_results"] = settings["max_results"]
+        try:
+            return TavilyTools(**kwargs)
+        except TypeError:
+            return TavilyTools()
+    return TavilyTools()
+
+
+def _build_gemini_image(settings: Dict[str, Any] | None) -> object | None:
+    """Build Gemini image generation tool."""
+    try:
+        from agno.tools.models.gemini import GeminiTools
+
+        return GeminiTools()
+    except ImportError:
+        _LOGGER.warning("Gemini image tool not available")
+        return None
+
+
+def _build_replicate(settings: Dict[str, Any] | None) -> object | None:
+    """Build Replicate image generation tool."""
+    try:
+        from agno.tools.replicate import ReplicateTools
+    except ImportError:
+        _LOGGER.warning("Replicate tool not available")
+        return None
+
+    model = "luma/photon-flash"
+    if isinstance(settings, dict) and settings.get("model"):
+        model = settings["model"]
+    try:
+        return ReplicateTools(model=model, enable_generate_media=True)
+    except TypeError:
+        return ReplicateTools()
+
+
 def _build_websearch(settings: Dict[str, Any] | None) -> object:
     """Build WebSearch tool with settings."""
     from agno.tools.websearch import WebSearchTools
@@ -459,6 +594,11 @@ TOOL_BUILDERS: Dict[str, ToolBuilder] = {
     "mermaid": lambda s, _: _build_mermaid(s),
     "image": lambda s, key: _build_image(s, openai_api_key=key),
     "websearch": lambda s, _: _build_websearch(s),
+    "dalle": lambda s, _: _build_dalle(s),
+    "exa": lambda s, _: _build_exa(s),
+    "tavily": lambda s, _: _build_tavily(s),
+    "gemini_image": lambda s, _: _build_gemini_image(s),
+    "replicate": lambda s, _: _build_replicate(s),
 }
 
 

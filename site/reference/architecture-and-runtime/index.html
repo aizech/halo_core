@@ -10,29 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://docs.corpusanalytica.com/">
+        <link rel="canonical" href="https://docs.corpusanalytica.com/reference/architecture-and-runtime/">
       
       
+        <link rel="prev" href="../repository-overview/">
       
-        <link rel="next" href="handbook/">
+      
+        <link rel="next" href="../agent-system/">
       
       
         
       
       
-      <link rel="icon" href="assets/icon_light.png">
+      <link rel="icon" href="../../assets/icon_light.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
-        <title>HALO Core Docs</title>
+        <title>Architecture and Runtime - HALO Core Docs</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#halo-core-documentation" class="md-skip">
+        <a href="#halo-core-architecture-and-runtime-flows" class="md-skip">
           Skip to content
         </a>
       
@@ -92,9 +94,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="HALO Core Docs" class="md-header__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+    <a href="../.." title="HALO Core Docs" class="md-header__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
       
-  <img src="assets/logo_light.png" alt="logo">
+  <img src="../../assets/logo_light.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -111,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Architecture and Runtime
             
           </span>
         </div>
@@ -222,11 +224,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="." class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -247,7 +247,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="handbook/" class="md-tabs__link">
+        <a href="../../handbook/" class="md-tabs__link">
           
   
   
@@ -269,7 +269,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="admin/" class="md-tabs__link">
+        <a href="../../admin/" class="md-tabs__link">
           
   
   
@@ -287,11 +287,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="reference/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -327,9 +329,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="HALO Core Docs" class="md-nav__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
+    <a href="../.." title="HALO Core Docs" class="md-nav__button md-logo" aria-label="HALO Core Docs" data-md-component="logo">
       
-  <img src="assets/logo_light.png" alt="logo">
+  <img src="../../assets/logo_light.png" alt="logo">
 
     </a>
     HALO Core Docs
@@ -353,37 +355,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -399,192 +374,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Links
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-halo-core-does" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What HALO Core Does
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#documentation-sections" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation Sections
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Documentation Sections">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#user-handbook" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Handbook
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#admin-guide" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Admin Guide
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#technical-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Technical Reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Key Features">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#team-based-ai-collaboration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Team-Based AI Collaboration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#smart-delegation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Smart Delegation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source-grounded-responses" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Source-Grounded Responses
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#transparent-execution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transparent Execution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#studio-pipeline" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Studio Pipeline
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Start
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Resources
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -643,7 +432,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="handbook/" class="md-nav__link ">
+            <a href="../../handbook/" class="md-nav__link ">
               
   
   
@@ -687,7 +476,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/getting-started/" class="md-nav__link">
+      <a href="../../handbook/getting-started/" class="md-nav__link">
         
   
   
@@ -715,7 +504,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/sources/" class="md-nav__link">
+      <a href="../../handbook/sources/" class="md-nav__link">
         
   
   
@@ -743,7 +532,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/chat/" class="md-nav__link">
+      <a href="../../handbook/chat/" class="md-nav__link">
         
   
   
@@ -771,7 +560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/studio/" class="md-nav__link">
+      <a href="../../handbook/studio/" class="md-nav__link">
         
   
   
@@ -799,7 +588,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/notes/" class="md-nav__link">
+      <a href="../../handbook/notes/" class="md-nav__link">
         
   
   
@@ -827,7 +616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/configuration/" class="md-nav__link">
+      <a href="../../handbook/configuration/" class="md-nav__link">
         
   
   
@@ -855,7 +644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/advanced/" class="md-nav__link">
+      <a href="../../handbook/advanced/" class="md-nav__link">
         
   
   
@@ -883,7 +672,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/workflows/" class="md-nav__link">
+      <a href="../../handbook/workflows/" class="md-nav__link">
         
   
   
@@ -911,7 +700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/troubleshooting/" class="md-nav__link">
+      <a href="../../handbook/troubleshooting/" class="md-nav__link">
         
   
   
@@ -939,7 +728,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/faq/" class="md-nav__link">
+      <a href="../../handbook/faq/" class="md-nav__link">
         
   
   
@@ -967,7 +756,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handbook/glossary/" class="md-nav__link">
+      <a href="../../handbook/glossary/" class="md-nav__link">
         
   
   
@@ -1039,7 +828,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="admin/" class="md-nav__link ">
+            <a href="../../admin/" class="md-nav__link ">
               
   
   
@@ -1083,7 +872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/deployment/" class="md-nav__link">
+      <a href="../../admin/deployment/" class="md-nav__link">
         
   
   
@@ -1111,7 +900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/configuration/" class="md-nav__link">
+      <a href="../../admin/configuration/" class="md-nav__link">
         
   
   
@@ -1139,7 +928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/user-management/" class="md-nav__link">
+      <a href="../../admin/user-management/" class="md-nav__link">
         
   
   
@@ -1167,7 +956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/security/" class="md-nav__link">
+      <a href="../../admin/security/" class="md-nav__link">
         
   
   
@@ -1195,7 +984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/monitoring/" class="md-nav__link">
+      <a href="../../admin/monitoring/" class="md-nav__link">
         
   
   
@@ -1223,7 +1012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="admin/maintenance/" class="md-nav__link">
+      <a href="../../admin/maintenance/" class="md-nav__link">
         
   
   
@@ -1255,6 +1044,8 @@
       
   
   
+    
+  
   
   
     
@@ -1282,22 +1073,23 @@
     
     
       
+        
+        
+      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="reference/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -1315,13 +1107,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1341,7 +1133,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -1369,7 +1161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/repository-overview/" class="md-nav__link">
+      <a href="../repository-overview/" class="md-nav__link">
         
   
   
@@ -1394,10 +1186,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="reference/architecture-and-runtime/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Runtime
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1413,6 +1232,291 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-architectural-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Architectural style
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-runtime-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Runtime layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#21-presentation-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Presentation layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-orchestration-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Orchestration layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-agentteam-coordination-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Agent/team coordination layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-data-and-retrieval-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Data and retrieval layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-streaming-abstraction-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Streaming abstraction layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-app-startup-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) App startup flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-source-ingestion-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Source ingestion flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Source ingestion flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-upload-and-document-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Upload and document parsing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-supported-content-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Supported content paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-connector-and-web-search-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Connector and web search paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-chat-turn-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) Chat turn flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5) Chat turn flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-ui-responsibilities-render_chat_panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 UI responsibilities (render_chat_panel)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-runtime-responsibilities-serviceschat_runtimepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Runtime responsibilities (services/chat_runtime.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-streaming-behavior-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Streaming behavior model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-citation-and-grounding-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7) Citation and grounding policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-studio-generation-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Studio generation flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-persistence-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Persistence architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-config-driven-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10) Config-driven behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-fallback-and-resilience-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11) Fallback and resilience behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-observability-and-trace-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12) Observability and trace model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-architectural-constraints-and-near-term-priorities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13) Architectural constraints and near-term priorities
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1425,7 +1529,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/agent-system/" class="md-nav__link">
+      <a href="../agent-system/" class="md-nav__link">
         
   
   
@@ -1453,7 +1557,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/data-storage-and-retrieval/" class="md-nav__link">
+      <a href="../data-storage-and-retrieval/" class="md-nav__link">
         
   
   
@@ -1481,7 +1585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/ui-panels-and-pages/" class="md-nav__link">
+      <a href="../ui-panels-and-pages/" class="md-nav__link">
         
   
   
@@ -1509,7 +1613,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/development-testing-and-operations/" class="md-nav__link">
+      <a href="../development-testing-and-operations/" class="md-nav__link">
         
   
   
@@ -1564,10 +1668,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
+  <a href="#1-architectural-style" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Links
+        1) Architectural style
       
     </span>
   </a>
@@ -1575,10 +1679,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-halo-core-does" class="md-nav__link">
+  <a href="#2-runtime-layers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What HALO Core Does
+        2) Runtime layers
       
     </span>
   </a>
@@ -1586,22 +1690,88 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#documentation-sections" class="md-nav__link">
+  <a href="#21-presentation-layer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Documentation Sections
+        2.1 Presentation layer
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Documentation Sections">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-orchestration-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Orchestration layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-agentteam-coordination-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Agent/team coordination layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-data-and-retrieval-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Data and retrieval layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-streaming-abstraction-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Streaming abstraction layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-app-startup-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) App startup flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-source-ingestion-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Source ingestion flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Source ingestion flow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#user-handbook" class="md-nav__link">
+  <a href="#41-upload-and-document-parsing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        User Handbook
+        4.1 Upload and document parsing
       
     </span>
   </a>
@@ -1609,10 +1779,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#admin-guide" class="md-nav__link">
+  <a href="#42-supported-content-paths" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Admin Guide
+        4.2 Supported content paths
       
     </span>
   </a>
@@ -1620,10 +1790,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#technical-reference" class="md-nav__link">
+  <a href="#43-connector-and-web-search-paths" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Technical Reference
+        4.3 Connector and web search paths
       
     </span>
   </a>
@@ -1636,22 +1806,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
+  <a href="#5-chat-turn-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Features
+        5) Chat turn flow
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Key Features">
+    <nav class="md-nav" aria-label="5) Chat turn flow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#team-based-ai-collaboration" class="md-nav__link">
+  <a href="#51-ui-responsibilities-render_chat_panel" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Team-Based AI Collaboration
+        5.1 UI responsibilities (render_chat_panel)
       
     </span>
   </a>
@@ -1659,43 +1829,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#smart-delegation" class="md-nav__link">
+  <a href="#52-runtime-responsibilities-serviceschat_runtimepy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Smart Delegation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#source-grounded-responses" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Source-Grounded Responses
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#transparent-execution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transparent Execution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#studio-pipeline" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Studio Pipeline
+        5.2 Runtime responsibilities (services/chat_runtime.py)
       
     </span>
   </a>
@@ -1708,10 +1845,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#6-streaming-behavior-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        6) Streaming behavior model
       
     </span>
   </a>
@@ -1719,10 +1856,76 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#resources" class="md-nav__link">
+  <a href="#7-citation-and-grounding-policy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Resources
+        7) Citation and grounding policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-studio-generation-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8) Studio generation flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-persistence-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9) Persistence architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-config-driven-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10) Config-driven behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-fallback-and-resilience-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11) Fallback and resilience behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-observability-and-trace-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12) Observability and trace model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-architectural-constraints-and-near-term-priorities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13) Architectural constraints and near-term priorities
       
     </span>
   </a>
@@ -1749,112 +1952,201 @@
   
 
 
-<h1 id="halo-core-documentation">HALO Core Documentation</h1>
-<p>Welcome to the HALO Core documentation. HALO (<strong>Holistic Agent Logical Orchestrator</strong>) Core is an intelligence workspace for teams that need to turn raw information into clear, usable outputs.</p>
-<hr />
-<h2 id="quick-links">Quick Links</h2>
-<table>
-<thead>
-<tr>
-<th>Audience</th>
-<th>Documentation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>End Users</strong></td>
-<td><a href="handbook/">User Handbook</a></td>
-</tr>
-<tr>
-<td><strong>Administrators</strong></td>
-<td><a href="admin/">Admin Guide</a></td>
-</tr>
-<tr>
-<td><strong>Developers</strong></td>
-<td><a href="reference/">Technical Reference</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="what-halo-core-does">What HALO Core Does</h2>
+<h1 id="halo-core-architecture-and-runtime-flows">HALO Core Architecture and Runtime Flows</h1>
+<h2 id="1-architectural-style">1) Architectural style</h2>
+<p>HALO Core follows a UI + service-layer split:</p>
 <ul>
-<li><strong>Collect sources</strong> — files, web findings, connector results</li>
-<li><strong>Ask questions</strong> — source-grounded AI chat</li>
-<li><strong>Generate outputs</strong> — reports, infographics, podcasts, presentations</li>
-<li><strong>Save insights</strong> — reusable notes from your work</li>
+<li><code>app/</code> handles Streamlit rendering and interaction wiring.</li>
+<li><code>services/</code> handles orchestration, storage, ingestion, retrieval, routing, and agent behavior.</li>
 </ul>
-<hr />
-<h2 id="documentation-sections">Documentation Sections</h2>
-<h3 id="user-handbook">User Handbook</h3>
-<p>Complete guide for end users:</p>
+<p>The current codebase is in an incremental migration state: some runtime logic still lives in <code>app/main.py</code>, while core chat orchestration has already been extracted into <code>services/chat_runtime.py</code>.</p>
+<h2 id="2-runtime-layers">2) Runtime layers</h2>
+<h2 id="21-presentation-layer">2.1 Presentation layer</h2>
 <ul>
-<li><a href="handbook/getting-started/">Getting Started</a> — Installation and first steps</li>
-<li><a href="handbook/sources/">Sources</a> — Managing your content library</li>
-<li><a href="handbook/chat/">Chat</a> — AI conversations and multimodal input</li>
-<li><a href="handbook/studio/">Studio</a> — Generating outputs from templates</li>
-<li><a href="handbook/workflows/">Workflows</a> — Common task recipes</li>
-<li><a href="handbook/troubleshooting/">Troubleshooting</a> — Solving problems</li>
-<li><a href="handbook/faq/">FAQ</a> — Quick answers</li>
-<li><a href="handbook/glossary/">Glossary</a> — Terms and definitions</li>
+<li><code>app/main.py</code>: primary 3-panel UI and sidebar</li>
+<li><code>app/pages/*.py</code>: auxiliary Streamlit pages (Configuration, Agent Config, Dashboard, Account, Help)</li>
 </ul>
-<h3 id="admin-guide">Admin Guide</h3>
-<p>System administration documentation:</p>
+<h2 id="22-orchestration-layer">2.2 Orchestration layer</h2>
 <ul>
-<li><a href="admin/deployment/">Deployment</a> — Infrastructure and deployment options</li>
-<li><a href="admin/configuration/">Configuration</a> — System configuration</li>
-<li><a href="admin/user-management/">User Management</a> — Identity and memory</li>
-<li><a href="admin/security/">Security</a> — Security and compliance</li>
-<li><a href="admin/monitoring/">Monitoring</a> — Logging and observability</li>
-<li><a href="admin/maintenance/">Maintenance</a> — Backup and updates</li>
+<li><code>services/chat_runtime.py</code>: chat-turn pipeline (payload, agent creation, stream handling, fallback, trace)</li>
+<li><code>services/pipelines.py</code>: lightweight wrappers for chat/studio/infographic generation</li>
+<li><code>services/agents.py</code>: core agent and team invocation logic</li>
 </ul>
-<h3 id="technical-reference">Technical Reference</h3>
-<p>Developer documentation:</p>
+<h2 id="23-agentteam-coordination-layer">2.3 Agent/team coordination layer</h2>
 <ul>
-<li><a href="reference/">Overview</a> — Technical reference home</li>
-<li><a href="reference/getting-started/">Getting Started</a> — Developer quickstart</li>
-<li><a href="reference/repository-overview/">Repository Overview</a> — Codebase structure</li>
-<li><a href="reference/architecture-and-runtime/">Architecture and Runtime</a> — System design</li>
-<li><a href="reference/agent-system/">Agent System</a> — AI agent architecture</li>
-<li><a href="reference/data-storage-and-retrieval/">Data Storage and Retrieval</a> — Data layer</li>
-<li><a href="reference/ui-panels-and-pages/">UI Panels and Pages</a> — Frontend architecture</li>
-<li><a href="reference/development-testing-and-operations/">Development, Testing, and Operations</a> — DevOps</li>
+<li><code>services/halo_team.py</code>: team assembly from config</li>
+<li><code>services/routing_policy.py</code>: deterministic member selection for coordination modes</li>
+<li><code>services/agent_factory.py</code>: provider/model/tool factory functions</li>
+<li><code>services/agents_config.py</code>: config schema, defaults, migration, persistence</li>
+<li><code>services/presets.py</code>: preset application and chat config overrides</li>
 </ul>
-<hr />
-<h2 id="key-features">Key Features</h2>
-<h3 id="team-based-ai-collaboration">Team-Based AI Collaboration</h3>
-<p>Run specialized AI agents with different roles, instructions, and tools.</p>
-<h3 id="smart-delegation">Smart Delegation</h3>
-<p>Multiple coordination modes: direct, skill-based delegation, or team-wide collaboration.</p>
-<h3 id="source-grounded-responses">Source-Grounded Responses</h3>
-<p>Answers are grounded in your selected documents with citations.</p>
-<h3 id="transparent-execution">Transparent Execution</h3>
-<p>Inspect tool calls, agent actions, and reasoning traces.</p>
-<h3 id="studio-pipeline">Studio Pipeline</h3>
-<p>Generate reports, presentations, podcasts, and more from your research context.</p>
-<hr />
-<h2 id="quick-start">Quick Start</h2>
-<pre><code class="language-bash"># Clone and setup
-git clone https://github.com/aizech/halo_core.git
-cd halo_core
-python -m venv .venv
-. .venv/Scripts/activate
-pip install -r requirements.txt
-
-# Configure API key
-echo 'OPENAI_API_KEY = &quot;sk-...&quot;' &gt; .streamlit/secrets.toml
-
-# Run
-streamlit run app/main.py
-</code></pre>
-<hr />
-<h2 id="resources">Resources</h2>
+<h2 id="24-data-and-retrieval-layer">2.4 Data and retrieval layer</h2>
 <ul>
-<li><a href="https://github.com/aizech/halo_core">GitHub Repository</a></li>
-<li><a href="https://halocore.streamlit.app/">Live Demo</a></li>
-<li><a href="https://www.corpusanalytica.com/">Corpus Analytica</a></li>
+<li><code>services/storage.py</code>: JSON persistence and optional agent DB initialization</li>
+<li><code>services/ingestion.py</code>: source extraction + indexing bridge</li>
+<li><code>services/parsers.py</code>: file-type-specific parsing/transcription/captioning</li>
+<li><code>services/chunking.py</code>: text normalization/chunk segmentation</li>
+<li><code>services/retrieval.py</code>: LanceDB indexing and similarity search</li>
+<li><code>services/knowledge.py</code>: optional native Agno Knowledge wrapper over LanceDB</li>
 </ul>
-<hr />
-<p>Made with ❤️ by Corpus Analytica</p>
+<h2 id="25-streaming-abstraction-layer">2.5 Streaming abstraction layer</h2>
+<ul>
+<li><code>services/streaming_adapter.py</code>: normalizes event names, deduplicates output, merges tool events, and enforces final response authority.</li>
+</ul>
+<h2 id="3-app-startup-flow">3) App startup flow</h2>
+<ol>
+<li><code>run_app()</code> sets page configuration and renders sidebar.</li>
+<li><code>_init_state()</code> initializes session-state keys and loads persisted data:</li>
+<li>session id</li>
+<li>sources</li>
+<li>chat history</li>
+<li>notes</li>
+<li>studio templates and outputs</li>
+<li>app config</li>
+<li>agent configs</li>
+<li>Main content is rendered via three Streamlit columns:</li>
+<li><code>render_sources_panel()</code></li>
+<li><code>render_chat_panel()</code></li>
+<li><code>render_studio_panel()</code></li>
+</ol>
+<h2 id="4-source-ingestion-flow">4) Source ingestion flow</h2>
+<h3 id="41-upload-and-document-parsing">4.1 Upload and document parsing</h3>
+<p>In Sources panel:</p>
+<ul>
+<li>user uploads one or more files</li>
+<li>each file is passed to <code>ingestion.extract_document_payload()</code></li>
+<li>extraction delegates to <code>parsers.extract_text_from_bytes()</code></li>
+<li>a source entry is created and persisted in JSON</li>
+<li>parsed body is chunked and indexed into LanceDB via <code>ingestion.ingest_source_content()</code> and <code>retrieval.index_source_text()</code></li>
+</ul>
+<h3 id="42-supported-content-paths">4.2 Supported content paths</h3>
+<p>Parser behavior by extension:</p>
+<ul>
+<li>text-like: <code>.txt</code>, <code>.md</code>, <code>.csv</code></li>
+<li>office docs: <code>.pdf</code>, <code>.docx</code>, <code>.xlsx</code>, <code>.pptx</code></li>
+<li>image captioning path (if API key available): <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.webp</code>, <code>.gif</code></li>
+<li>audio transcription path: <code>.mp3</code>, <code>.wav</code>, <code>.m4a</code>, <code>.aac</code>, <code>.flac</code>, <code>.ogg</code>, <code>.opus</code></li>
+<li>video transcription path: <code>.mp4</code>, <code>.mov</code>, <code>.mkv</code>, <code>.webm</code>, <code>.avi</code></li>
+</ul>
+<h3 id="43-connector-and-web-search-paths">4.3 Connector and web search paths</h3>
+<ul>
+<li>connectors are currently mock providers (<code>GoogleDriveConnector</code>, <code>NotionConnector</code>) cached in JSON</li>
+<li>web search in ingestion is currently a mock response set</li>
+</ul>
+<h2 id="5-chat-turn-flow">5) Chat turn flow</h2>
+<p>Chat flow is intentionally split between UI and service orchestration.</p>
+<h3 id="51-ui-responsibilities-render_chat_panel">5.1 UI responsibilities (<code>render_chat_panel</code>)</h3>
+<ul>
+<li>render chat history and media attachments</li>
+<li>capture user input from <code>st.chat_input</code> (text, optional images, optional audio)</li>
+<li>persist user message</li>
+<li>create <code>ChatTurnInput</code></li>
+<li>wire UI callbacks for streaming response and tool-call display</li>
+<li>append final assistant message to persisted history</li>
+</ul>
+<h3 id="52-runtime-responsibilities-serviceschat_runtimepy">5.2 Runtime responsibilities (<code>services/chat_runtime.py</code>)</h3>
+<p><code>run_chat_turn()</code> pipeline:</p>
+<ol>
+<li><code>build_chat_payload()</code></li>
+<li>query retrieval contexts (<code>retrieval.query_similar</code>)</li>
+<li>build payload text (<code>agents.build_chat_payload</code>)</li>
+<li><code>create_chat_agent()</code></li>
+<li>build team/agent from config (with prompt-aware fallback)</li>
+<li><code>stream_chat_response()</code></li>
+<li>stream normalized events via <code>stream_agent_response</code></li>
+<li>response handling</li>
+<li>if stream is <code>None</code> or empty: fallback to <code>pipelines.generate_chat_reply</code></li>
+<li>apply citation policy</li>
+<li>trace and telemetry</li>
+<li>compose structured trace with model, members, tools, latency, knowledge hits/sources, stream outcome</li>
+</ol>
+<h2 id="6-streaming-behavior-model">6) Streaming behavior model</h2>
+<p><code>stream_agent_response()</code> handles difficult stream cases:</p>
+<ul>
+<li>normalizes event names across possible event enum/string formats</li>
+<li>allows content only for known run/team events</li>
+<li>deduplicates team/member output overlap</li>
+<li>treats completed events as authoritative final output</li>
+<li>ignores post-final chunks to avoid corrupted response merges</li>
+<li>collects tool-call events into unique tool list</li>
+</ul>
+<p>This behavior is validated by streaming-focused tests in <code>tests/test_streaming.py</code> and runtime tests in <code>tests/test_chat_runtime.py</code>.</p>
+<h2 id="7-citation-and-grounding-policy">7) Citation and grounding policy</h2>
+<p>Chat runtime applies a post-processing citation policy:</p>
+<ul>
+<li>single source: append one normalized citation (<code>[Quelle: ...]</code> + page when available)</li>
+<li>multiple sources: append a markdown <code>### Quellen</code> section with bulletized citations</li>
+<li>existing citation tags are cleaned/reduced for consistency</li>
+</ul>
+<p>Page inference supports multiple metadata key names (<code>page</code>, <code>page_number</code>, <code>page_index</code>, <code>chunk_index</code>, etc.).</p>
+<h2 id="8-studio-generation-flow">8) Studio generation flow</h2>
+<p><code>render_studio_panel()</code> loads templates from <code>templates/studio_templates.json</code> and renders cards.</p>
+<p>Card generation flow:</p>
+<ol>
+<li>user presses template generate action</li>
+<li>UI builds prompt from language/tone/instructions/user prompt</li>
+<li>selected sources are passed to pipeline</li>
+<li>for infographic template, dedicated image generation pipeline is used</li>
+<li>output is normalized and persisted to <code>studio_outputs</code></li>
+<li>output appears in Studio results section, where it can be:</li>
+<li>renamed</li>
+<li>downloaded</li>
+<li>deleted</li>
+<li>promoted to source</li>
+</ol>
+<p>Studio notes are managed separately in <code>studio_notes</code> and can also be promoted to source entries.</p>
+<h2 id="9-persistence-architecture">9) Persistence architecture</h2>
+<p>Persistence uses local files by default, under <code>HALO_DATA_DIR</code>:</p>
+<ul>
+<li>source catalog</li>
+<li>notes and studio outputs</li>
+<li>connector cache</li>
+<li>per-session chat history JSON files</li>
+<li>LanceDB vector store for retrieval</li>
+</ul>
+<p>Optional persistent Agno DB memory is activated when <code>HALO_AGENT_DB</code> is configured.</p>
+<h2 id="10-config-driven-behavior">10) Config-driven behavior</h2>
+<p>Configuration is data-driven in three major areas:</p>
+<ol>
+<li>Agent configs (<code>data/agents/*.json</code>)</li>
+<li>Studio template definitions (<code>templates/studio_templates.json</code>)</li>
+<li>Chat presets (<code>presets.json</code>)</li>
+</ol>
+<p>This allows many behavior changes without touching Python code.</p>
+<h2 id="11-fallback-and-resilience-behavior">11) Fallback and resilience behavior</h2>
+<p>The implementation includes multiple protective fallback paths:</p>
+<ul>
+<li>model construction returns <code>None</code> if provider/key unavailable</li>
+<li>team build falls back to single-agent mode</li>
+<li>stream failure or empty stream falls back to non-streaming generation</li>
+<li>parser functions return meaningful placeholders when API keys are absent for media understanding</li>
+<li>knowledge initialization failures degrade to manual retrieval path</li>
+</ul>
+<h2 id="12-observability-and-trace-model">12) Observability and trace model</h2>
+<p>Runtime traces combine base agent trace and chat telemetry envelope:</p>
+<ul>
+<li>model</li>
+<li>selected members</li>
+<li>tools</li>
+<li>stream mode/events/result</li>
+<li>latency (ms)</li>
+<li>knowledge hits and source names</li>
+<li>fallback usage flag</li>
+</ul>
+<p>Traces are attached to assistant chat messages and rendered in UI under "Agent Actions".</p>
+<h2 id="13-architectural-constraints-and-near-term-priorities">13) Architectural constraints and near-term priorities</h2>
+<p>Current constraints:</p>
+<ul>
+<li><code>app/main.py</code> remains large and still contains mixed concerns</li>
+<li>some connectors and search paths are mock/demo behavior</li>
+<li>studio export helpers are placeholder-level for PDF/slide output</li>
+</ul>
+<p>Near-term direction (as already tracked in backlog/docs):</p>
+<ul>
+<li>continue extracting orchestration from <code>app/main.py</code></li>
+<li>keep routing and stream handling deterministic and test-covered</li>
+<li>expand native Agno knowledge/memory usage while preserving safe fallback behavior</li>
+</ul>
 
 
 
@@ -1933,10 +2225,10 @@ streamlit run app/main.py
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

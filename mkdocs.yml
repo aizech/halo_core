@@ -1,19 +1,88 @@
 site_name: HALO Core Docs
-site_description: Documentation for HALO Core
-site_url: http://docs.corpusanalytica.com/
+site_description: Documentation for HALO Core - Holistic Agent Logical Orchestrator
+site_url: https://docs.corpusanalytica.com/
 repo_url: https://github.com/aizech/halo_core
 repo_name: aizech/halo_core
 docs_dir: docs
 strict: true
+
 theme:
   name: material
+  logo: assets/logo_light.png
+  logo_dark: assets/logo_dark.png
+  favicon: assets/icon_light.png
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/aizech/halo_core
+    - icon: fontawesome/solid/globe
+      link: https://www.corpusanalytica.com/
+
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - User Handbook: user-handbook.md
-  - Repository Overview: repository-overview.md
-  - Architecture and Runtime: architecture-and-runtime.md
-  - Agent System: agent-system.md
-  - Data Storage and Retrieval: data-storage-and-retrieval.md
-  - UI Panels and Pages: ui-panels-and-pages.md
-  - Development, Testing, and Operations: development-testing-and-operations.md
+  - User Handbook:
+    - Overview: handbook/index.md
+    - Getting Started: handbook/getting-started.md
+    - Sources: handbook/sources.md
+    - Chat: handbook/chat.md
+    - Studio: handbook/studio.md
+    - Notes: handbook/notes.md
+    - Configuration: handbook/configuration.md
+    - Advanced Usage: handbook/advanced.md
+    - Workflows: handbook/workflows.md
+    - Troubleshooting: handbook/troubleshooting.md
+    - FAQ: handbook/faq.md
+    - Glossary: handbook/glossary.md
+  - Admin Guide:
+    - Overview: admin/index.md
+    - Deployment: admin/deployment.md
+    - Configuration: admin/configuration.md
+    - User Management: admin/user-management.md
+    - Security: admin/security.md
+    - Monitoring: admin/monitoring.md
+    - Maintenance: admin/maintenance.md
+  - Technical Reference:
+    - Overview: reference/index.md
+    - Getting Started: reference/getting-started.md
+    - Repository Overview: reference/repository-overview.md
+    - Architecture and Runtime: reference/architecture-and-runtime.md
+    - Agent System: reference/agent-system.md
+    - Data Storage and Retrieval: reference/data-storage-and-retrieval.md
+    - UI Panels and Pages: reference/ui-panels-and-pages.md
+    - Development, Testing, and Operations: reference/development-testing-and-operations.md

@@ -2263,20 +2263,12 @@ def _render_chat_memory_configuration(
     member_options = [
         agent_id for agent_id in agent_configs.keys() if agent_id != "chat"
     ]
+    # Load available tools from registry
+    from services.tool_registry import get_all_tool_metadata
+
+    tool_metadata = get_all_tool_metadata()
     available_tools = {
-        "pubmed": "PubMed Suche",
-        "websearch": "Web Search",
-        "youtube": "YouTube",
-        "youtube_transcript": "YouTube Transkript",
-        "duckduckgo": "DuckDuckGo Suche",
-        "arxiv": "arXiv Papers",
-        "website": "Website Inhalte",
-        "hackernews": "Hacker News",
-        "yfinance": "Yahoo Finance",
-        "calculator": "Calculator",
-        "wikipedia": "Wikipedia Suche",
-        "mermaid": "Mermaid Diagramme",
-        "image": "Bildgenerierung (GPT Image)",
+        tool_id: meta.display_name for tool_id, meta in tool_metadata.items()
     }
     chat_model_key = "chat_cfg_model"
     chat_members_key = "chat_cfg_members"
@@ -2485,19 +2477,12 @@ def _render_advanced_configuration(
             "Erwartet: `provider:model` (z.B. `openai:gpt-5.2`)."
         )
 
+    # Load available tools from registry
+    from services.tool_registry import get_all_tool_metadata
+
+    tool_metadata = get_all_tool_metadata()
     available_tools = {
-        "pubmed": "PubMed Suche",
-        "websearch": "Web Search",
-        "youtube": "YouTube",
-        "youtube_transcript": "YouTube Transkript",
-        "duckduckgo": "DuckDuckGo Suche",
-        "arxiv": "arXiv Papers",
-        "website": "Website Inhalte",
-        "hackernews": "Hacker News",
-        "yfinance": "Yahoo Finance",
-        "calculator": "Calculator",
-        "wikipedia": "Wikipedia Suche",
-        "mermaid": "Mermaid Diagramme",
+        tool_id: meta.display_name for tool_id, meta in tool_metadata.items()
     }
     normalized_tools = _normalize_agent_tools(selected_agent.get("tools", []))
     if tools_key in st.session_state:
@@ -3132,6 +3117,7 @@ def _append_chat(
 def _display_tool_calls(
     tool_calls_container: st.delta_generator.DeltaGenerator, tools: object
 ) -> None:
+    """Render tool calls with special handling for images, mermaid diagrams, and transcripts."""
     if tools is None:
         return
     if tool_calls_container is None:
@@ -3166,13 +3152,127 @@ def _display_tool_calls(
                         tool_call, "args", {}
                     )
                     content = getattr(tool_call, "content", None)
+
+                tool_name_lower = str(tool_name).lower()
                 with st.expander(f"Tool: {tool_name}", expanded=False):
                     if tool_args:
                         st.code(json.dumps(tool_args, ensure_ascii=True, indent=2))
                     if content:
-                        st.markdown(str(content))
+                        # Handle image generation tools
+                        if (
+                            "image" in tool_name_lower
+                            or "dalle" in tool_name_lower
+                            or "imagen" in tool_name_lower
+                        ):
+                            _render_image_content(content)
+                        # Handle mermaid diagrams
+                        elif "mermaid" in tool_name_lower:
+                            st.code(str(content), language="mermaid")
+                        # Handle YouTube transcripts
+                        elif "youtube" in tool_name_lower:
+                            _render_youtube_content(content)
+                        else:
+                            st.markdown(str(content))
     except Exception as exc:
         _LOGGER.warning("Failed to render tool calls: %s", exc)
+
+
+def _render_image_content(content: object) -> None:
+    """Render image content from URLs or base64 data."""
+    if content is None:
+        return
+
+    # Handle list of items (e.g., multiple images)
+    if isinstance(content, list):
+        for item in content:
+            _render_image_content(item)
+        return
+
+    # Handle dict with image data
+    if isinstance(content, dict):
+        # Check for URL
+        url = content.get("url") or content.get("image_url")
+        if url:
+            st.image(str(url))
+            return
+
+        # Check for base64 image data
+        b64_data = (
+            content.get("b64_json") or content.get("base64") or content.get("image")
+        )
+        if b64_data:
+            try:
+                image_bytes = (
+                    base64.b64decode(b64_data)
+                    if isinstance(b64_data, str)
+                    else b64_data
+                )
+                st.image(image_bytes)
+                return
+            except Exception:
+                pass
+
+    # Handle string that might be URL or base64
+    if isinstance(content, str):
+        content_str = content.strip()
+        # Check if it's a URL
+        if content_str.startswith(("http://", "https://")):
+            # Check if it's an image URL
+            if any(
+                ext in content_str.lower()
+                for ext in [".png", ".jpg", ".jpeg", ".gif", ".webp"]
+            ):
+                st.image(content_str)
+                return
+            # Otherwise show as link
+            st.markdown(f"[{content_str}]({content_str})")
+            return
+
+        # Try to decode as base64
+        if len(content_str) > 100:
+            try:
+                image_bytes = base64.b64decode(content_str)
+                st.image(image_bytes)
+                return
+            except Exception:
+                pass
+
+        # Fallback to markdown
+        st.markdown(content_str)
+
+
+def _render_youtube_content(content: object) -> None:
+    """Render YouTube transcript content with formatting."""
+    if content is None:
+        return
+
+    if isinstance(content, dict):
+        # Handle structured transcript data
+        text = (
+            content.get("text") or content.get("transcript") or content.get("content")
+        )
+        if text:
+            st.markdown(str(text))
+        else:
+            st.json(content)
+    elif isinstance(content, list):
+        # Handle list of transcript segments
+        for segment in content:
+            if isinstance(segment, dict):
+                timestamp = (
+                    segment.get("start")
+                    or segment.get("timestamp")
+                    or segment.get("time")
+                )
+                text = segment.get("text") or segment.get("content")
+                if timestamp and text:
+                    st.markdown(f"**[{timestamp}]**: {text}")
+                elif text:
+                    st.markdown(str(text))
+            else:
+                st.markdown(str(segment))
+    else:
+        st.markdown(str(content))
 
 
 def _render_thinking_trace(trace: Dict[str, object]) -> None:
@@ -4045,16 +4145,21 @@ def render_chat_panel() -> None:
                     if message_images:
                         cols = st.columns(2)
                         for img_idx, image in enumerate(message_images):
+                            # Handle both local filepath and remote URL
                             image_path = (
                                 image.get("filepath")
                                 if isinstance(image, dict)
                                 else None
                             )
-                            if not image_path:
+                            image_url = (
+                                image.get("url") if isinstance(image, dict) else None
+                            )
+                            image_src = image_path or image_url
+                            if not image_src:
                                 continue
                             with cols[img_idx % 2]:
                                 st.image(
-                                    image_path,
+                                    image_src,
                                     caption=(
                                         image.get("name")
                                         if isinstance(image, dict)
@@ -4069,16 +4174,21 @@ def render_chat_panel() -> None:
                     if message_images:
                         cols = st.columns(2)
                         for img_idx, image in enumerate(message_images):
+                            # Handle both local filepath and remote URL
                             image_path = (
                                 image.get("filepath")
                                 if isinstance(image, dict)
                                 else None
                             )
-                            if not image_path:
+                            image_url = (
+                                image.get("url") if isinstance(image, dict) else None
+                            )
+                            image_src = image_path or image_url
+                            if not image_src:
                                 continue
                             with cols[img_idx % 2]:
                                 st.image(
-                                    image_path,
+                                    image_src,
                                     caption=(
                                         image.get("name")
                                         if isinstance(image, dict)

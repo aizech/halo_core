@@ -76,14 +76,56 @@ def _tool_id(tool_item: object) -> str | None:
     return getattr(tool_item, "name", None) or getattr(tool_item, "tool_name", None)
 
 
+def _extract_tool_content(tool_item: object) -> object | None:
+    """Extract content from a tool call result."""
+    if tool_item is None:
+        return None
+    # Try dict-style access
+    if hasattr(tool_item, "get"):
+        content = tool_item.get("content")
+        if content is not None:
+            return content
+        # Try result field
+        result = tool_item.get("result")
+        if result is not None:
+            return result
+    # Try attribute access
+    content = getattr(tool_item, "content", None)
+    if content is not None:
+        return content
+    result = getattr(tool_item, "result", None)
+    if result is not None:
+        return result
+    return None
+
+
+def _merge_tool_content(existing_tool: object, new_tool: object) -> object:
+    """Merge content from new tool into existing tool, preserving all data."""
+    new_content = _extract_tool_content(new_tool)
+
+    # If new tool has content, update existing
+    if new_content is not None:
+        if hasattr(existing_tool, "__setitem__"):
+            existing_tool["content"] = new_content
+        elif hasattr(existing_tool, "content"):
+            # Can't set attribute on some objects, return new tool
+            return new_tool
+        return existing_tool
+    return existing_tool
+
+
 def _append_unique_tool(current_tools: List[object], tool_item: object) -> bool:
     identifier = _tool_id(tool_item)
     if not identifier:
         return False
-    for existing in current_tools:
+    for i, existing in enumerate(current_tools):
         existing_id = _tool_id(existing)
         if existing_id == identifier:
-            return False
+            # Merge content if tool already exists (e.g., result comes later)
+            merged = _merge_tool_content(existing, tool_item)
+            if merged is not existing:
+                current_tools[i] = merged
+            return False  # Already exists, but may have been updated
     current_tools.append(tool_item)
     return True
 
@@ -197,6 +239,7 @@ async def stream_agent_response_async(
     saw_team_output = False
     final_response_emitted = False
     mcp_telemetry_events = []
+    response_images: List[object] = []  # Capture images from response
 
     def _emit_response() -> None:
         if on_response is not None:
@@ -244,12 +287,43 @@ async def stream_agent_response_async(
             return
 
         tool = getattr(chunk, "tool", None)
+        # Capture tool calls at start (for metadata)
         if (
             event in ("TeamToolCallStarted", "ToolCallStarted")
             or event_name in ("teamtoolcallstarted", "toolcallstarted")
         ) and tool is not None:
             if _append_unique_tool(current_tools, tool):
                 _emit_tools()
+
+        # Capture tool results at completion (for content/images)
+        if (
+            event in ("TeamToolCallCompleted", "ToolCallCompleted")
+            or event_name in ("teamtoolcallcompleted", "toolcallcompleted")
+        ) and tool is not None:
+            # Log tool result structure for debugging
+            if logger:
+                tool_name = getattr(tool, "name", None) or (
+                    tool.get("name") if hasattr(tool, "get") else None
+                )
+                tool_content = getattr(tool, "content", None) or (
+                    tool.get("content") if hasattr(tool, "get") else None
+                )
+                tool_result = getattr(tool, "result", None)
+                tool_images = getattr(tool, "images", None)
+                logger.info(
+                    "ToolCallCompleted: name=%s, content_type=%s, result_type=%s, images=%s",
+                    tool_name,
+                    type(tool_content).__name__ if tool_content else "None",
+                    type(tool_result).__name__ if tool_result else "None",
+                    len(tool_images) if tool_images else 0,
+                )
+                if tool_images:
+                    logger.info(
+                        "Tool has images attribute with %d items", len(tool_images)
+                    )
+            # Always try to update with result content
+            _append_unique_tool(current_tools, tool)
+            _emit_tools()
 
         tools = getattr(chunk, "tools", None)
         if tools:
@@ -321,6 +395,7 @@ async def stream_agent_response_async(
         if response_content is not None:
             if not is_team_output:
                 saw_member_output = True
+            # Images are captured from chunk.images after _handle_chunk, not here
             text = str(response_content)
             if is_final and text.strip():
                 # Final completed events carry the full authoritative response.
@@ -343,9 +418,19 @@ async def stream_agent_response_async(
     if inspect.isasyncgen(run_response) or hasattr(run_response, "__aiter__"):
         async for chunk in run_response:
             _handle_chunk(chunk)
+            # Check for images in each chunk
+            chunk_images = getattr(chunk, "images", None)
+            if chunk_images and logger:
+                logger.info("Found images in chunk: %d images", len(chunk_images))
+                response_images.extend(chunk_images)
     else:
         for chunk in run_response:
             _handle_chunk(chunk)
+            # Check for images in each chunk
+            chunk_images = getattr(chunk, "images", None)
+            if chunk_images and logger:
+                logger.info("Found images in chunk: %d images", len(chunk_images))
+                response_images.extend(chunk_images)
 
     # Safety net: emit the accumulated response only if no authoritative final
     # event was received during the stream (avoids overwriting clean text with
@@ -353,12 +438,20 @@ async def stream_agent_response_async(
     if not final_response_emitted:
         _emit_response()
 
+    # NOTE: Do NOT extract images from run_response.images here
+    # Images are already captured from streaming chunks above
+    # Extracting again would cause duplicates
+
+    if logger:
+        logger.info("Total response_images collected: %d", len(response_images))
+
     return {
         "response": (
             authoritative_response if authoritative_response is not None else response
         ),
         "tools": current_tools,
         "mcp_events": mcp_telemetry_events,
+        "images": response_images,
     }
 
 

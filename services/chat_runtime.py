@@ -526,7 +526,7 @@ def _save_generated_image(
 
 
 def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
-    """Extract generated images from tool call results."""
+    """Extract generated images from tool call results or Image objects."""
     images: List[Dict[str, str]] = []
 
     if tool_calls is None:
@@ -548,6 +548,31 @@ def _extract_generated_images(tool_calls: object) -> List[Dict[str, str]]:
     for tool_call in tool_list:
         if tool_call is None:
             continue
+
+        # Handle Agno Image objects directly (from response.images)
+        # Image objects have: id, url, content (base64), original_prompt
+        if hasattr(tool_call, "content") and hasattr(tool_call, "id"):
+            _LOGGER.debug(
+                "Found Agno Image object with id=%s", getattr(tool_call, "id", None)
+            )
+            image_content = getattr(tool_call, "content", None)
+            image_url = getattr(tool_call, "url", None)
+
+            if image_content:
+                # Base64 content
+                saved = _save_generated_image(image_content)
+                if saved:
+                    images.append(saved)
+                    continue
+            if image_url:
+                # URL - save metadata for display
+                images.append(
+                    {
+                        "url": image_url,
+                        "name": f"Generated Image {getattr(tool_call, 'id', 'unknown')}",
+                    }
+                )
+                continue
 
         tool_name = None
         tool_content = None
@@ -671,6 +696,16 @@ def run_chat_turn(turn: ChatTurnInput) -> ChatTurnResult:
     response = (streamed.get("response") or "").strip()
     response = _apply_citation_policy(response, turn.sources, contexts)
     tool_calls = streamed.get("tools")
+    streamed_images = streamed.get("images", [])
+    _LOGGER.info(
+        "Streamed result: response_len=%d, tools=%s, images=%d",
+        len(response),
+        [
+            getattr(t, "name", None) or t.get("name") if hasattr(t, "get") else None
+            for t in (tool_calls or [])
+        ],
+        len(streamed_images),
+    )
     trace = _compose_run_trace(
         base_trace=agents.get_last_trace(),
         turn=turn,
@@ -705,10 +740,65 @@ def run_chat_turn(turn: ChatTurnInput) -> ChatTurnResult:
         )
 
     generated_images = _extract_generated_images(tool_calls)
+    # Only use streamed images if available (avoids duplicates from response object)
+    # Streaming chunks capture images earlier, response.images is often the same
+    if streamed_images:
+        # Prefer streamed images as they come first and avoid duplicates
+        generated_images = streamed_images
+    # Only fall back to tool_calls extraction if no streamed images
+
+    # Convert Agno Image objects to JSON-serializable dicts and deduplicate
+    serializable_images = []
+    seen_urls = set()
+    seen_paths = set()
+
+    for img in generated_images:
+        img_dict = None
+
+        if isinstance(img, dict):
+            img_dict = img
+        elif hasattr(img, "__dict__"):
+            # Agno Image object - convert to dict
+            img_dict = {}
+            if hasattr(img, "url") and img.url:
+                img_dict["url"] = img.url
+            if hasattr(img, "content") and img.content:
+                # Base64 content - save to file
+                saved = _save_generated_image(img.content)
+                if saved:
+                    img_dict["filepath"] = saved.get("filepath")
+                    img_dict["name"] = saved.get("name", "Generated Image")
+            if hasattr(img, "id") and img.id:
+                img_dict["name"] = f"Generated Image {img.id}"
+        elif hasattr(img, "url") or hasattr(img, "filepath"):
+            # Already a dict-like object
+            img_dict = {
+                "url": getattr(img, "url", None),
+                "filepath": getattr(img, "filepath", None),
+                "name": getattr(img, "name", "Generated Image"),
+            }
+
+        # Deduplicate by URL or filepath
+        if img_dict:
+            url = img_dict.get("url")
+            filepath = img_dict.get("filepath")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                serializable_images.append(img_dict)
+            elif filepath and filepath not in seen_paths:
+                seen_paths.add(filepath)
+                serializable_images.append(img_dict)
+            elif not url and not filepath:
+                # No dedup key, just add
+                serializable_images.append(img_dict)
+
+    # Only return first image to avoid showing duplicates
+    if len(serializable_images) > 1:
+        serializable_images = [serializable_images[0]]
 
     return ChatTurnResult(
         response=response,
         tool_calls=tool_calls,
         trace=trace,
-        generated_images=generated_images,
+        generated_images=serializable_images,
     )
