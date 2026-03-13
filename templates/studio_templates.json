@@ -233,6 +233,153 @@
         "tone": "Neutral",
         "instructions": "Analysiere die bereitgestellten Quellen (falls keine ausgewählt, nutze alle verfügbaren Quellen) und erstelle ein Video-Storyboard. Format: nummerierte Szenenübersicht, jede Szene mit: Szene Nr. | Visual-Beschreibung | Sprecher-Text (Voice-over) | Dauer (Sek.). Gesamtlänge: 60–120 Sekunden. Beginne mit Hook-Szene, schließe mit klarem Call-to-Action. Sprache des Sprecher-Textes: klar, direkt, für gesprochene Sprache optimiert."
       }
+    },
+    {
+      "id": "medical_diagnosis",
+      "title": "Differential Diagnosis",
+      "description": "Generates a structured differential diagnosis from clinical presentation with evidence-based reasoning.",
+      "icon": "🩺",
+      "color": "#FFE4E1",
+      "team_id": "medical_team",
+      "agent_id": "chief_doctor",
+      "actions": [
+        {"id": "generate", "label": "Generate"},
+        {"id": "configure", "label": "Configure"}
+      ],
+      "agent": {
+        "instructions": "Analyze the clinical presentation and generate a structured differential diagnosis. Structure: 1) Chief complaint summary, 2) Key clinical findings, 3) Differential diagnosis ranked by likelihood (with ICD-10 codes), 4) Evidence supporting each diagnosis, 5) Recommended diagnostic workup to narrow differentials, 6) Red flags requiring urgent evaluation. Cite PubMed sources when available. Respond in the same language as the input."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Clinical",
+        "instructions": "Analyze the clinical presentation and generate a structured differential diagnosis. Structure: 1) Chief complaint summary, 2) Key clinical findings, 3) Differential diagnosis ranked by likelihood (with ICD-10 codes), 4) Evidence supporting each diagnosis, 5) Recommended diagnostic workup to narrow differentials, 6) Red flags requiring urgent evaluation. Cite PubMed sources when available. Respond in the same language as the input."
+      }
+    },
+    {
+      "id": "clinical_case_report",
+      "title": "Case Report",
+      "description": "Creates a formal clinical case report following CARE guidelines from patient information and clinical notes.",
+      "icon": "📄",
+      "color": "#F0FFF0",
+      "team_id": "medical_team",
+      "agent_id": "medical_scribe",
+      "actions": [
+        {"id": "generate", "label": "Generate"},
+        {"id": "configure", "label": "Configure"}
+      ],
+      "agent": {
+        "instructions": "Create a formal case report following CARE guidelines. Structure: 1) Title (descriptive with key clinical elements), 2) Abstract (structured: introduction, case presentation, discussion, conclusion), 3) Introduction (background and clinical context), 4) Case Presentation (patient demographics, history, examination, investigations, treatment, outcomes), 5) Discussion (differential diagnosis, literature review, clinical lessons), 6) Conclusion and patient perspective. Ensure patient anonymity. Use medical terminology appropriately. Respond in the same language as the input."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Clinical",
+        "instructions": "Create a formal case report following CARE guidelines. Structure: 1) Title (descriptive with key clinical elements), 2) Abstract (structured: introduction, case presentation, discussion, conclusion), 3) Introduction (background and clinical context), 4) Case Presentation (patient demographics, history, examination, investigations, treatment, outcomes), 5) Discussion (differential diagnosis, literature review, clinical lessons), 6) Conclusion and patient perspective. Ensure patient anonymity. Use medical terminology appropriately. Respond in the same language as the input."
+      }
+    },
+    {
+      "id": "drug_interaction_check",
+      "title": "Drug Interaction Analysis",
+      "description": "Comprehensive medication interaction analysis with severity grading and management recommendations.",
+      "icon": "💊",
+      "color": "#E6E6FA",
+      "team_id": "medical_team",
+      "agent_id": "pharmacist",
+      "actions": [
+        {"id": "generate", "label": "Generate"},
+        {"id": "configure", "label": "Configure"}
+      ],
+      "agent": {
+        "instructions": "Analyze the provided medication list for drug-drug and drug-condition interactions. Structure: 1) Medication summary table (drug, dose, indication), 2) Interactions identified (drug pair, mechanism, severity: contraindicated/major/moderate/minor, clinical effects), 3) Drug-disease contraindications, 4) Management recommendations for each significant interaction, 5) Monitoring parameters, 6) Therapeutic alternatives if needed. Cite evidence sources. Respond in the same language as the input."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Clinical",
+        "instructions": "Analyze the provided medication list for drug-drug and drug-condition interactions. Structure: 1) Medication summary table (drug, dose, indication), 2) Interactions identified (drug pair, mechanism, severity: contraindicated/major/moderate/minor, clinical effects), 3) Drug-disease contraindications, 4) Management recommendations for each significant interaction, 5) Monitoring parameters, 6) Therapeutic alternatives if needed. Cite evidence sources. Respond in the same language as the input."
+      }
+    },
+    {
+      "id": "radiology_report",
+      "title": "Radiology Report",
+      "description": "Generates structured radiology report from imaging findings with differential considerations.",
+      "icon": "📡",
+      "color": "#F5F5DC",
+      "team_id": "medical_team",
+      "agent_id": "radiologist",
+      "actions": [
+        {"id": "generate", "label": "Generate"},
+        {"id": "configure", "label": "Configure"}
+      ],
+      "agent": {
+        "instructions": "Generate a structured radiology report from the provided imaging description. Structure: 1) EXAMINATION (modality, body part, technique), 2) COMPARISON (prior studies if mentioned), 3) FINDINGS (organized by anatomical region, use standard terminology), 4) IMPRESSION (numbered list of findings with differential considerations), 5) RECOMMENDATIONS (follow-up imaging or clinical correlation if needed). Use standardized reporting lexicon (BI-RADS, TI-RADS, PI-RADS, etc.) when applicable. Highlight urgent findings. Respond in the same language as the input."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Clinical",
+        "instructions": "Generate a structured radiology report from the provided imaging description. Structure: 1) EXAMINATION (modality, body part, technique), 2) COMPARISON (prior studies if mentioned), 3) FINDINGS (organized by anatomical region, use standard terminology), 4) IMPRESSION (numbered list of findings with differential considerations), 5) RECOMMENDATIONS (follow-up imaging or clinical correlation if needed). Use standardized reporting lexicon (BI-RADS, TI-RADS, PI-RADS, etc.) when applicable. Highlight urgent findings. Respond in the same language as the input."
+      }
+    },
+    {
+      "id": "evidence_summary",
+      "title": "Evidence Summary",
+      "description": "Synthesizes medical literature into a structured evidence-based summary with quality assessment.",
+      "icon": "📚",
+      "color": "#E0FFFF",
+      "team_id": "medical_team",
+      "agent_id": "medical_researcher",
+      "actions": [
+        {"id": "generate", "label": "Generate"},
+        {"id": "configure", "label": "Configure"}
+      ],
+      "agent": {
+        "instructions": "Synthesize the provided clinical question and literature into an evidence summary. Structure: 1) Clinical question (PICO format), 2) Search summary (databases, date range, number of studies), 3) Evidence by study type (systematic reviews, RCTs, observational studies), 4) Quality assessment (GRADE rating, risk of bias), 5) Key findings with confidence intervals and NNT where applicable, 6) Clinical implications, 7) Research gaps. Provide PMID/DOI citations. Respond in the same language as the input."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Academic",
+        "instructions": "Synthesize the provided clinical question and literature into an evidence summary. Structure: 1) Clinical question (PICO format), 2) Search summary (databases, date range, number of studies), 3) Evidence by study type (systematic reviews, RCTs, observational studies), 4) Quality assessment (GRADE rating, risk of bias), 5) Key findings with confidence intervals and NNT where applicable, 6) Clinical implications, 7) Research gaps. Provide PMID/DOI citations. Respond in the same language as the input."
+      }
+    },
+    {
+      "id": "treatment_protocol",
+      "title": "Treatment Protocol",
+      "description": "Develops comprehensive treatment protocol with step-by-step management plan and monitoring parameters.",
+      "icon": "📋",
+      "color": "#FFF8DC",
+      "team_id": "medical_team",
+      "agent_id": "chief_doctor",
+      "actions": [
+        {"id": "generate", "label": "Generate"},
+        {"id": "configure", "label": "Configure"}
+      ],
+      "agent": {
+        "instructions": "Develop a comprehensive treatment protocol for the specified condition. Structure: 1) Diagnosis confirmation criteria, 2) Treatment goals (short-term and long-term), 3) First-line therapy (medications, dosing, duration, administration), 4) Monitoring parameters and frequency, 5) Treatment modifications (dose adjustments, alternatives for non-response), 6) Adverse effect management, 7) Follow-up schedule, 8) Patient education points, 9) Referral criteria. Reference current guidelines (ACC/AHA, ESC, etc.). Respond in the same language as the input."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Clinical",
+        "instructions": "Develop a comprehensive treatment protocol for the specified condition. Structure: 1) Diagnosis confirmation criteria, 2) Treatment goals (short-term and long-term), 3) First-line therapy (medications, dosing, duration, administration), 4) Monitoring parameters and frequency, 5) Treatment modifications (dose adjustments, alternatives for non-response), 6) Adverse effect management, 7) Follow-up schedule, 8) Patient education points, 9) Referral criteria. Reference current guidelines (ACC/AHA, ESC, etc.). Respond in the same language as the input."
+      }
+    },
+    {
+      "id": "cardiac_risk_assessment",
+      "title": "Cardiac Risk Assessment",
+      "description": "Cardiovascular risk stratification using validated risk scores with prevention recommendations.",
+      "icon": "❤️",
+      "color": "#FFE4E9",
+      "team_id": "medical_team",
+      "agent_id": "cardiologist",
+      "actions": [
+        {"id": "generate", "label": "Generate"},
+        {"id": "configure", "label": "Configure"}
+      ],
+      "agent": {
+        "instructions": "Perform cardiovascular risk assessment using the provided patient data. Structure: 1) Risk factor summary, 2) Risk score calculation (Framingham, ASCVD, SCORE, or QRISK as appropriate), 3) Risk category interpretation, 4) 10-year and lifetime risk estimation, 5) Modifiable risk factors with intervention targets, 6) Recommended screening schedule, 7) Prevention strategy (lifestyle, pharmacotherapy if indicated), 8) Referral recommendations. Show calculation steps. Cite guideline sources. Respond in the same language as the input."
+      },
+      "defaults": {
+        "language": "Auto",
+        "tone": "Clinical",
+        "instructions": "Perform cardiovascular risk assessment using the provided patient data. Structure: 1) Risk factor summary, 2) Risk score calculation (Framingham, ASCVD, SCORE, or QRISK as appropriate), 3) Risk category interpretation, 4) 10-year and lifetime risk estimation, 5) Modifiable risk factors with intervention targets, 6) Recommended screening schedule, 7) Prevention strategy (lifestyle, pharmacotherapy if indicated), 8) Referral recommendations. Show calculation steps. Cite guideline sources. Respond in the same language as the input."
+      }
     }
   ]
 }

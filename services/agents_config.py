@@ -21,6 +21,7 @@ class AgentConfig(BaseModel):
     name: str = ""
     description: str = ""
     role: str = ""
+    type: str = "agent"  # "agent" or "team"
     instructions: str | List[str] = ""
     skills: List[str] = Field(default_factory=list)
     tools: List[str] = Field(default_factory=list)
@@ -33,6 +34,14 @@ class AgentConfig(BaseModel):
     enabled: bool = True
     members: List[str] = Field(default_factory=list)
     tool_settings: Dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("type")
+    @classmethod
+    def _validate_type(cls, value: str) -> str:
+        allowed = {"agent", "team"}
+        if value not in allowed:
+            raise ValueError(f"type must be one of: {allowed}")
+        return value
 
     @field_validator("instructions")
     @classmethod
@@ -220,6 +229,11 @@ DEFAULT_MCP_SERVERS = [
 ]
 
 
+def _builtin_agents_dir() -> Path:
+    """Return path to built-in agent configs in services/agents."""
+    return Path(__file__).parent / "agents"
+
+
 def _agent_dir() -> Path:
     return Path(_SETTINGS.data_dir) / "agents"
 
@@ -348,6 +362,19 @@ def load_agent_configs() -> Dict[str, Dict[str, object]]:
     defaults_by_id = {
         str(payload.get("id", "agent")): payload for payload in _default_configs()
     }
+
+    # Load built-in agent configs from services/agents
+    builtin_dir = _builtin_agents_dir()
+    if builtin_dir.exists():
+        for path in builtin_dir.glob("*.json"):
+            with path.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            agent_id = str(payload.get("id", path.stem))
+            payload.setdefault("id", agent_id)
+            payload = _validate_agent_config(payload, path)
+            configs[agent_id] = payload
+
+    # Load user agent configs from data_dir/agents
     for path in _agent_dir().glob("*.json"):
         with path.open("r", encoding="utf-8") as handle:
             payload = json.load(handle)

@@ -1,16 +1,15 @@
-"""Shared factories for Agno models and tools."""
+"""Shared factories for Agno models and tools.
+
+Tool building is delegated to tool_registry.py for extensibility.
+This module focuses on model building and MCP tool assembly.
+"""
 
 from __future__ import annotations
 
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from agno.models.openai import OpenAIChat
-from agno.tools.openai import OpenAITools
-from agno.tools.pubmed import PubmedTools
-from agno.tools.websearch import WebSearchTools
-from agno.tools.youtube import YouTubeTools
-from agno.tools.wikipedia import WikipediaTools
 
 from services.settings import get_settings
 
@@ -18,41 +17,6 @@ try:  # Optional MCP tool kit
     from agno.tools.mcp import MCPTools
 except ImportError:  # pragma: no cover - optional dependency
     MCPTools = None
-
-try:  # Optional tool kit
-    from agno.tools.arxiv import ArxivTools
-except ImportError:  # pragma: no cover - optional dependency
-    ArxivTools = None
-
-try:  # Optional tool kit
-    from agno.tools.duckduckgo import DuckDuckGoTools
-except ImportError:  # pragma: no cover - optional dependency
-    DuckDuckGoTools = None
-
-try:  # Optional tool kit
-    from agno.tools.website import WebsiteTools
-except ImportError:  # pragma: no cover - optional dependency
-    WebsiteTools = None
-
-try:  # Optional tool kit
-    from agno.tools.hackernews import HackerNewsTools
-except ImportError:  # pragma: no cover - optional dependency
-    HackerNewsTools = None
-
-try:  # Optional tool kit
-    from agno.tools.yfinance import YFinanceTools
-except ImportError:  # pragma: no cover - optional dependency
-    YFinanceTools = None
-
-try:  # Optional tool kit
-    from agno.tools.calculator import CalculatorTools
-except ImportError:  # pragma: no cover - optional dependency
-    CalculatorTools = None
-
-try:  # Optional Mermaid tool
-    from agno.tools.mermaid import MermaidTools
-except ImportError:  # pragma: no cover - optional dependency
-    MermaidTools = None
 
 try:  # Optional model providers
     from agno.models.google import Gemini
@@ -109,271 +73,24 @@ def build_model(model_id: str, *, openai_api_key: str | None, logger: logging.Lo
 
 def build_tools(
     tool_ids: object,
-    tool_settings: Dict[str, object] | None = None,
+    tool_settings: Dict[str, Any] | None = None,
     *,
     logger: logging.Logger,
 ) -> List[object]:
-    tools: List[object] = []
-    if not isinstance(tool_ids, list):
-        return tools
-    tool_settings = tool_settings or {}
-    for tool_id in tool_ids:
-        if tool_id == "shell":
-            logger.warning("Shell tool is disabled by default")
-            continue
-        if tool_id == "image":
-            image_settings = tool_settings.get("image") if tool_settings else None
-            image_model = "gpt-image-1.5"
-            if isinstance(image_settings, dict):
-                image_model = str(image_settings.get("image_model", "gpt-image-1.5"))
-            api_key = _SETTINGS.openai_api_key
-            if api_key:
-                tools.append(OpenAITools(image_model=image_model, api_key=api_key))
-                logger.info("Added image generation tool with model: %s", image_model)
-            else:
-                logger.warning("Cannot add image tool: OpenAI API key not configured")
-            continue
-        if tool_id == "pubmed":
-            pubmed_settings = tool_settings.get("pubmed")
-            if isinstance(pubmed_settings, dict):
-                tools.append(
-                    PubmedTools(
-                        email=pubmed_settings.get("email"),
-                        max_results=pubmed_settings.get("max_results"),
-                        enable_search_pubmed=pubmed_settings.get(
-                            "enable_search_pubmed", True
-                        ),
-                        all=pubmed_settings.get("all", False),
-                    )
-                )
-            else:
-                tools.append(PubmedTools())
-        if tool_id == "websearch":
-            websearch_settings = tool_settings.get("websearch")
-            if isinstance(websearch_settings, dict):
-                websearch_kwargs = {
-                    "backend": websearch_settings.get("backend"),
-                    "num_results": websearch_settings.get("num_results"),
-                }
-                try:
-                    tools.append(WebSearchTools(**websearch_kwargs))
-                except TypeError:
-                    logger.warning(
-                        "WebSearch tool does not support configured settings; using defaults"
-                    )
-                    tools.append(WebSearchTools())
-            else:
-                tools.append(WebSearchTools())
-        if tool_id in {"youtube", "youtube_transcript"}:
-            settings_key = (
-                "youtube_transcript" if tool_id == "youtube_transcript" else "youtube"
-            )
-            youtube_settings = tool_settings.get(settings_key)
-            default_youtube_flags = {
-                "enable_get_video_captions": True,
-                "enable_get_video_data": tool_id != "youtube_transcript",
-                "enable_get_video_timestamps": tool_id == "youtube_transcript",
-            }
-            default_languages = ["en", "de"] if tool_id == "youtube_transcript" else []
-            if isinstance(youtube_settings, dict):
-                fetch_captions = bool(youtube_settings.get("fetch_captions", True))
-                fetch_video_info = bool(
-                    youtube_settings.get(
-                        "fetch_video_info",
-                        default_youtube_flags["enable_get_video_data"],
-                    )
-                )
-                fetch_timestamps = bool(
-                    youtube_settings.get(
-                        "fetch_timestamps",
-                        default_youtube_flags["enable_get_video_timestamps"],
-                    )
-                )
-                languages_raw = youtube_settings.get("languages")
-                languages = (
-                    [
-                        str(language).strip()
-                        for language in languages_raw
-                        if str(language).strip()
-                    ]
-                    if isinstance(languages_raw, list)
-                    else []
-                )
-                youtube_kwargs = {
-                    "enable_get_video_captions": bool(
-                        youtube_settings.get(
-                            "enable_get_video_captions",
-                            fetch_captions,
-                        )
-                    ),
-                    "enable_get_video_data": bool(
-                        youtube_settings.get(
-                            "enable_get_video_data",
-                            fetch_video_info,
-                        )
-                    ),
-                    "enable_get_video_timestamps": bool(
-                        youtube_settings.get(
-                            "enable_get_video_timestamps",
-                            fetch_timestamps,
-                        )
-                    ),
-                }
-                if languages:
-                    youtube_kwargs["languages"] = languages
-                elif default_languages:
-                    youtube_kwargs["languages"] = default_languages
-                try:
-                    tools.append(YouTubeTools(**youtube_kwargs))
-                except TypeError:
-                    logger.warning(
-                        "YouTube tool does not support configured settings; using defaults"
-                    )
-                    try:
-                        fallback_kwargs = {**default_youtube_flags}
-                        if default_languages:
-                            fallback_kwargs["languages"] = default_languages
-                        tools.append(YouTubeTools(**fallback_kwargs))
-                    except TypeError:
-                        logger.warning(
-                            "YouTube tool does not support fetch_* options in this Agno version; using no-arg init"
-                        )
-                        tools.append(YouTubeTools())
-            else:
-                try:
-                    default_kwargs = {**default_youtube_flags}
-                    if default_languages:
-                        default_kwargs["languages"] = default_languages
-                    tools.append(YouTubeTools(**default_kwargs))
-                except TypeError:
-                    logger.warning(
-                        "YouTube tool does not support fetch_* options in this Agno version; using no-arg init"
-                    )
-                    tools.append(YouTubeTools())
-        if tool_id == "duckduckgo":
-            if DuckDuckGoTools is None:
-                logger.warning("DuckDuckGo tool not available")
-            else:
-                duckduckgo_settings = tool_settings.get("duckduckgo")
-                if isinstance(duckduckgo_settings, dict):
-                    tools.append(
-                        DuckDuckGoTools(
-                            enable_search=duckduckgo_settings.get(
-                                "enable_search", True
-                            ),
-                            enable_news=duckduckgo_settings.get("enable_news", True),
-                            fixed_max_results=duckduckgo_settings.get(
-                                "fixed_max_results"
-                            ),
-                            timeout=duckduckgo_settings.get("timeout", 10),
-                            verify_ssl=duckduckgo_settings.get("verify_ssl", True),
-                        )
-                    )
-                else:
-                    tools.append(DuckDuckGoTools())
-        if tool_id == "arxiv":
-            if ArxivTools is None:
-                logger.warning("Arxiv tool not available")
-            else:
-                arxiv_settings = tool_settings.get("arxiv")
-                if isinstance(arxiv_settings, dict):
-                    arxiv_kwargs = {
-                        "max_results": int(arxiv_settings.get("max_results") or 5),
-                        "sort_by": arxiv_settings.get("sort_by") or None,
-                    }
-                    try:
-                        tools.append(ArxivTools(**arxiv_kwargs))
-                    except TypeError:
-                        logger.warning(
-                            "Arxiv tool does not support configured settings; using defaults"
-                        )
-                        tools.append(ArxivTools())
-                else:
-                    tools.append(ArxivTools())
-        if tool_id == "website":
-            if WebsiteTools is None:
-                logger.warning("Website tool not available")
-            else:
-                website_settings = tool_settings.get("website")
-                if isinstance(website_settings, dict):
-                    allowed_domains_raw = website_settings.get("allowed_domains", [])
-                    allowed_domains = (
-                        [
-                            str(domain).strip()
-                            for domain in allowed_domains_raw
-                            if str(domain).strip()
-                        ]
-                        if isinstance(allowed_domains_raw, list)
-                        else []
-                    )
-                    website_kwargs = {
-                        "max_pages": max(
-                            1,
-                            min(20, int(website_settings.get("max_pages") or 5)),
-                        ),
-                        "timeout": max(
-                            1,
-                            min(120, int(website_settings.get("timeout") or 10)),
-                        ),
-                        "allowed_domains": allowed_domains,
-                    }
-                    try:
-                        tools.append(WebsiteTools(**website_kwargs))
-                    except TypeError:
-                        logger.warning(
-                            "Website tool does not support configured settings; using defaults"
-                        )
-                        tools.append(WebsiteTools())
-                else:
-                    tools.append(WebsiteTools())
-        if tool_id == "hackernews":
-            if HackerNewsTools is None:
-                logger.warning("HackerNews tool not available")
-            else:
-                hackernews_settings = tool_settings.get("hackernews")
-                if isinstance(hackernews_settings, dict):
-                    tools.append(
-                        HackerNewsTools(
-                            enable_get_top_stories=hackernews_settings.get(
-                                "enable_get_top_stories", True
-                            ),
-                            enable_get_user_details=hackernews_settings.get(
-                                "enable_get_user_details", True
-                            ),
-                            all=hackernews_settings.get("all", False),
-                        )
-                    )
-                else:
-                    tools.append(HackerNewsTools())
-        if tool_id == "yfinance":
-            if YFinanceTools is None:
-                logger.warning("YFinance tool not available")
-            else:
-                yfinance_settings = tool_settings.get("yfinance")
-                if isinstance(yfinance_settings, dict):
-                    tools.append(
-                        YFinanceTools(
-                            stock_price=yfinance_settings.get("stock_price", True),
-                            analyst_recommendations=yfinance_settings.get(
-                                "analyst_recommendations", True
-                            ),
-                        )
-                    )
-                else:
-                    tools.append(YFinanceTools())
-        if tool_id == "calculator":
-            if CalculatorTools is None:
-                logger.warning("Calculator tool not available")
-            else:
-                tools.append(CalculatorTools())
-        if tool_id == "wikipedia":
-            tools.append(WikipediaTools())
-        if tool_id == "mermaid":
-            if MermaidTools is None:
-                logger.warning("Mermaid tool not available")
-            else:
-                tools.append(MermaidTools())
-    return tools
+    """Build tools using the tool registry.
+
+    This is a compatibility wrapper around the registry-based tool builder.
+    New tools should be registered in tool_registry.py rather than adding
+    if-branches here.
+    """
+    from services.tool_registry import build_tools_from_registry
+
+    return build_tools_from_registry(
+        tool_ids if isinstance(tool_ids, list) else [],
+        tool_settings,
+        openai_api_key=_SETTINGS.openai_api_key,
+        logger=logger,
+    )
 
 
 def build_mcp_tools(

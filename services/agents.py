@@ -351,12 +351,67 @@ def render_studio_output(
     instructions: str,
     sources: List[str],
     agent_config: Dict[str, str] | None = None,
+    template: Dict[str, Any] | None = None,
 ) -> str:
+    """Render studio output using the appropriate agent or team.
+
+    Args:
+        template_name: Name of the template
+        instructions: Template instructions
+        sources: List of source names
+        agent_config: Optional agent configuration
+        template: Optional template dict with team_id/agent_id bindings
+
+    Returns:
+        Generated output string
+    """
     prompt = (
         f"Template: {template_name}\nAnweisungen: {instructions}\n"
         f"Quellen: {', '.join(sources) or 'keine'}\n"
         "Erzeuge eine prägnante Ausgabe."
     )
+
+    # Check for team_id or agent_id binding in template
+    team_id = None
+    agent_id = None
+    if template:
+        team_id = template.get("team_id")
+        agent_id = template.get("agent_id")
+
+    # Load configs if we have a team or agent binding
+    if team_id or agent_id:
+        from services.agents_config import load_agent_configs
+
+        all_configs = load_agent_configs()
+
+        # Prefer team if both are specified
+        if team_id:
+            team_config = all_configs.get(team_id)
+            if team_config and team_config.get("type") == "team":
+                _LOGGER.info("Studio routing to team: %s", team_id)
+                team = build_master_team_from_config(team_config, prompt=prompt)
+                if team:
+                    try:
+                        result = _run_agent(prompt, team)
+                        return result
+                    except Exception as exc:
+                        return f"Fehler bei der Generierung: {exc}"
+                _LOGGER.warning("Failed to build team '%s', falling back", team_id)
+
+        if agent_id:
+            agent_cfg = all_configs.get(agent_id)
+            if agent_cfg and agent_cfg.get("type") == "agent":
+                _LOGGER.info("Studio routing to agent: %s", agent_id)
+                agent = _build_agent_from_config(agent_cfg)
+                if agent:
+                    try:
+                        result = _run_agent(prompt, agent)
+                        return result
+                    except Exception as exc:
+                        return f"Fehler bei der Generierung: {exc}"
+                _LOGGER.warning("Failed to build agent '%s', falling back", agent_id)
+
+    # Fallback to original behavior
     agent_instructions = None
     if agent_config:
         agent_instructions = build_agent_instructions(agent_config)

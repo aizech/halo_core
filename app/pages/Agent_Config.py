@@ -669,18 +669,203 @@ def _render_mcp_servers_ui(
             st.success("Saved.")
 
 
+def _render_team_builder_tab() -> None:
+    """Render the Team Builder tab for creating agent teams."""
+    st.subheader("Team Builder")
+    st.caption("Create and configure teams of agents for coordinated task execution.")
+
+    try:
+        configs = _load_configs()
+    except Exception as exc:
+        st.error(f"Failed to load agent configs: {exc}")
+        return
+
+    # Separate agents and teams
+    agents = {
+        aid: cfg for aid, cfg in configs.items() if cfg.get("type", "agent") == "agent"
+    }
+    teams = {tid: cfg for tid, cfg in configs.items() if cfg.get("type") == "team"}
+
+    # Show existing teams
+    st.markdown("### Existing Teams")
+    if teams:
+        team_options = ["(New Team)"] + list(teams.keys())
+        selected_team = st.selectbox("Select team to edit", options=team_options)
+    else:
+        selected_team = st.selectbox("Select team to edit", options=["(New Team)"])
+        st.info("No teams configured yet. Create a new team below.")
+
+    # Team configuration
+    if selected_team == "(New Team)":
+        team_id = st.text_input("Team ID", placeholder="e.g., medical_team")
+        team_name = st.text_input("Team Name", placeholder="e.g., Medical AI Team")
+        team_description = st.text_area(
+            "Description", placeholder="Describe the team's purpose..."
+        )
+        existing_config = {}
+    else:
+        existing_config = dict(teams[selected_team])
+        team_id = st.text_input("Team ID", value=selected_team, disabled=True)
+        team_name = st.text_input(
+            "Team Name", value=str(existing_config.get("name", ""))
+        )
+        team_description = st.text_area(
+            "Description", value=str(existing_config.get("description", ""))
+        )
+
+    # Member selection
+    st.markdown("### Team Members")
+    st.caption(
+        "Select agents to include in this team. Members will be delegated tasks based on their skills."
+    )
+
+    available_agent_ids = list(agents.keys())
+    current_members = existing_config.get("members", [])
+    if not isinstance(current_members, list):
+        current_members = []
+
+    selected_members = st.multiselect(
+        "Team Members",
+        options=available_agent_ids,
+        default=[m for m in current_members if m in available_agent_ids],
+        format_func=lambda aid: f"{aid} ({agents.get(aid, {}).get('name', aid)})",
+    )
+
+    # Show member details
+    if selected_members:
+        st.markdown("#### Selected Members")
+        for member_id in selected_members:
+            member_cfg = agents.get(member_id, {})
+            with st.expander(f"**{member_cfg.get('name', member_id)}** ({member_id})"):
+                st.markdown(f"**Role:** {member_cfg.get('role', 'N/A')}")
+                st.markdown(
+                    f"**Skills:** {', '.join(member_cfg.get('skills', [])) or 'None'}"
+                )
+                st.markdown(
+                    f"**Tools:** {', '.join(member_cfg.get('tools', [])) or 'None'}"
+                )
+
+    # Coordination mode
+    st.markdown("### Coordination Settings")
+    coordination_options = [
+        "delegate_on_complexity",
+        "always_delegate",
+        "coordinated_rag",
+        "direct_only",
+    ]
+    current_mode = str(
+        existing_config.get("coordination_mode", "delegate_on_complexity")
+    )
+    if current_mode not in coordination_options:
+        current_mode = "delegate_on_complexity"
+
+    coordination_mode = st.selectbox(
+        "Coordination Mode",
+        options=coordination_options,
+        index=coordination_options.index(current_mode),
+        help=(
+            "delegate_on_complexity: Route to members based on skill matching. "
+            "always_delegate: Always involve all members. "
+            "coordinated_rag: RAG-focused with source citations. "
+            "direct_only: No delegation, master handles all."
+        ),
+    )
+
+    # Team-level model
+    team_model = st.text_input(
+        "Team Model Override",
+        value=str(existing_config.get("model", "")),
+        placeholder="e.g., openai:gpt-4.1",
+        help="Model used by the team coordinator. Members can have their own models.",
+    )
+
+    # Team instructions
+    team_instructions = st.text_area(
+        "Team Instructions",
+        value=str(existing_config.get("instructions", "")),
+        height=120,
+        placeholder="Instructions for the team coordinator...",
+    )
+
+    # Team skills
+    team_skills_raw = st.text_area(
+        "Team Skills (one per line)",
+        value=_as_text_lines(existing_config.get("skills")),
+        help="Skills that describe the team's collective capabilities.",
+    )
+
+    # Save button
+    col_save, col_delete = st.columns([1, 1])
+
+    with col_save:
+        if st.button("Save Team", type="primary"):
+            if not team_id or selected_team == "(New Team)" and team_id in configs:
+                st.error("Team ID is required and must be unique.")
+            elif not selected_members:
+                st.warning("Please select at least one team member.")
+            else:
+                team_config = {
+                    "id": team_id,
+                    "name": team_name.strip() or team_id,
+                    "description": team_description.strip(),
+                    "type": "team",
+                    "members": selected_members,
+                    "coordination_mode": coordination_mode,
+                    "model": team_model.strip() or None,
+                    "instructions": team_instructions.strip(),
+                    "skills": _parse_lines(team_skills_raw),
+                    "enabled": True,
+                }
+                # Remove None values
+                team_config = {k: v for k, v in team_config.items() if v is not None}
+
+                try:
+                    _save_config(team_id, team_config)
+                    st.success(f"Team '{team_id}' saved successfully!")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(f"Failed to save team: {exc}")
+
+    with col_delete:
+        if selected_team != "(New Team)":
+            if st.button("Delete Team", type="secondary"):
+                try:
+                    # Mark as disabled rather than delete to preserve references
+                    disabled_config = dict(existing_config)
+                    disabled_config["enabled"] = False
+                    _save_config(selected_team, disabled_config)
+                    st.success(f"Team '{selected_team}' disabled.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(f"Failed to disable team: {exc}")
+
+
+def _render_agent_config_tab(is_admin: bool) -> None:
+    """Render the Agent Config tab (original functionality)."""
+    _render_mcp_servers_ui("agent_config_page", {}, is_admin)
+
+
 def render_agent_config_page() -> None:
     """Entrypoint for Streamlit multipage navigation."""
     main._init_state()
     main.render_sidebar()
     if not main.require_access("logged_in"):
         st.stop()
-    st.title("Agent Config")
+    st.title("Agent Configuration")
     st.caption(
-        "Dedicated full-page editor for agent settings. Inhaltlich entspricht dies der Agent-Konfiguration im Configuration-Tab 'Advanced', aber mit mehr Fokus auf einer eigenen Seite."
+        "Configure agents and teams. Agents are individual AI specialists; "
+        "Teams coordinate multiple agents for complex tasks."
     )
+
     is_admin = bool(st.session_state.get("is_admin", True))
-    _render_mcp_servers_ui("agent_config_page", {}, is_admin)
+
+    tab_agent, tab_team = st.tabs(["Agent Config", "Team Builder"])
+
+    with tab_agent:
+        _render_agent_config_tab(is_admin)
+
+    with tab_team:
+        _render_team_builder_tab()
 
 
 if __name__ == "__main__":

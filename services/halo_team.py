@@ -35,11 +35,34 @@ def build_agent_from_config(
     model,
     session_id: str | None = None,
     user_id: str | None = None,
+    openai_api_key: str | None = None,
 ) -> Agent | None:
     name = str(config.get("name") or config.get("id") or "Agent")
     instructions = build_agent_instructions(config)
     db = get_agent_db()
     knowledge = get_agent_knowledge()
+
+    # Per-member model override: use member's model if specified
+    member_model_id = config.get("model")
+    if member_model_id:
+        normalized_id = normalize_model_id(member_model_id)
+        member_model = build_model(
+            normalized_id,
+            openai_api_key=openai_api_key or _SETTINGS.openai_api_key,
+            logger=_LOGGER,
+        )
+        if member_model is not None:
+            _LOGGER.info(
+                "Using member-specific model for '%s': %s", name, normalized_id
+            )
+            model = member_model
+        else:
+            _LOGGER.warning(
+                "Failed to build member model '%s' for '%s', falling back to master model",
+                normalized_id,
+                name,
+            )
+
     agent = Agent(
         name=name,
         instructions=instructions,
@@ -99,7 +122,11 @@ def build_master_team_from_config(
             if member_config.get("enabled", True) is False:
                 continue
             member = build_agent_from_config(
-                member_config, model, session_id=session_id, user_id=user_id
+                member_config,
+                model,
+                session_id=session_id,
+                user_id=user_id,
+                openai_api_key=_SETTINGS.openai_api_key,
             )
             if member:
                 member_map[member_id] = member
