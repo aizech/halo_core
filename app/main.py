@@ -3906,13 +3906,18 @@ def render_sources_panel() -> None:
                     st.caption("Vorschläge aus Web & System APIs")
                     for idx, result in enumerate(results):
                         st.markdown(f"**{result['title']}**  — {result['description']}")
-                        st.caption(result["meta"])
+                        st.caption(f"{result['meta']} • {result.get('url', '')}")
                         if st.button("Übernehmen", key=f"dialog_web_result_{idx}"):
+                            # Scrape full content from URL before adding
+                            url = result.get("url", "")
+                            scraped = ingestion.scrape_web_content(url) if url else {}
+                            body = scraped.get("body") or result.get("description", "")
+                            title = scraped.get("title") or result["title"]
                             _add_source(
-                                result["title"],
+                                title,
                                 result["type"],
                                 result["meta"],
-                                result.get("description"),
+                                body,
                             )
                             st.toast("Quelle übernommen")
 

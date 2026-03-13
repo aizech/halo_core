@@ -1,45 +1,93 @@
-"""Mock ingestion connectors for MVP workflows."""
+"""Ingestion connectors for web search and content scraping."""
 
 from __future__ import annotations
 
+import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
 from services import chunking, parsers, retrieval
 
+_LOGGER = logging.getLogger(__name__)
+
 DocumentPayload = Dict[str, str]
 
 
-_SAMPLE_WEB_RESULTS = [
-    {
-        "title": "Notion AI Tutorial",
-        "type": "Web",
-        "meta": "Web • Vor 2 Tagen",
-        "description": "Anleitung zur Nutzung von Notion AI für Wissensarbeit.",
-    },
-    {
-        "title": "OpenAI DevDay Recap",
-        "type": "Blog",
-        "meta": "Blog • Vor 1 Woche",
-        "description": "Zusammenfassung aller DevDay Ankündigungen.",
-    },
-    {
-        "title": "Streamlit Components Guide",
-        "type": "Doc",
-        "meta": "Dokument • Vor 3 Wochen",
-        "description": "Best Practices zum Bau komplexer Layouts.",
-    },
-]
+def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
+    """Search the web using DuckDuckGo and return formatted results.
 
+    Args:
+        query: Search query string
+        max_results: Maximum number of results to return
 
-def search_web(query: str) -> List[Dict[str, str]]:
-    """Return mock search results – replace with MCP/System API call later."""
-    if not query:
+    Returns:
+        List of dicts with keys: title, type, meta, description, url
+    """
+    if not query or not query.strip():
         return []
-    lowered = query.lower()
-    return [
-        item for item in _SAMPLE_WEB_RESULTS if lowered in item["title"].lower()
-    ] or _SAMPLE_WEB_RESULTS
+
+    try:
+        from duckduckgo_search import DDGS
+    except ImportError:
+        _LOGGER.warning("duckduckgo_search not installed, returning empty results")
+        return []
+
+    results: List[Dict[str, str]] = []
+    try:
+        with DDGS() as ddgs:
+            search_results = ddgs.text(query, max_results=max_results)
+            if search_results:
+                for item in search_results:
+                    results.append(
+                        {
+                            "title": item.get("title", "Untitled"),
+                            "type": "Web",
+                            "meta": f"Web • {datetime.now():%d.%m.%Y}",
+                            "description": item.get("body", "")[:300],
+                            "url": item.get("href", ""),
+                        }
+                    )
+    except Exception as e:
+        _LOGGER.error("DuckDuckGo search failed: %s", e)
+
+    return results
+
+
+def scrape_web_content(url: str) -> Dict[str, str]:
+    """Scrape content from a URL using WebsiteTools.
+
+    Args:
+        url: URL to scrape
+
+    Returns:
+        Dict with keys: title, body, source_url, or empty dict on failure
+    """
+    if not url or not url.strip():
+        return {}
+
+    try:
+        from agno.tools.website import WebsiteTools
+    except ImportError:
+        _LOGGER.warning("agno.tools.website not available")
+        return {}
+
+    try:
+        tools = WebsiteTools()
+        # WebsiteTools returns content via its methods
+        # Use the web scraper to extract text content
+        content = tools.read(url)
+
+        if content:
+            return {
+                "title": url.split("/")[-1] or url,
+                "body": content,
+                "source_url": url,
+            }
+        return {}
+    except Exception as e:
+        _LOGGER.error("Web scraping failed for %s: %s", url, e)
+        return {}
 
 
 def ingest_source_content(title: str, body: str, meta: Dict[str, str]) -> None:
