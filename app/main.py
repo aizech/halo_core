@@ -4201,33 +4201,39 @@ def render_chat_panel() -> None:
     if pending_prompt:
         agent_config = _get_agent_config("chat")
         with st.chat_message("assistant"):
-            tool_calls_container = st.empty()
-            response_container = st.empty()
+            # Status container to show agent progress
+            with st.status("Agent läuft...", expanded=True) as status:
+                tool_calls_container = st.empty()
+                response_container = st.empty()
 
-            def _on_response(value: str) -> None:
-                rendered = _normalize_chat_response_text(value)
-                with response_container.container():
-                    _render_chat_markdown(rendered)
+                def _on_response(value: str) -> None:
+                    rendered = _normalize_chat_response_text(value)
+                    with response_container.container():
+                        _render_chat_markdown(rendered)
 
-            def _on_tools(tools: List[object]) -> None:
-                _display_tool_calls(tool_calls_container, tools)
+                def _on_tools(tools: List[object]) -> None:
+                    _display_tool_calls(tool_calls_container, tools)
 
-            turn = ChatTurnInput(
-                prompt=pending_prompt,
-                sources=_selected_source_names(),
-                notes=st.session_state["notes"],
-                session_id=st.session_state.get("session_id"),
-                user_id=user_memory.resolve_user_id(st.session_state),
-                agent_config=agent_config,
-                images=pending_images,
-                stream_events=bool((agent_config or {}).get("stream_events", True)),
-                log_stream_events=bool(
-                    st.session_state.get("config", {}).get("log_stream_events")
-                ),
-                on_response=_on_response,
-                on_tools=_on_tools,
-            )
-            result = run_chat_turn(turn)
+                turn = ChatTurnInput(
+                    prompt=pending_prompt,
+                    sources=_selected_source_names(),
+                    notes=st.session_state["notes"],
+                    session_id=st.session_state.get("session_id"),
+                    user_id=user_memory.resolve_user_id(st.session_state),
+                    agent_config=agent_config,
+                    images=pending_images,
+                    stream_events=bool((agent_config or {}).get("stream_events", True)),
+                    log_stream_events=bool(
+                        st.session_state.get("config", {}).get("log_stream_events")
+                    ),
+                    on_response=_on_response,
+                    on_tools=_on_tools,
+                )
+                result = run_chat_turn(turn)
+                # Update status to complete when done
+                status.update(
+                    label="Antwort generiert", state="complete", expanded=False
+                )
 
         _append_chat(
             "assistant",
