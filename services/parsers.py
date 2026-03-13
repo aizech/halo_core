@@ -51,11 +51,18 @@ SUPPORTED_EXTENSIONS = {
     ".mkv",
     ".webm",
     ".avi",
+    ".dcm",
+    ".dicom",
 }
 _TEXT_EXTENSIONS = {".txt", ".md", ".csv"}
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 _AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus"}
 _VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
+_DICOM_EXTENSIONS = {".dcm", ".dicom"}
+
+# DICOM magic bytes: 128-byte preamble followed by 'DICM'
+_DICOM_MAGIC = b"DICM"
+_DICOM_PREAMBLE_SIZE = 128
 
 
 def _decode_text(data: bytes) -> str:
@@ -192,9 +199,124 @@ def _transcribe_video(data: bytes, filename: str, suffix: str) -> str:
         _safe_unlink(audio_path)
 
 
+def is_dicom_file(data: bytes) -> bool:
+    """Check if bytes represent a DICOM file by magic bytes.
+
+    DICOM files have a 128-byte preamble followed by 'DICM'.
+    This works for files with or without .dcm extension.
+    """
+    if len(data) < _DICOM_PREAMBLE_SIZE + 4:
+        return False
+    return data[_DICOM_PREAMBLE_SIZE : _DICOM_PREAMBLE_SIZE + 4] == _DICOM_MAGIC
+
+
+def _extract_dicom_metadata(data: bytes, filename: str) -> str:
+    """Extract readable metadata and text from a DICOM file.
+
+    Returns a formatted string with patient info, study/series details,
+    and any structured report content.
+    """
+    try:
+        import pydicom
+    except ImportError:
+        return f"DICOM-Datei: {filename} (pydicom nicht installiert)"
+
+    try:
+        ds = pydicom.dcmread(BytesIO(data))
+    except Exception:
+        return f"DICOM-Datei: {filename} (Lesefehler)"
+
+    lines: list[str] = []
+
+    # Patient info (anonymized display)
+    patient_name = str(getattr(ds, "PatientName", "Unbekannt"))
+    patient_id = str(getattr(ds, "PatientID", "Unbekannt"))
+    lines.append(f"Patient: {patient_name} (ID: {patient_id})")
+
+    # Study info
+    study_desc = str(getattr(ds, "StudyDescription", ""))
+    study_date = str(getattr(ds, "StudyDate", ""))
+    modality = str(getattr(ds, "Modality", ""))
+    if study_desc or study_date or modality:
+        lines.append(f"Studie: {study_desc} ({study_date}) - {modality}")
+
+    # Series info
+    series_desc = str(getattr(ds, "SeriesDescription", ""))
+    series_number = str(getattr(ds, "SeriesNumber", ""))
+    if series_desc or series_number:
+        lines.append(f"Serie: {series_desc} (Nr. {series_number})")
+
+    # SOP Class info
+    sop_class = str(getattr(ds, "SOPClassUID", ""))
+    if sop_class:
+        # Extract readable name from UID
+        if "Structured Report" in sop_class:
+            lines.append("Typ: Structured Report")
+        elif "Image" in sop_class:
+            lines.append("Typ: Bild")
+        else:
+            lines.append(f"SOP Class: {sop_class}")
+
+    # Extract text from structured reports
+    if hasattr(ds, "ContentSequence"):
+        content_texts = _extract_dicom_content_sequence(ds.ContentSequence)
+        if content_texts:
+            lines.append("")
+            lines.append("Inhalt:")
+            lines.extend(content_texts)
+
+    # Extract encapsulated documents (PDF in DICOM)
+    if hasattr(ds, "EncapsulatedDocument"):
+        encap_doc = ds.EncapsulatedDocument
+        if isinstance(encap_doc, bytes):
+            lines.append("")
+            lines.append("Enthält eingebettetes Dokument")
+            # Try to extract text from encapsulated PDF
+            try:
+                from pypdf import PdfReader
+
+                pdf_reader = PdfReader(BytesIO(encap_doc))
+                pdf_text = _extract_pdf(pdf_reader)
+                if pdf_text:
+                    lines.append(f"PDF-Inhalt: {pdf_text[:500]}...")
+            except Exception:
+                pass
+
+    return "\n".join(lines)
+
+
+def _extract_dicom_content_sequence(sequence) -> list[str]:
+    """Recursively extract text from DICOM ContentSequence."""
+    texts: list[str] = []
+    if not sequence:
+        return texts
+
+    for item in sequence:
+        # Get content value if present
+        if hasattr(item, "TextValue"):
+            texts.append(f"- {item.TextValue}")
+        elif hasattr(item, "CodeMeaning"):
+            code_meaning = str(item.CodeMeaning)
+            if code_meaning:
+                texts.append(f"- {code_meaning}")
+
+        # Recurse into nested sequences
+        if hasattr(item, "ContentSequence"):
+            nested = _extract_dicom_content_sequence(item.ContentSequence)
+            texts.extend(nested)
+
+    return texts
+
+
 def extract_text_from_bytes(filename: str, data: bytes) -> str:
     """Return plaintext from a binary document payload."""
     suffix = Path(filename).suffix.lower()
+
+    # Check for DICOM by extension or magic bytes
+    is_dicom = suffix in _DICOM_EXTENSIONS or is_dicom_file(data)
+    if is_dicom:
+        return _extract_dicom_metadata(data, filename)
+
     if suffix in _TEXT_EXTENSIONS:
         return _decode_text(data)
     if suffix == ".pdf":

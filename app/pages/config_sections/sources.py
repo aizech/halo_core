@@ -8,18 +8,40 @@ from services import connectors
 
 def render(container: st.delta_generator.DeltaGenerator) -> None:
     container.subheader("Quellen & Connectoren")
+
+    # Show connector configuration status
+    status = connectors.get_connector_status()
+
+    with container.expander("Connector-Status", expanded=True):
+        for slug, info in status.items():
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                if info["configured"]:
+                    st.markdown(f"✅ **{info['name']}**")
+                else:
+                    st.markdown(f"⚠️ **{info['name']}**")
+            with col2:
+                if info["configured"]:
+                    st.caption("Bereit für Sync")
+                else:
+                    missing = info.get("missing_env_vars", [])
+                    if missing:
+                        st.caption(f"Fehlt: {', '.join(missing)}")
+
     enabled = container.multiselect(
         "Aktivierte Connectoren",
         options=list(connectors.AVAILABLE_CONNECTORS.keys()),
         default=st.session_state["config"].get("enabled_connectors", []),
         format_func=lambda key: connectors.AVAILABLE_CONNECTORS[key].name,
     )
+
     container.subheader("Bildgenerierung")
     image_model = container.selectbox(
         "Bildmodell",
         options=["gpt-image-1.5"],
         index=0,
     )
+
     if container.button("Speichern", key="cfg_sources_save_connectors"):
         updates = {
             "enabled_connectors": enabled,

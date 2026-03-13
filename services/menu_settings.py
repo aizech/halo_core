@@ -65,6 +65,13 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
         },
         {
             "kind": "link",
+            "label": "DICOM Tools",
+            "icon": "medical_services",
+            "page": "pages/DICOM_Tools.py",
+            "access": "logged_in",
+        },
+        {
+            "kind": "link",
             "label": "Account",
             "icon": "account_circle",
             "page": "pages/Account.py",

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from dotenv import load_dotenv
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +32,46 @@ class Settings(BaseSettings):
         validation_alias="HALO_AGENT_DB",
         description="Path to SQLite file for Agno agent memory. None = JSON-only (no DB).",
     )
+    # DICOM settings
+    dicom_anonymize_on_upload: bool = Field(
+        default=False,
+        validation_alias="DICOM_ANONYMIZE_ON_UPLOAD",
+        description="Auto-anonymize DICOM files on upload to Sources.",
+    )
+    dicom_anonymization_tags: List[str] = Field(
+        default_factory=lambda: [
+            "PatientName",
+            "PatientID",
+            "PatientBirthDate",
+            "PatientSex",
+            "PatientAddress",
+            "InstitutionName",
+            "ReferringPhysicianName",
+        ],
+        validation_alias="DICOM_ANONYMIZATION_TAGS",
+        description="List of DICOM tags to anonymize.",
+    )
+    dicom_pacs_host: Optional[str] = Field(
+        default=None,
+        validation_alias="DICOM_PACS_HOST",
+        description="DICOM PACS server hostname for MCP connector.",
+    )
+    dicom_pacs_port: Optional[int] = Field(
+        default=None,
+        validation_alias="DICOM_PACS_PORT",
+        description="DICOM PACS server port.",
+    )
+    dicom_pacs_ae_title: Optional[str] = Field(
+        default=None,
+        validation_alias="DICOM_PACS_AE_TITLE",
+        description="DICOM PACS AE Title.",
+    )
+
+    @field_validator("dicom_pacs_port", mode="before")
+    @classmethod
+    def _empty_str_to_none(cls, v: object) -> Optional[object]:
+        """Convert empty string to None for optional int fields."""
+        return None if v == "" else v
 
     model_config = SettingsConfigDict(
         env_file=".env",

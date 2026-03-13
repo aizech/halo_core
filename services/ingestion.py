@@ -54,9 +54,14 @@ def ingest_source_content(title: str, body: str, meta: Dict[str, str]) -> None:
         retrieval.index_source_text(title, chunk["text"], chunk["meta"])
 
 
-def infer_type_label(filename: str) -> str:
+def infer_type_label(filename: str, data: bytes | None = None) -> str:
+    """Infer type label from filename extension or content.
+
+    If data is provided, also checks for DICOM magic bytes for files
+    without recognized extension.
+    """
     suffix = Path(filename).suffix.lower()
-    return {
+    type_label = {
         ".pdf": "PDF",
         ".docx": "Doc",
         ".txt": "Text",
@@ -81,21 +86,36 @@ def infer_type_label(filename: str) -> str:
         ".mkv": "Video",
         ".webm": "Video",
         ".avi": "Video",
-    }.get(suffix, "Doc")
+        ".dcm": "DICOM",
+        ".dicom": "DICOM",
+    }.get(suffix)
+
+    if type_label:
+        return type_label
+
+    # Check for DICOM by magic bytes if no extension match
+    if data and parsers.is_dicom_file(data):
+        return "DICOM"
+
+    return "Doc"
 
 
 def extract_document_payload(filename: str, data: bytes) -> DocumentPayload:
     """Return title/type/body for a single uploaded document."""
     text = parsers.extract_text_from_bytes(filename, data)
+    type_label = infer_type_label(filename, data)
     return {
         "title": filename,
-        "type_label": infer_type_label(filename),
+        "type_label": type_label,
         "body": text,
     }
 
 
 def load_directory_documents(directory: Path) -> List[DocumentPayload]:
-    """Collect supported files from a directory (recursively)."""
+    """Collect supported files from a directory (recursively).
+
+    Also detects DICOM files by magic bytes even without extension.
+    """
     if not directory.exists():
         raise FileNotFoundError(directory)
     if not directory.is_dir():
@@ -106,14 +126,28 @@ def load_directory_documents(directory: Path) -> List[DocumentPayload]:
         if not path.is_file():
             continue
         suffix = path.suffix.lower()
-        if suffix not in parsers.SUPPORTED_EXTENSIONS:
-            continue
+
+        # Check if extension is supported
+        ext_supported = suffix in parsers.SUPPORTED_EXTENSIONS
+
+        # For files without recognized extension, check content
+        if not ext_supported:
+            try:
+                with path.open("rb") as f:
+                    header = f.read(132)  # DICOM preamble + magic
+                    if not parsers.is_dicom_file(header):
+                        continue
+            except Exception:
+                continue
+
+        # Skip media files (handled differently)
         if suffix in (
             parsers._IMAGE_EXTENSIONS
             | parsers._AUDIO_EXTENSIONS
             | parsers._VIDEO_EXTENSIONS
         ):
             continue
+
         body = parsers.extract_text_from_path(path)
         documents.append(
             {

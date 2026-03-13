@@ -226,6 +226,44 @@ DEFAULT_MCP_SERVERS = [
         "url": "",
         "command": 'npx -y @modelcontextprotocol/server-filesystem "c:\\temp"',
     },
+    # Cloud storage connectors (MCP-based)
+    {
+        "name": "notion",
+        "enabled": False,
+        "transport": "streamable-http",
+        "url": "https://mcp.notion.com/mcp",
+        "command": "",
+        "env_vars": ["NOTION_API_KEY"],
+        "description": "Notion workspace integration via official Notion MCP server",
+    },
+    {
+        "name": "google-drive",
+        "enabled": False,
+        "transport": "stdio",
+        "url": "",
+        "command": "npx -y @modelcontextprotocol/server-gdrive",
+        "env_vars": ["GOOGLE_OAUTH_CREDENTIALS"],
+        "description": "Google Drive integration via MCP server",
+    },
+    {
+        "name": "onedrive",
+        "enabled": False,
+        "transport": "stdio",
+        "url": "",
+        "command": "npx -y @microsoft/mcp-server-files",
+        "env_vars": ["MSAL_TENANT_ID", "MSAL_CLIENT_ID", "MSAL_CLIENT_SECRET"],
+        "description": "OneDrive/SharePoint integration via Microsoft MCP server",
+    },
+    # Healthcare/Research connectors
+    {
+        "name": "dicom-pacs",
+        "enabled": False,
+        "transport": "stdio",
+        "url": "",
+        "command": "uvx dicom-mcp",
+        "env_vars": ["DICOM_PACS_HOST", "DICOM_PACS_PORT", "DICOM_PACS_AE_TITLE"],
+        "description": "DICOM PACS server integration for medical imaging",
+    },
 ]
 
 
