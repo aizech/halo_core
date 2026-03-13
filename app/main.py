@@ -2188,6 +2188,29 @@ def _render_chat_memory_configuration(
     sum_c2.markdown(f"**Team:** {rt_members_display}")
     sum_c2.markdown(f"**Tools:** {rt_tools_display}")
 
+    # Presets Mapping Table
+    container.markdown("### Preset-Team Zuordnung")
+    presets_payload = presets.load_presets()
+    if presets_payload:
+        mapping_data = []
+        for preset_name, preset_data in presets_payload.items():
+            team_id = preset_data.get("team_id", "—")
+            members = preset_data.get("members", [])
+            members_str = ", ".join(members) if members else "—"
+            mapping_data.append({
+                "Preset": preset_name,
+                "Team": team_id,
+                "Agenten": members_str
+            })
+        if mapping_data:
+            import pandas as pd
+            df = pd.DataFrame(mapping_data)
+            container.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True,
+            )
+
     payload_key = "cfg_chat_log_agent_payload"
     response_key = "cfg_chat_log_agent_response"
     errors_key = "cfg_chat_log_agent_errors"
@@ -2280,6 +2303,11 @@ def _render_chat_memory_configuration(
                 agent_configs = st.session_state.get("agent_configs", {})
                 agent_configs["chat"] = updated
                 st.session_state["agent_configs"] = agent_configs
+                # Sync team_id with Studio
+                preset_data = presets_payload.get(selected_preset, {})
+                team_id = preset_data.get("team_id")
+                if team_id:
+                    st.session_state["selected_team_id"] = team_id
                 preset_payload = {
                     "chat_preset": selected_preset,
                     "model": str(updated.get("model", "openai:gpt-5.2")),
@@ -2332,11 +2360,15 @@ def _render_chat_memory_configuration(
     container.multiselect(
         "Chat Team",
         options=member_options,
-        default=(
-            chat_config.get("members", [])
-            if isinstance(chat_config.get("members"), list)
-            else []
-        ),
+        default=[
+            m
+            for m in (
+                chat_config.get("members", [])
+                if isinstance(chat_config.get("members"), list)
+                else []
+            )
+            if m in member_options
+        ],
         key=chat_members_key,
     )
     normalized_chat_tools = _normalize_agent_tools(chat_config.get("tools", []))
@@ -2745,11 +2777,15 @@ def _render_advanced_configuration(
     team_box.multiselect(
         "Mitglieder (Delegation)",
         options=member_options,
-        default=(
-            selected_agent.get("members", [])
-            if isinstance(selected_agent.get("members"), list)
-            else []
-        ),
+        default=[
+            m
+            for m in (
+                selected_agent.get("members", [])
+                if isinstance(selected_agent.get("members"), list)
+                else []
+            )
+            if m in member_options
+        ],
         key=members_key,
     )
 
@@ -4514,19 +4550,52 @@ def render_studio_panel() -> None:
     teams = _load_studio_teams()
     all_templates = st.session_state["studio_templates"]
 
+    # Initialize selected_team_id from session state (synced from preset)
+    st.session_state.setdefault("selected_team_id", None)
+    current_team_id = st.session_state.get("selected_team_id")
+
     if teams:
-        # Team selector dropdown
+        # Team selector dropdown with bidirectional sync
         team_options = {"Alle Teams": None}
         for team in teams:
             team_options[team.name] = team.team_id
 
+        # Find the option name for current team
+        current_team_name = "Alle Teams"
+        for name, tid in team_options.items():
+            if tid == current_team_id:
+                current_team_name = name
+                break
+
+        # Get current selection from widget state if it exists
+        widget_key = "studio_team_filter"
+        if widget_key in st.session_state:
+            selected_team_name = st.session_state[widget_key]
+        else:
+            selected_team_name = current_team_name
+
         selected_team_name = st.selectbox(
             "Team-Filter",
             options=list(team_options.keys()),
+            index=list(team_options.keys()).index(selected_team_name)
+            if selected_team_name in team_options
+            else 0,
             key="studio_team_filter",
             label_visibility="collapsed",
         )
         selected_team_id = team_options.get(selected_team_name)
+
+        # Sync back to session state and find matching preset
+        if selected_team_id != current_team_id:
+            st.session_state["selected_team_id"] = selected_team_id
+            # Find preset with matching team_id and update chat_preset
+            presets_payload = presets.load_presets()
+            for preset_name, preset_data in presets_payload.items():
+                if preset_data.get("team_id") == selected_team_id:
+                    st.session_state.setdefault("config", {})
+                    st.session_state["config"]["chat_preset"] = preset_name
+                    storage.save_config(st.session_state.get("config", {}))
+                    break
 
         # Filter templates by team
         if selected_team_id:

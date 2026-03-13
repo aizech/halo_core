@@ -1,36 +1,60 @@
 {
-  "Research": {
-    "model": "openai:gpt-5",
+  "General": {
+    "team_id": "general_team",
+    "model": "openai:gpt-4.1",
     "members": [
-      "reports",
-      "pubmed"
+      "general_assistant",
+      "note_taker",
+      "summarizer"
+    ],
+    "tools": [
+      "duckduckgo",
+      "calculator"
+    ],
+    "stream_events": true
+  },
+  "Showcase": {
+    "team_id": "showcase_team",
+    "model": "openai:gpt-4.1",
+    "members": [
+      "showcase_assistant",
+      "web_researcher",
+      "image_creator",
+      "data_analyst"
+    ],
+    "tools": [
+      "duckduckgo",
+      "calculator",
+      "arxiv"
+    ],
+    "stream_events": true
+  },
+  "Medical": {
+    "team_id": "medical_team",
+    "model": "openai:gpt-4.1",
+    "members": [
+      "chief_doctor",
+      "radiologist",
+      "cardiologist",
+      "pharmacist",
+      "medical_researcher",
+      "medical_scribe"
     ],
     "tools": [
       "pubmed"
     ],
     "stream_events": true
   },
-  "Default": {
-    "model": "openai:gpt-5.2",
+  "Marketing": {
+    "team_id": "marketing_team",
+    "model": "openai:gpt-4.1",
     "members": [
-      "reports",
-      "infographic"
+      "content_writer",
+      "seo_optimizer",
+      "visual_researcher"
     ],
     "tools": [
-      "wikipedia",
-      "pubmed",
-      "mermaid"
-    ],
-    "stream_events": true
-  },
-  "GodsinWhite": {
-    "model": "openai:gpt-5",
-    "members": [
-      "infographic",
-      "pubmed"
-    ],
-    "tools": [
-      "pubmed"
+      "duckduckgo"
     ],
     "stream_events": true
   }
