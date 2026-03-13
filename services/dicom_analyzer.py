@@ -436,6 +436,7 @@ def analyze_single_dicom(
         quality=quality,
         summary=summary,
         raw_agent_response=raw_response,
+        image_bytes=image_bytes,  # Store converted image for display
     )
 
 
@@ -547,6 +548,15 @@ def analyze_dicom_series(
         dicom_results=dicom_results,
         analysis_source="directory",
     )
+
+
+def _add_overall_summary(
+    result: SeriesAnalysisResult,
+    agent_run_func: Optional[callable] = None,
+) -> SeriesAnalysisResult:
+    """Add overall summary to the analysis result."""
+    result.overall_summary = generate_overall_summary(result, agent_run_func)
+    return result
 
 
 def analyze_uploaded_dicoms(
@@ -683,3 +693,93 @@ def load_analysis_result(filepath: Path) -> SeriesAnalysisResult:
         data = json.load(f)
 
     return SeriesAnalysisResult.from_dict(data)
+
+
+def generate_overall_summary(
+    result: SeriesAnalysisResult,
+    agent_run_func: Optional[callable] = None,
+) -> str:
+    """Generate an overall summary of all DICOM analysis findings.
+
+    Args:
+        result: SeriesAnalysisResult with individual DICOM analyses
+        agent_run_func: Function to run AI agent for summary generation
+
+    Returns:
+        Overall summary text
+    """
+    if not agent_run_func or not result.dicom_results:
+        return _generate_statistical_summary(result)
+
+    # Build context for the agent
+    findings_context = []
+    for dicom_result in result.dicom_results:
+        if dicom_result.error:
+            continue
+        findings_context.append(
+            f"**{Path(dicom_result.file_path).name}:**\n"
+            f"- Anomalien: {dicom_result.anomaly_count}\n"
+            f"- Qualität: {dicom_result.quality.overall:.1f}/5\n"
+            f"- Zusammenfassung: {dicom_result.summary}\n"
+        )
+        if dicom_result.anomalies:
+            for a in dicom_result.anomalies:
+                findings_context.append(
+                    f"  - {a.anomaly_type} ({a.severity.to_label()}): {a.description}"
+                )
+
+    try:
+        # Use text-only analysis for summary (no image needed)
+        response = agent_run_func(b"", {"modality": "summary", "summary_request": True})
+        if response and len(response) > 50:
+            return response
+    except Exception as e:
+        _logger.warning("Agent summary generation failed: %s", e)
+
+    # Fallback to statistical summary
+    return _generate_statistical_summary(result)
+
+
+def _generate_statistical_summary(result: SeriesAnalysisResult) -> str:
+    """Generate a statistical summary without AI agent."""
+    parts = []
+
+    # Overview
+    parts.append(
+        f"Analyse von {len(result.dicom_results)} DICOM-Dateien "
+        f"mit insgesamt {result.total_anomalies} Anomalien."
+    )
+
+    # Quality assessment
+    if result.avg_quality >= 4.0:
+        quality_label = "ausgezeichnete"
+    elif result.avg_quality >= 3.0:
+        quality_label = "gute"
+    elif result.avg_quality >= 2.0:
+        quality_label = "ausreichende"
+    else:
+        quality_label = "eingeschränkte"
+
+    parts.append(
+        f"Durchschnittliche Bildqualität: {quality_label} ({result.avg_quality:.1f}/5)."
+    )
+
+    # Severity distribution
+    if result.anomaly_distribution:
+        dist_parts = []
+        for label, count in result.anomaly_distribution.items():
+            if count > 0:
+                dist_parts.append(f"{count} {label}")
+        if dist_parts:
+            parts.append("Schweregrad-Verteilung: " + ", ".join(dist_parts) + ".")
+
+    # Critical findings
+    if result.critical_findings:
+        parts.append(
+            f"ACHTUNG: {len(result.critical_findings)} kritische Befunde erfordern "
+            "sofortige klinische Abklärung."
+        )
+        for finding in result.critical_findings[:3]:  # Show top 3
+            parts.append(f"- {finding.anomaly_type} in {finding.location}")
+
+    return " ".join(parts)

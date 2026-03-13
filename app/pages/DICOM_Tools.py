@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+from datetime import datetime
 
 import streamlit as st
 
@@ -242,7 +243,7 @@ def render():
                 st.download_button(
                     label=":material/download: Anonymisierte Dateien (ZIP)",
                     data=zip_data,
-                    file_name=f"anonymized_dicom_{config.anonymization_id}.zip",
+                    file_name=f"{datetime.now().strftime('%Y%m%d_%H%M')}_anonymized_dicom_{config.anonymization_id}.zip",
                     mime="application/zip",
                     key="download_zip_btn",
                 )
@@ -289,46 +290,37 @@ def render():
                 key="import_to_sources_btn",
             ):
                 from app.main import SourceItem, _now_iso
-                from services import ingestion, storage
+                from services import storage
 
                 imported_count = 0
                 for result in results:
                     if result.error:
                         continue
 
-                    # Parse anonymized DICOM for indexing
-                    text = parsers.extract_text_from_bytes(
+                    # Create source entry with binary file storage
+                    source = SourceItem(
+                        name=f"DICOM: {result.original_filename}",
+                        type_label="DICOM",
+                        meta=f"Anonymisiert ({result.anonymization_id[:8]})",
+                    )
+
+                    # Save DICOM binary to disk
+                    file_path = storage.save_dicom_file(
+                        source.id,
                         result.original_filename,
                         result.anonymized_data,
                     )
-
-                    source_id = (
-                        f"dicom_{result.anonymization_id}_{result.original_filename}"
-                    )
-
-                    meta = {
-                        "type": "DICOM",
-                        "type_label": "DICOM",
-                        "anonymization_id": result.anonymization_id,
-                        "original_id": result.original_id,
-                        "source_id": source_id,
-                    }
-
-                    # Add to LanceDB for RAG
-                    ingestion.ingest_source_content(
-                        title=f"DICOM: {result.original_filename}",
-                        body=text,
-                        meta=meta,
-                    )
+                    source.file_path = file_path
 
                     # Add to sources.json for Home page display
                     source_entry = {
-                        "id": source_id,
-                        "name": f"DICOM: {result.original_filename}",
-                        "type_label": "DICOM",
-                        "meta": f"Anonymisiert ({result.anonymization_id[:8]})",
+                        "id": source.id,
+                        "name": source.name,
+                        "type_label": source.type_label,
+                        "meta": source.meta,
                         "selected": True,
                         "created_at": _now_iso(),
+                        "file_path": file_path,
                     }
 
                     # Load, append, save
@@ -338,7 +330,7 @@ def render():
 
                     # Also update session state if already loaded
                     if "sources" in st.session_state:
-                        st.session_state["sources"].append(SourceItem(**source_entry))
+                        st.session_state["sources"].append(source)
 
                     imported_count += 1
 

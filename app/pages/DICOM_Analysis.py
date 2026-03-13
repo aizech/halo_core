@@ -17,6 +17,7 @@ from services import parsers
 from services.dicom_analyzer import (
     analyze_dicom_series,
     analyze_uploaded_dicoms,
+    generate_overall_summary,
     is_dicom_available,
     save_analysis_result,
 )
@@ -325,6 +326,9 @@ def _run_directory_analysis(directory: Path, anonymize: bool, save_results: bool
             progress_callback=progress_callback,
         )
 
+        # Generate overall summary
+        result.overall_summary = generate_overall_summary(result, agent_runner)
+
         progress_bar.progress(1.0, text="Analyse abgeschlossen!")
         stop_container.empty()
 
@@ -411,6 +415,9 @@ def _run_upload_analysis(uploaded_files: List, anonymize: bool, save_results: bo
             progress_callback=progress_callback,
         )
 
+        # Generate overall summary
+        result.overall_summary = generate_overall_summary(result, agent_runner)
+
         progress_bar.progress(1.0, text="Analyse abgeschlossen!")
         stop_container.empty()
 
@@ -458,12 +465,12 @@ def _create_agent_runner():
         from services.agents import _build_agent_from_config
         from services.agents_config import load_agent_configs
 
-        # Load medical imaging agent config
+        # Load radiologist agent config for medical imaging analysis
         configs = load_agent_configs()
-        config = configs.get("medical_imaging")
+        config = configs.get("radiologist")
         if not config:
-            _LOGGER.warning("medical_imaging agent not found, using default")
-            return "Medical imaging agent not configured"
+            _LOGGER.warning("radiologist agent not found, using default")
+            return "Radiologist agent not configured"
 
         # Create agent from config
         agent = _build_agent_from_config(config)
@@ -546,6 +553,12 @@ Falls keine Anomalien gefunden werden, gib ein leeres `anomalies`-Array zurück.
 def _render_analysis_results(result: SeriesAnalysisResult):
     """Render analysis results with drill-down."""
     st.header("Analyse-Ergebnisse")
+
+    # Overall summary at the top
+    if result.overall_summary:
+        st.subheader("Gesamt-Zusammenfassung")
+        st.markdown(result.overall_summary)
+        st.divider()
 
     # Summary metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -644,10 +657,22 @@ def _render_analysis_results(result: SeriesAnalysisResult):
                 else:
                     st.info("Keine Anomalien gefunden")
 
-            # Summary
-            if dicom_result.summary:
-                st.markdown("**Zusammenfassung:**")
-                st.markdown(dicom_result.summary)
+            # Summary with image on the left
+            image_bytes = getattr(dicom_result, "image_bytes", None)
+            if dicom_result.summary or image_bytes:
+                st.divider()
+                if image_bytes and dicom_result.summary:
+                    img_col, summary_col = st.columns([1, 2])
+                    with img_col:
+                        st.image(image_bytes, caption="DICOM-Bild", width="stretch")
+                    with summary_col:
+                        st.markdown("**Zusammenfassung:**")
+                        st.markdown(dicom_result.summary)
+                elif image_bytes:
+                    st.image(image_bytes, caption="DICOM-Bild", width=300)
+                elif dicom_result.summary:
+                    st.markdown("**Zusammenfassung:**")
+                    st.markdown(dicom_result.summary)
 
     # Export section
     st.subheader("Export")

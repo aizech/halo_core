@@ -134,6 +134,7 @@ class SourceItem:
     selected: bool = True
     id: str = field(default_factory=lambda: uuid4().hex)
     created_at: str = field(default_factory=_now_iso)
+    file_path: str | None = None  # Path to binary file for DICOM sources
 
 
 @dataclass
@@ -2197,13 +2198,12 @@ def _render_chat_memory_configuration(
             team_id = preset_data.get("team_id", "—")
             members = preset_data.get("members", [])
             members_str = ", ".join(members) if members else "—"
-            mapping_data.append({
-                "Preset": preset_name,
-                "Team": team_id,
-                "Agenten": members_str
-            })
+            mapping_data.append(
+                {"Preset": preset_name, "Team": team_id, "Agenten": members_str}
+            )
         if mapping_data:
             import pandas as pd
+
             df = pd.DataFrame(mapping_data)
             container.dataframe(
                 df,
@@ -3022,7 +3022,30 @@ def _render_advanced_configuration(
         )
 
 
-def _add_source(name: str, type_label: str, meta: str, body: str | None = None) -> None:
+def _add_source(
+    name: str,
+    type_label: str,
+    meta: str,
+    body: str | None = None,
+    raw_data: bytes | None = None,
+) -> None:
+    """Add a source to the session state and persist it.
+
+    For DICOM files, stores binary data to disk instead of LanceDB.
+    For other types, ingests text content into LanceDB for RAG.
+    """
+    file_path: str | None = None
+
+    # Handle DICOM files: save binary, skip LanceDB ingestion
+    if type_label == "DICOM" and raw_data is not None:
+        source = SourceItem(name=name, type_label=type_label, meta=meta)
+        file_path = storage.save_dicom_file(source.id, name, raw_data)
+        source.file_path = file_path
+        st.session_state["sources"].append(source)
+        _persist_sources()
+        return
+
+    # Non-DICOM: existing behavior with LanceDB ingestion
     source = SourceItem(name=name, type_label=type_label, meta=meta)
     st.session_state["sources"].append(source)
     _persist_sources()
@@ -3045,13 +3068,22 @@ def _toggle_source(source_id: str) -> None:
     _persist_sources()
 
 
-def _add_document_payload(payload: Dict[str, str], fallback_meta: str) -> None:
+def _add_document_payload(
+    payload: Dict[str, str],
+    fallback_meta: str,
+    raw_data: bytes | None = None,
+) -> None:
+    """Add a document from an extraction payload.
+
+    For DICOM files, pass raw_data to store binary instead of text extraction.
+    """
     meta = payload.get("meta") or payload.get("source_path") or fallback_meta
     _add_source(
         payload["title"],
         payload.get("type_label", "Doc"),
         meta,
         payload.get("body", ""),
+        raw_data=raw_data,
     )
 
 
@@ -3811,15 +3843,22 @@ def render_sources_panel() -> None:
             ):
                 imported = 0
                 for file in uploaded_files:
+                    raw_bytes = file.getvalue()
                     try:
                         payload = ingestion.extract_document_payload(
-                            file.name, file.getvalue()
+                            file.name, raw_bytes
                         )
                     except ValueError as exc:
                         st.error(f"{file.name}: {exc}")
                         continue
+                    # Pass raw bytes for DICOM files to store binary instead of RAG
+                    raw_data = (
+                        raw_bytes if payload.get("type_label") == "DICOM" else None
+                    )
                     _add_document_payload(
-                        payload, upload_meta or f"Upload • {datetime.now():%d.%m.%Y}"
+                        payload,
+                        upload_meta or f"Upload • {datetime.now():%d.%m.%Y}",
+                        raw_data=raw_data,
                     )
                     imported += 1
                 if imported:
@@ -4577,9 +4616,11 @@ def render_studio_panel() -> None:
         selected_team_name = st.selectbox(
             "Team-Filter",
             options=list(team_options.keys()),
-            index=list(team_options.keys()).index(selected_team_name)
-            if selected_team_name in team_options
-            else 0,
+            index=(
+                list(team_options.keys()).index(selected_team_name)
+                if selected_team_name in team_options
+                else 0
+            ),
             key="studio_team_filter",
             label_visibility="collapsed",
         )

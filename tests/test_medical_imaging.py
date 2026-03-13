@@ -38,7 +38,7 @@ class TestRadiologistAgentConfig:
 
         assert config.get("id") == "radiologist"
         assert "Radiology" in config.get("name", "")
-        assert config.get("role") == "imaging_specialist"
+        assert config.get("role") == "radiologist"
         assert "instructions" in config
         assert config.get("enabled") is True
 

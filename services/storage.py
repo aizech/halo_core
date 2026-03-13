@@ -20,11 +20,13 @@ _ALL_SOURCES_SUMMARY_FILE = _DATA_DIR / "all_sources_summary.json"
 _CONFIG_FILE = _DATA_DIR / "config.json"
 _CONNECTOR_CACHE_FILE = _DATA_DIR / "connector_cache.json"
 _CHAT_HISTORY_DIR = _DATA_DIR / "chat_history"
+_DICOM_FILES_DIR = _DATA_DIR / "dicom_files"
 
 
 def _ensure_data_dir() -> None:
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
     _CHAT_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    _DICOM_FILES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_sources() -> List[Dict[str, str]]:
@@ -125,6 +127,27 @@ def save_connector_cache(cache: Dict[str, Dict[str, List[Dict[str, str]]]]) -> N
     _ensure_data_dir()
     with _CONNECTOR_CACHE_FILE.open("w", encoding="utf-8") as handle:
         json.dump(cache, handle, ensure_ascii=False, indent=2)
+
+
+def save_dicom_file(source_id: str, filename: str, data: bytes) -> str:
+    """Save a DICOM binary file to the dicom_files directory.
+
+    Args:
+        source_id: Unique identifier for the source entry
+        filename: Original filename (used for extension and reference)
+        data: Raw DICOM file bytes
+
+    Returns:
+        Absolute path to the saved file
+    """
+    _ensure_data_dir()
+    # Preserve extension or default to .dcm
+    suffix = Path(filename).suffix or ".dcm"
+    safe_filename = f"{source_id}{suffix}"
+    file_path = _DICOM_FILES_DIR / safe_filename
+    file_path.write_bytes(data)
+    _logger.info("Saved DICOM file: %s", file_path)
+    return str(file_path.resolve())
 
 
 _AGENT_DB: object | None = None

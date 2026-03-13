@@ -180,6 +180,7 @@ class DicomAnalysisResult:
     quality: QualityScore
     summary: str
     raw_agent_response: str
+    image_bytes: Optional[bytes] = None  # Converted DICOM image for display
     analysis_timestamp: str = field(
         default_factory=lambda: datetime.datetime.now().isoformat()
     )
@@ -212,6 +213,7 @@ class DicomAnalysisResult:
             "raw_agent_response": self.raw_agent_response,
             "analysis_timestamp": self.analysis_timestamp,
             "error": self.error,
+            # Note: image_bytes not serialized to JSON
         }
 
     @classmethod
@@ -249,6 +251,7 @@ class SeriesAnalysisResult:
     anomaly_distribution: Dict[str, int] = field(default_factory=dict)
     avg_quality: float = 0.0
     critical_findings: List[AnomalyFinding] = field(default_factory=list)
+    overall_summary: str = ""  # AI-generated summary of all findings
     created_at: str = field(default_factory=lambda: datetime.datetime.now().isoformat())
     analysis_source: str = "directory"  # "directory", "upload", "pacs"
 
@@ -307,6 +310,7 @@ class SeriesAnalysisResult:
             "anomaly_distribution": self.anomaly_distribution,
             "avg_quality": self.avg_quality,
             "critical_findings": [f.to_dict() for f in self.critical_findings],
+            "overall_summary": self.overall_summary,
             "created_at": self.created_at,
             "analysis_source": self.analysis_source,
         }
@@ -332,6 +336,7 @@ class SeriesAnalysisResult:
             anomaly_distribution=data.get("anomaly_distribution", {}),
             avg_quality=data.get("avg_quality", 0.0),
             critical_findings=critical_findings,
+            overall_summary=data.get("overall_summary", ""),
             created_at=data.get("created_at", ""),
             analysis_source=data.get("analysis_source", "directory"),
         )
