@@ -2207,7 +2207,7 @@ def _render_chat_memory_configuration(
             df = pd.DataFrame(mapping_data)
             container.dataframe(
                 df,
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
