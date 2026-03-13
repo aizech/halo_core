@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 
-
 class TestQuerySimilarSourceFiltering:
     """Tests for source_ids filtering in query_similar."""
 

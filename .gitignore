@@ -19,6 +19,9 @@ venv/
 data/*
 !data/.gitkeep
 
+# uploads
+uploads/
+
 # Docs internal
 docs_internal/
 

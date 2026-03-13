@@ -3632,12 +3632,16 @@ def _save_uploaded_images(
     return saved_images, image_artifacts
 
 
-def _save_note_from_message(content: str) -> None:
-    note = {
+def _save_note_from_message(
+    content: str, images: List[Dict[str, object]] | None = None
+) -> None:
+    note: Dict[str, object] = {
         "content": content,
         "sources": _selected_source_names(),
         "created_at": _now_iso(),
     }
+    if images:
+        note["images"] = images
     st.session_state.setdefault("notes", []).append(note)
     storage.save_notes(st.session_state["notes"])
     st.toast("Als Notiz gespeichert")
@@ -4173,7 +4177,19 @@ def render_chat_panel() -> None:
                                     use_container_width=True,
                                 )
                     if st.button("In Notiz speichern", key=f"save_note_{idx}"):
-                        _save_note_from_message(display_content)
+                        # Include images from preceding user message (uploaded files)
+                        combined_images = list(message_images) if message_images else []
+                        if idx > 0:
+                            prev_msg = st.session_state["chat_history"][idx - 1]
+                            if prev_msg.get("role") == "user":
+                                prev_images = prev_msg.get("images")
+                                if prev_images:
+                                    combined_images = combined_images + list(
+                                        prev_images
+                                    )
+                        _save_note_from_message(
+                            display_content, combined_images or None
+                        )
                 else:
                     _render_chat_markdown(message["content"])
                     if message_images:
@@ -4207,7 +4223,7 @@ def render_chat_panel() -> None:
         agent_config = _get_agent_config("chat")
         with st.chat_message("assistant"):
             # Status container to show agent progress
-            with st.status("Agent läuft...", expanded=True) as status:
+            with st.status("Thinking...", expanded=True) as status:
                 tool_calls_container = st.empty()
                 response_container = st.empty()
 
@@ -5008,12 +5024,36 @@ def _render_studio_notes_section() -> None:
                     _render_chat_markdown(content)
                 else:
                     st.write("Keine Inhalte verfügbar.")
+                # Display images if present
+                note_images = note.get("images")
+                if note_images:
+                    img_cols = st.columns(2)
+                    for img_idx, image in enumerate(note_images):
+                        image_path = (
+                            image.get("filepath") if isinstance(image, dict) else None
+                        )
+                        image_url = (
+                            image.get("url") if isinstance(image, dict) else None
+                        )
+                        image_src = image_path or image_url
+                        if not image_src:
+                            continue
+                        with img_cols[img_idx % 2]:
+                            st.image(
+                                image_src,
+                                caption=(
+                                    image.get("name")
+                                    if isinstance(image, dict)
+                                    else None
+                                ),
+                                use_container_width=True,
+                            )
                 source_names = sources or ["Alle Quellen"]
                 st.caption("Quellen: " + ", ".join(source_names))
             st.markdown("</div>", unsafe_allow_html=True)
         with cols[1]:
             st.markdown('<div class="note-actions">', unsafe_allow_html=True)
-            with st.popover("", width="stretch"):
+            with st.popover(""):
                 if st.button(
                     "Umbenennen",
                     key=f"note_rename_button_{idx}",
@@ -5066,10 +5106,8 @@ def _render_studio_notes_section() -> None:
                     icon=":material/delete:",
                     icon_position="left",
                     width="stretch",
-                    help="menu-danger",
                 ):
                     st.session_state["confirm_delete_note_index"] = idx
-                    st.session_state["confirm_delete_note_title"] = title
                     _open_delete_note_dialog(idx, title)
                 elif st.session_state.get("confirm_delete_note_index") == idx:
                     _open_delete_note_dialog(idx, title)
