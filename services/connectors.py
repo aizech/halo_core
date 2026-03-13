@@ -214,18 +214,36 @@ AVAILABLE_CONNECTORS: Dict[str, Connector] = {
 }
 
 
-def get_connector_status() -> Dict[str, Dict[str, Any]]:
+def get_connector_status(
+    test_mode: bool = False, test_credentials: dict | None = None
+) -> Dict[str, Dict[str, Any]]:
     """Get configuration status for all connectors.
+
+    Args:
+        test_mode: If True, check test credentials instead of env vars
+        test_credentials: Optional dict of test credentials from session state
 
     Returns dict mapping slug to status info including name, configured, env_vars.
     """
     status: Dict[str, Dict[str, Any]] = {}
+    test_creds = test_credentials or {}
+
     for slug, connector in AVAILABLE_CONNECTORS.items():
-        missing_vars = [var for var in connector.env_vars if not os.environ.get(var)]
+        if test_mode and slug in test_creds:
+            # In test mode, check if test credentials are provided
+            configured = bool(test_creds[slug])
+            missing_vars = [] if configured else connector.env_vars
+        else:
+            # Production mode: check environment variables
+            missing_vars = [
+                var for var in connector.env_vars if not os.environ.get(var)
+            ]
+            configured = connector.is_configured()
+
         status[slug] = {
             "name": connector.name,
             "description": connector.description,
-            "configured": connector.is_configured(),
+            "configured": configured,
             "missing_env_vars": missing_vars,
         }
     return status
