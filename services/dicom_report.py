@@ -605,7 +605,7 @@ def _clean_text(text: str) -> str:
         "—": "-",  # em-dash
         """: '"',  # left double quote
         """: '"',  # right double quote
-        "'": "'",  # left single quote
+        "‘": "'",  # left single quote (U+2018)
         "'": "'",  # right single quote
         "…": "...",  # ellipsis
         "×": "x",  # multiplication sign
