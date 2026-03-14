@@ -40,7 +40,7 @@ Demo limitations:
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - FFmpeg (for audio/video transcription)
 - OpenAI API key (and any MCP/provider credentials you use)
 - Optional: Node/npm for frontend tooling
@@ -48,8 +48,15 @@ Demo limitations:
 ### Install
 
 ```bash
+# Unix/Linux/macOS
 python -m venv .venv
-. .venv/Scripts/activate        # Windows PowerShell: .venv\Scripts\Activate.ps1
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Windows PowerShell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -80,19 +87,29 @@ Default UI includes a sidebar plus three work areas: **Sources**, **Chat**, and 
 
 You now have a full source-to-output workflow running end to end.
 
+### Agent teams quickstart
+
+1. Open **Configuration** → **Agent Config**.
+2. Select a pre-configured team (e.g., "Medical AI Team").
+3. In **Chat**, enable team mode and ask a complex question.
+4. Watch as different agents contribute specialized expertise.
+5. Review the coordinated response with tool call traces.
+
 ---
 
 ## Core product areas
 
 ### Sources
-- Upload and manage documents, data files, images, audio, and video
-- Import connector results
+- Upload and manage documents, data files, images, audio, video, and medical DICOM files
+- Import connector results from Notion, Google Drive, and Microsoft 365
 - Control exactly what context HALO may use
+- Optional auto-anonymization for DICOM medical imaging
 
 ### Chat
-- Source-grounded responses
-- Multimodal input support
-- Optional team-agent orchestration
+- Source-grounded responses with citations
+- Multimodal input support (text, images, audio, video)
+- Team-agent orchestration with specialized roles
+- Multiple coordination modes: direct, skill-based delegation, or team-wide
 - Save responses directly into notes
 
 ### Summary of all sources
@@ -109,9 +126,19 @@ You now have a full source-to-output workflow running end to end.
 - Preserve approved reasoning and decisions
 - Reuse notes as future sources
 
+### DICOM Tools
+- Medical imaging anonymization with HIPAA Safe Harbor compliance
+- Configurable anonymization (patient, institution, study data)
+- Batch processing of multiple DICOM files
+- Export anonymization mapping as CSV
+- PACS server integration for hospital systems
+
 ### Configuration and Agent Config
 - Tune app behavior, presets, models, tools, and runtime options
 - Configure advanced team coordination and MCP usage
+- 15 pre-configured agents and 4 ready-to-use teams
+- MCP connectors for Notion, Google Drive, and Microsoft 365
+- DICOM medical imaging settings and PACS integration
 
 ---
 
@@ -148,6 +175,15 @@ You now have a full source-to-output workflow running end to end.
 - Optional: set `HALO_AGENT_DB` to enable Agno SQLite-backed memory
 - With DB enabled, agents/teams use bounded history (`num_history_runs=3`) and user memories
 
+### DICOM Settings
+- `DICOM_ANONYMIZE_ON_UPLOAD`: Auto-anonymize DICOM files on upload
+- `DICOM_PACS_*`: PACS server configuration for hospital integration
+
+### MCP Connector Credentials
+- `NOTION_API_KEY`: Notion workspace integration
+- `GOOGLE_OAUTH_CREDENTIALS`: Google Drive access (JSON credentials file)
+- `MSAL_*`: Microsoft 365 / OneDrive authentication
+
 ### Structured trace telemetry
 Each chat turn stores telemetry fields, including:
 - `model`
@@ -177,6 +213,16 @@ Each chat turn stores telemetry fields, including:
 2. Turn on `log_stream_events` for deeper diagnostics.
 3. Run: `python -m pytest tests/test_streaming.py -q`
 
+### MCP connector issues
+1. Verify credentials in `.env` or `.streamlit/secrets.toml`.
+2. Test connections via Configuration page.
+3. Run: `python -m pytest tests/test_terminal_mcp_smoke.py -q`
+
+### DICOM file handling issues
+1. Check `DICOM_ANONYMIZE_ON_UPLOAD` setting if auto-anonymization unexpected.
+2. Verify PACS server configuration for connection issues.
+3. Ensure DICOM files are not corrupted before upload.
+
 ### Agent config validation issues
 1. Check `data/agents/*.json` typed fields (`instructions`, `skills`, `tools`, `members`).
 2. Run: `python -m pytest tests/test_agents_config.py -q`
@@ -203,9 +249,20 @@ mkdocs build --strict
 
 ```text
 app/                # Streamlit entrypoints and UI components
+├── pages/          # Individual app pages (Configuration, DICOM_Tools, etc.)
 services/           # Backend orchestration, retrieval, storage, connectors
+├── agents/         # Agent configuration files
+└── knowledge.py    # LanceDB integration for RAG
 data/               # Local persisted workspace data
+├── agents/         # Runtime agent data
+├── chat_history/   # Conversation history
+└── lancedb/         # Vector database for knowledge retrieval
 templates/          # Studio template definitions
+├── studio_templates.json  # Template configurations
+docs/               # Comprehensive documentation
+├── handbook/       # User guides
+├── admin/          # Administration guides
+└── reference/      # Technical reference
 tests/              # Pytest suites
 adr/                # Architectural Decision Records
 ```
@@ -236,8 +293,11 @@ CI runs linting, tests, and type checks via GitHub Actions.
 
 ## Useful links
 
-- [Documentation Content Overview](docs/CONTENT_OVERVIEW.md)
-- [User Handbook](docs/user-handbook.md)
+- [Documentation](docs/index.md) — Comprehensive docs site
+- [User Handbook](docs/handbook/index.md) — End user guides
+- [Admin Guide](docs/admin/index.md) — System administration
+- [Technical Reference](docs/reference/index.md) — Developer documentation
+- [Changelog](docs/changelog.md) — Version history and changes
 - [Product Requirements Document](docs_internal/HALO_CORE_PRD.md)
 - [Chat Integration PRD](docs_internal/HALO_CHAT_INTEGRATION_PRD.md)
 - [Agent Config Integration Plan](docs_internal/AGENT_CONFIG_INTEGRATION_PLAN.md)
@@ -245,5 +305,7 @@ CI runs linting, tests, and type checks via GitHub Actions.
 - [Streamlit App Entry](app/main.py)
 - [Agno docs](https://github.com/agno-agi/agno)
 - [Streamlit docs](https://docs.streamlit.io)
+- [Live Demo](https://halocore.streamlit.app/)
+- [Corpus Analytica](https://www.corpusanalytica.com/)
 
 Made with ❤️ by Corpus Analytica

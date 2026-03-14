@@ -519,27 +519,10 @@ def _apply_theme_preset_to_config(
 
     current = menu_settings.get_menu_settings(config)
     updated: Dict[str, object] = dict(current)
-    updated["theme_preset_name"] = preset_name
+    updated["theme_preset"] = preset_name
     for key, value in preset.items():
         updated[key] = value
     menu_settings.save_menu_settings(config, updated)
-
-
-def _handle_theme_mode_change(*, config: Dict[str, object], toggle_key: str) -> None:
-    is_dark = bool(st.session_state.get(toggle_key))
-    menu_cfg = menu_settings.get_menu_settings(config)
-    menu_cfg["theme_mode"] = "dark" if is_dark else "light"
-    menu_settings.save_menu_settings(config, menu_cfg)
-
-    preset_name = (
-        str(menu_cfg.get("theme_preset_dark") or "").strip()
-        if is_dark
-        else str(menu_cfg.get("theme_preset_light") or "").strip()
-    )
-    if preset_name:
-        _apply_theme_preset_to_config(config, preset_name=preset_name)
-
-    st.session_state["config"] = dict(config)
 
 
 def _src_to_css_url(src: str) -> str:
@@ -578,87 +561,21 @@ def render_sidebar() -> None:
 
     menu_cfg = menu_settings.get_menu_settings(config)
 
-    # Handle theme toggle via query param (avoids st.button layout issues)
-    if st.query_params.get("toggle_theme") == "1":
-        st.query_params.pop("toggle_theme")
-        is_dark_now = str(menu_cfg.get("theme_mode") or "light") == "dark"
-        menu_cfg_new = menu_settings.get_menu_settings(config)
-        menu_cfg_new["theme_mode"] = "light" if is_dark_now else "dark"
-        menu_settings.save_menu_settings(config, menu_cfg_new)
-        preset_name = (
-            str(menu_cfg_new.get("theme_preset_light") or "").strip()
-            if is_dark_now
-            else str(menu_cfg_new.get("theme_preset_dark") or "").strip()
-        )
-        if preset_name:
-            _apply_theme_preset_to_config(config, preset_name=preset_name)
-        st.rerun()
-
     auth_user = st.session_state.get("auth_user")
     if auth_user is None:
         auth_user = auth_service.resolve_auth_user(config)
         st.session_state["auth_user"] = auth_user
     access_guards_enabled = bool(config.get("enable_access_guards", False))
 
-    theme_mode = str(menu_cfg.get("theme_mode") or "light").strip().lower()
-    if theme_mode not in {"light", "dark"}:
-        theme_mode = "light"
+    # Use Streamlit's native theme - simplified color handling
+    separator_color = str(menu_cfg.get("sidebar_separator_color") or "#6C757D").strip()
+    sidebar_text_color = str(menu_cfg.get("sidebar_text_color") or "").strip()
+    sidebar_icon_color = str(menu_cfg.get("sidebar_icon_color") or "").strip()
+    sidebar_bg_color = str(menu_cfg.get("sidebar_bg") or "").strip()
 
-    separator_color = (
-        str(menu_cfg.get("sidebar_separator_color_dark") or "").strip()
-        if theme_mode == "dark"
-        else str(menu_cfg.get("sidebar_separator_color_light") or "").strip()
-    )
-    if not separator_color:
-        separator_color = str(
-            menu_cfg.get("sidebar_separator_color") or "#6C757D"
-        ).strip()
-
-    # Sidebar colors based on theme mode
-    sidebar_text_color = (
-        str(menu_cfg.get("sidebar_text_color_dark") or "").strip()
-        if theme_mode == "dark"
-        else str(
-            menu_cfg.get("sidebar_text_color_light")
-            or menu_cfg.get("sidebar_text_color")
-            or ""
-        ).strip()
-    )
-    if not sidebar_text_color:
-        sidebar_text_color = "#FFFFFF" if theme_mode == "dark" else "#212529"
-
-    sidebar_icon_color = (
-        str(menu_cfg.get("sidebar_icon_color_dark") or "").strip()
-        if theme_mode == "dark"
-        else str(
-            menu_cfg.get("sidebar_icon_color_light")
-            or menu_cfg.get("sidebar_icon_color")
-            or ""
-        ).strip()
-    )
-    if not sidebar_icon_color:
-        sidebar_icon_color = "#ADB5BD" if theme_mode == "dark" else "#495057"
-
-    sidebar_bg_color = (
-        str(menu_cfg.get("sidebar_bg_dark") or "").strip()
-        if theme_mode == "dark"
-        else str(
-            menu_cfg.get("sidebar_bg_light") or menu_cfg.get("sidebar_bg") or ""
-        ).strip()
-    )
-    if not sidebar_bg_color:
-        sidebar_bg_color = "#212529" if theme_mode == "dark" else "#F8F9FA"
-
-    logo_src = (
-        str(menu_cfg.get("logo_src_dark") or "").strip()
-        if theme_mode == "dark"
-        else str(menu_cfg.get("logo_src_light") or "").strip()
-    )
-    icon_src = (
-        str(menu_cfg.get("icon_src_dark") or "").strip()
-        if theme_mode == "dark"
-        else str(menu_cfg.get("icon_src_light") or "").strip()
-    )
+    # Logo and icon sources (no theme-specific variants)
+    logo_src = str(menu_cfg.get("logo_src") or "").strip()
+    icon_src = str(menu_cfg.get("icon_src") or "").strip()
 
     logo_css_url = _src_to_css_url(logo_src)
     icon_css_url = _src_to_css_url(icon_src)
@@ -723,112 +640,28 @@ def render_sidebar() -> None:
     st.markdown(
         f"""
         <style>
-            :root {{
-                --sidebar-bg: {sidebar_bg_color};
-                --sidebar-text: {sidebar_text_color};
-                --sidebar-icon: {sidebar_icon_color};
-                --sidebar-hover-bg: {menu_cfg['sidebar_hover_bg']};
-                --sidebar-hover-text: {menu_cfg.get('sidebar_hover_text_color', sidebar_text_color)};
-                --sidebar-active-bg: {menu_cfg['sidebar_active_bg']};
-                --sidebar-focus-outline: {menu_cfg['sidebar_focus_outline']};
-                --sidebar-accent: {menu_cfg.get('sidebar_focus_outline', '#3B5998')};
-                --sidebar-separator-color: {separator_color};
-                --sidebar-font-size: {menu_cfg['sidebar_font_size_px']}px;
-                --sidebar-icon-size: {menu_cfg.get('sidebar_icon_size_px', 20)}px;
-                --sidebar-collapsed-width: {menu_cfg['sidebar_collapsed_width_px']}px;
-                --sidebar-hover-width: {menu_cfg['sidebar_hover_width_px']}px;
-                --sidebar-item-gap: {menu_cfg.get('sidebar_item_gap_px', 4)}px;
-                --sidebar-transition: {menu_cfg['sidebar_transition']};
-            }}
-            /* Apply sidebar background color and theme mode class */
+        @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Sharp');
+        :root {{
+            /* Use Streamlit's native theme colors as fallbacks */
+            --sidebar-bg: {sidebar_bg_color or 'var(--secondaryBackgroundColor)'}; 
+            --sidebar-text: {sidebar_text_color or 'var(--textColor)'}; 
+            --sidebar-icon: {sidebar_icon_color or 'var(--textColor)'}; 
+            --sidebar-hover-bg: {menu_cfg['sidebar_hover_bg'] or 'var(--primaryColor)'}; 
+            --sidebar-hover-text: {menu_cfg.get('sidebar_hover_text_color', sidebar_text_color) or 'var(--textColor)'}; 
+            --sidebar-active-bg: {menu_cfg['sidebar_active_bg'] or 'var(--primaryColor)'}; 
+            --sidebar-focus-outline: {menu_cfg['sidebar_focus_outline'] or 'var(--primaryColor)'}; 
+            --sidebar-accent: {menu_cfg.get('sidebar_focus_outline', '#3B5998') or 'var(--primaryColor)'}; 
+            --sidebar-separator-color: {separator_color or 'rgba(0,0,0,0.1)'}; 
+            --sidebar-font-size: {menu_cfg['sidebar_font_size_px']}px; 
+            --sidebar-icon-size: {menu_cfg.get('sidebar_icon_size_px', 20)}px; 
+            --sidebar-collapsed-width: {menu_cfg['sidebar_collapsed_width_px']}px; 
+            --sidebar-hover-width: {menu_cfg['sidebar_hover_width_px']}px; 
+            --sidebar-item-gap: {menu_cfg.get('sidebar_item_gap_px', 4)}px; 
+            --sidebar-transition: {menu_cfg['sidebar_transition']}; 
+        }}
+            /* Apply sidebar background color */
             section[data-testid='stSidebar'] {{
                 background-color: var(--sidebar-bg) !important;
-            }}
-            section[data-testid='stSidebar'].halo-theme-{theme_mode} {{
-                /* Theme-specific styles */
-            }}
-            /* Force theme toggle colors based on current theme */
-            section[data-testid='stSidebar'].halo-theme-dark .halo-theme-toggle *,
-            section[data-testid='stSidebar'].halo-theme-dark .halo-theme-toggle {{
-                color: #FFFFFF !important;
-            }}
-            section[data-testid='stSidebar'].halo-theme-light .halo-theme-toggle *,
-            section[data-testid='stSidebar'].halo-theme-light .halo-theme-toggle {{
-                color: #212529 !important;
-            }}
-            /* Theme toggle form - prevent extra spacing */
-            section[data-testid='stSidebar'] form {{
-                margin: 0 !important;
-                padding: 0 !important;
-                border: none !important;
-            }}
-            /* Theme toggle HTML link - identical to stPageLink */
-            section[data-testid='stSidebar'] [data-testid='stMarkdownContainer']:has(.halo-theme-toggle) {{
-                margin: 0 !important;
-            }}
-            section[data-testid='stSidebar'] .halo-theme-toggle {{
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                border-radius: 8px;
-                padding: 6px 12px;
-                height: 50px;
-                box-sizing: border-box;
-                text-decoration: none;
-                white-space: nowrap;
-                overflow: hidden;
-                transition: background-color var(--sidebar-transition);
-                background-color: transparent;
-                width: 100%;
-                color: var(--sidebar-text) !important;
-                font-size: 16px;
-                line-height: 30px;
-            }}
-            /* Ensure button and its children inherit theme colors */
-            section[data-testid='stSidebar'] .halo-theme-toggle button,
-            section[data-testid='stSidebar'] .halo-theme-toggle button *,
-            section[data-testid='stSidebar'] .halo-theme-toggle p,
-            section[data-testid='stSidebar'] .halo-theme-toggle p *,
-            section[data-testid='stSidebar'] .halo-theme-toggle span,
-            section[data-testid='stSidebar'] .halo-theme-toggle span *,
-            section[data-testid='stSidebar'] .halo-theme-toggle .material-icons-sharp {{
-                color: var(--sidebar-text) !important;
-            }}
-            /* Debug: Force colors for dark mode */
-            [data-testid="stSidebar"][data-st-theme="dark"] .halo-theme-toggle *,
-            [data-testid="stSidebar"][data-st-theme="dark"] .halo-theme-toggle {{
-                color: #FFFFFF !important;
-            }}
-            section[data-testid='stSidebar'] .halo-theme-toggle .halo-theme-icon {{
-                font-size: var(--sidebar-icon-size);
-                color: var(--sidebar-icon);
-                flex-shrink: 0;
-                width: var(--sidebar-icon-size);
-                height: var(--sidebar-icon-size);
-                line-height: 1;
-                display: flex;
-                align-items: center;
-            }}
-            section[data-testid='stSidebar'] .halo-theme-toggle:hover {{
-                background-color: var(--sidebar-hover-bg);
-            }}
-            section[data-testid='stSidebar'] .halo-theme-toggle p.halo-theme-label {{
-                margin: 0;
-                white-space: nowrap;
-                overflow: hidden;
-                color: var(--sidebar-text);
-                font-size: 16px;
-                line-height: 30px;
-            }}
-            section[data-testid='stSidebar']:not(:hover) .halo-theme-toggle {{
-                justify-content: center !important;
-                padding: 0 !important;
-                width: var(--sidebar-collapsed-width) !important;
-                height: 30px !important;
-                gap: 0 !important;
-            }}
-            section[data-testid='stSidebar']:not(:hover) .halo-theme-toggle p.halo-theme-label {{
-                display: none !important;
             }}
 
             /* Page Links and Buttons - Expanded State */
@@ -1010,18 +843,9 @@ def render_sidebar() -> None:
                 max-width: 200px;
             }}
         </style>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {{
-                const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-                if (sidebar) {{
-                    sidebar.classList.add('halo-theme-{theme_mode}');
-                }}
-            }});
-        </script>
         """,
         unsafe_allow_html=True,
     )
-    # render_theme_toggle = False
     for index, item in enumerate(menu_cfg.get("items", [])):
         item_kind = str(item.get("kind", "link")).strip().lower()
         if item_kind == "separator":
@@ -1064,27 +888,6 @@ def render_sidebar() -> None:
                         <span class="material-icons-sharp" style="font-size: 16px; color: #6C757D;">unfold_more</span>
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            continue
-        if item_kind == "theme_toggle":
-            is_dark = str(menu_cfg.get("theme_mode") or "light") == "dark"
-            icon = "light_mode" if is_dark else "dark_mode"
-            label = "Light mode" if is_dark else "Dark mode"
-            st.sidebar.markdown(
-                f"""
-                <div class="halo-theme-toggle" onclick="toggleThemeClick()" style="cursor: pointer;">
-                    <span class="material-icons-sharp halo-theme-icon">{icon}</span>
-                    <p class="halo-theme-label">{label}</p>
-                </div>
-                <script>
-                function toggleThemeClick() {{
-                    const url = new URL(window.location);
-                    url.searchParams.set('toggle_theme', '1');
-                    window.location.href = url.toString();
-                }}
-                </script>
                 """,
                 unsafe_allow_html=True,
             )
@@ -1374,9 +1177,7 @@ def _normalize_menu_editor_items(items: object) -> List[Dict[str, object]]:
         editor_item: Dict[str, object] = {
             "_editor_id": uuid.uuid4().hex,
             "kind": (
-                item_kind
-                if item_kind in {"link", "separator", "spacer", "theme_toggle"}
-                else "link"
+                item_kind if item_kind in {"link", "separator", "spacer"} else "link"
             ),
         }
         if editor_item["kind"] == "separator":
@@ -1388,9 +1189,6 @@ def _normalize_menu_editor_items(items: object) -> List[Dict[str, object]]:
             except (TypeError, ValueError):
                 spacer_px = 16
             editor_item["spacer_px"] = max(4, min(64, spacer_px))
-            normalized.append(editor_item)
-            continue
-        if editor_item["kind"] == "theme_toggle":
             normalized.append(editor_item)
             continue
         editor_item["label"] = str(raw_item.get("label", "")).strip()
@@ -1434,348 +1232,12 @@ def _render_app_design_configuration(
     _render_config_saved_caption(container, "app_menu")
     _render_config_saved_caption(container, "app_auth")
     current_menu = menu_settings.get_menu_settings(st.session_state["config"])
-    container.caption("Farben, Größen und Theme-Einstellungen für das Sidebar-Menü.")
+    container.caption("Menüstruktur und Reihenfolge konfigurieren.")
 
-    auth_box = container.container(border=True)
-    auth_box.markdown("**Auth & Access**")
-    auth_mode_value = auth_service.normalize_auth_mode(
-        st.session_state["config"].get("auth_mode")
-    )
-    auth_mode = auth_box.selectbox(
-        "Auth-Modus",
-        options=["local_only", "auth_optional", "auth_required"],
-        index=["local_only", "auth_optional", "auth_required"].index(auth_mode_value),
-        key="cfg_auth_mode",
-    )
-    enable_auth_services = auth_box.checkbox(
-        "Auth-Services aktivieren",
-        value=bool(st.session_state["config"].get("enable_auth_services", False)),
-        key="cfg_enable_auth_services",
-    )
-    enable_auth_ui = auth_box.checkbox(
-        "Login/Logout UI anzeigen",
-        value=bool(st.session_state["config"].get("enable_auth_ui", False)),
-        key="cfg_enable_auth_ui",
-    )
-    enable_access_guards = auth_box.checkbox(
-        "Access Guards aktivieren",
-        value=bool(st.session_state["config"].get("enable_access_guards", False)),
-        key="cfg_enable_access_guards",
-    )
-    auth_provider = auth_box.text_input(
-        "Auth Provider",
-        value=str(st.session_state["config"].get("auth_provider") or "auth0"),
-        key="cfg_auth_provider",
-        help="z.B. auth0",
-    )
-    auth_provider_value = str(auth_provider).strip()
-    auth_preview_config = {
-        **st.session_state["config"],
-        "auth_mode": auth_mode,
-        "enable_auth_services": bool(enable_auth_services),
-        "enable_auth_ui": bool(enable_auth_ui),
-        "enable_access_guards": bool(enable_access_guards),
-    }
-    if auth_provider_value:
-        auth_preview_config["auth_provider"] = auth_provider_value
-    elif "auth_provider" in auth_preview_config:
-        del auth_preview_config["auth_provider"]
+    # Note: Auth configuration moved to dedicated Preferences page
+    # Note: Theme configuration moved to dedicated Themes page
 
-    auth_runtime_enabled_preview = auth_service.is_auth_enabled(auth_preview_config)
-    if auth_mode == "local_only":
-        auth_box.info(
-            "Auth ist auf local_only gesetzt. Login/Logout und Access Guards bleiben inaktiv."
-        )
-    elif not bool(enable_auth_services):
-        auth_box.warning(
-            "Auth-Modus aktiv, aber Auth-Services sind deaktiviert. Aktiviere sie für Login/Logout."
-        )
-    elif not bool(enable_auth_ui):
-        auth_box.warning(
-            "Auth-Services sind aktiv, aber die Login/Logout UI ist ausgeblendet."
-        )
-    elif auth_runtime_enabled_preview:
-        auth_box.success(
-            "Auth-Setup ist aktiv. Login/Logout UI und Guards können verwendet werden."
-        )
-    else:
-        auth_box.warning(
-            "Auth ist teilweise konfiguriert. Pruefe Provider und Streamlit Auth-Konfiguration."
-        )
-
-    auth_box.markdown("**Auth Readiness**")
-    auth_box.markdown(
-        f"- [{'x' if auth_mode != 'local_only' else ' '}] Auth mode ist nicht `local_only`"
-    )
-    auth_box.markdown(
-        f"- [{'x' if bool(enable_auth_services) else ' '}] `enable_auth_services` ist aktiv"
-    )
-    auth_box.markdown(
-        f"- [{'x' if bool(enable_auth_ui) else ' '}] `enable_auth_ui` ist aktiv"
-    )
-    auth_box.markdown(
-        f"- [{'x' if bool(enable_access_guards) else ' '}] `enable_access_guards` ist aktiv (optional)"
-    )
-    auth_box.markdown(
-        f"- [{'x' if bool(auth_provider_value) else ' '}] Auth Provider ist gesetzt"
-    )
-    auth_payload = {
-        "auth_mode": auth_mode,
-        "enable_auth_services": bool(enable_auth_services),
-        "enable_auth_ui": bool(enable_auth_ui),
-        "enable_access_guards": bool(enable_access_guards),
-        "auth_provider": auth_provider_value,
-    }
-    _render_config_dirty_hint(
-        auth_box,
-        "app_auth",
-        auth_payload,
-        "Ungespeicherte Auth-Änderungen.",
-    )
-    if auth_box.button("Auth-Einstellungen speichern", key="save_auth_rollout"):
-        st.session_state["config"]["auth_mode"] = auth_mode
-        st.session_state["config"]["enable_auth_services"] = bool(enable_auth_services)
-        st.session_state["config"]["enable_auth_ui"] = bool(enable_auth_ui)
-        st.session_state["config"]["enable_access_guards"] = bool(enable_access_guards)
-        provider_value = str(auth_provider).strip()
-        if provider_value:
-            st.session_state["config"]["auth_provider"] = provider_value
-        elif "auth_provider" in st.session_state["config"]:
-            del st.session_state["config"]["auth_provider"]
-        storage.save_config(st.session_state["config"])
-        _mark_config_saved(
-            auth_box,
-            "app_auth",
-            "Auth-Einstellungen gespeichert.",
-            payload=auth_payload,
-        )
-        st.rerun()
-
-    theme_mode_value = str(current_menu.get("theme_mode", "dark")).strip().lower()
-    if theme_mode_value not in {"light", "dark"}:
-        theme_mode_value = "dark"
-    theme_box = container.container(border=True)
-    theme_box.markdown("**Theme & Presets**")
-    theme_mode = theme_box.selectbox(
-        "Theme Modus (default)",
-        options=["light", "dark"],
-        index=0 if theme_mode_value == "light" else 1,
-        key="menu_theme_mode_selector",
-    )
-
-    preset_names = sorted(theme_presets.THEME_PRESETS.keys())
-    theme_light_default = str(current_menu.get("theme_preset_light") or "").strip()
-    theme_dark_default = str(current_menu.get("theme_preset_dark") or "").strip()
-    if theme_light_default not in preset_names and preset_names:
-        theme_light_default = preset_names[0]
-    if theme_dark_default not in preset_names and preset_names:
-        theme_dark_default = preset_names[-1]
-    theme_preset_light = theme_box.selectbox(
-        "Theme Preset (Light)",
-        options=preset_names,
-        index=preset_names.index(theme_light_default) if preset_names else None,
-        key="menu_theme_preset_light",
-    )
-    theme_preset_dark = theme_box.selectbox(
-        "Theme Preset (Dark)",
-        options=preset_names,
-        index=preset_names.index(theme_dark_default) if preset_names else None,
-        key="menu_theme_preset_dark",
-    )
-
-    sidebar_bg = str(current_menu.get("sidebar_bg", "#343A40"))
-    sidebar_text = str(current_menu.get("sidebar_text_color", "#F8F9FA"))
-    sidebar_icon = str(current_menu.get("sidebar_icon_color", "#F8F9FA"))
-    sidebar_hover = str(current_menu.get("sidebar_hover_bg", "#F22222"))
-    sidebar_hover_text = str(
-        current_menu.get(
-            "sidebar_hover_text_color",
-            current_menu.get("sidebar_text_color", "#F8F9FA"),
-        )
-    )
-    sidebar_active = str(current_menu.get("sidebar_active_bg", "#CC1E1E"))
-    sidebar_focus = str(current_menu.get("sidebar_focus_outline", "#F22222"))
-    sidebar_separator = str(current_menu.get("sidebar_separator_color", "#6C757D"))
-    sidebar_separator_light = str(
-        current_menu.get(
-            "sidebar_separator_color_light",
-            current_menu.get("sidebar_separator_color", "#D0D0D0"),
-        )
-    )
-    sidebar_separator_dark = str(
-        current_menu.get(
-            "sidebar_separator_color_dark",
-            current_menu.get("sidebar_separator_color", "#6C757D"),
-        )
-    )
-    sidebar_font_size = int(current_menu.get("sidebar_font_size_px", 16))
-    sidebar_icon_size = int(current_menu.get("sidebar_icon_size_px", 28))
-    sidebar_item_gap = int(current_menu.get("sidebar_item_gap_px", 8))
-    sidebar_collapsed_width = int(current_menu.get("sidebar_collapsed_width_px", 64))
-    sidebar_hover_width = int(current_menu.get("sidebar_hover_width_px", 240))
-    logo_src_light = str(current_menu.get("logo_src_light", ""))
-    icon_src_light = str(current_menu.get("icon_src_light", ""))
-    logo_src_dark = str(current_menu.get("logo_src_dark", ""))
-    icon_src_dark = str(current_menu.get("icon_src_dark", ""))
-    logo_height_px = int(current_menu.get("logo_height_px", 44))
-    logo_render_height_px = int(current_menu.get("logo_render_height_px", 36))
-    icon_render_height_px = int(current_menu.get("icon_render_height_px", 28))
-
-    show_advanced_design = container.checkbox(
-        "Erweiterte Design-Optionen anzeigen",
-        value=bool(st.session_state.get("cfg_show_advanced_design", False)),
-        key="cfg_show_advanced_design",
-    )
-    if not show_advanced_design:
-        container.caption(
-            "Farben, Größen und Branding sind ausgeblendet. Aktiviere die erweiterten Optionen, um sie anzupassen."
-        )
-    else:
-        color_box = container.container(border=True)
-        color_box.markdown("**Farben**")
-        color_left, color_right = color_box.columns(2)
-        with color_left:
-            sidebar_bg = st.color_picker(
-                "Sidebar Hintergrund",
-                value=sidebar_bg,
-                key="menu_sidebar_bg",
-            )
-            sidebar_text = st.color_picker(
-                "Sidebar Textfarbe",
-                value=sidebar_text,
-                key="menu_sidebar_text",
-            )
-            sidebar_hover = st.color_picker(
-                "Hover Farbe",
-                value=sidebar_hover,
-                key="menu_sidebar_hover",
-            )
-            sidebar_hover_text = st.color_picker(
-                "Hover Textfarbe",
-                value=sidebar_hover_text,
-                key="menu_sidebar_hover_text",
-            )
-            sidebar_separator = st.color_picker(
-                "Separator Farbe",
-                value=sidebar_separator,
-                key="menu_sidebar_separator",
-            )
-        with color_right:
-            sidebar_icon = st.color_picker(
-                "Icon Farbe",
-                value=sidebar_icon,
-                key="menu_sidebar_icon",
-            )
-            sidebar_active = st.color_picker(
-                "Aktive Farbe",
-                value=sidebar_active,
-                key="menu_sidebar_active",
-            )
-            sidebar_focus = st.color_picker(
-                "Focus Outline",
-                value=sidebar_focus,
-                key="menu_sidebar_focus",
-            )
-            sidebar_separator_light = st.color_picker(
-                "Separator Farbe (Light)",
-                value=sidebar_separator_light,
-                key="menu_sidebar_separator_light",
-            )
-            sidebar_separator_dark = st.color_picker(
-                "Separator Farbe (Dark)",
-                value=sidebar_separator_dark,
-                key="menu_sidebar_separator_dark",
-            )
-
-        sizing_box = container.container(border=True)
-        sizing_box.markdown("**Größen & Layout**")
-        sizing_left, sizing_right = sizing_box.columns(2)
-        with sizing_left:
-            sidebar_font_size = st.slider(
-                "Schriftgröße (px)",
-                min_value=12,
-                max_value=24,
-                value=sidebar_font_size,
-                key="menu_sidebar_font_size",
-            )
-            sidebar_icon_size = st.slider(
-                "Icon Größe (px)",
-                min_value=16,
-                max_value=34,
-                value=sidebar_icon_size,
-                key="menu_sidebar_icon_size",
-            )
-            sidebar_item_gap = st.slider(
-                "Abstand zwischen Menüpunkten (px)",
-                min_value=0,
-                max_value=34,
-                value=sidebar_item_gap,
-                key="menu_sidebar_item_gap",
-            )
-        with sizing_right:
-            sidebar_collapsed_width = st.slider(
-                "Breite eingeklappt (px)",
-                min_value=56,
-                max_value=120,
-                value=sidebar_collapsed_width,
-                key="menu_sidebar_collapsed_width",
-            )
-            sidebar_hover_width = st.slider(
-                "Breite bei Hover (px)",
-                min_value=180,
-                max_value=360,
-                value=sidebar_hover_width,
-                key="menu_sidebar_hover_width",
-            )
-
-        branding_box = container.container(border=True)
-        branding_box.markdown("**Branding (Logo & Icon)**")
-        branding_col_1, branding_col_2 = branding_box.columns(2)
-        with branding_col_1:
-            logo_src_light = st.text_input(
-                "Logo Quelle (Light)",
-                value=logo_src_light,
-                key="menu_logo_src_light",
-            )
-            icon_src_light = st.text_input(
-                "Icon Quelle (Light)",
-                value=icon_src_light,
-                key="menu_icon_src_light",
-            )
-        with branding_col_2:
-            logo_src_dark = st.text_input(
-                "Logo Quelle (Dark)",
-                value=logo_src_dark,
-                key="menu_logo_src_dark",
-            )
-            icon_src_dark = st.text_input(
-                "Icon Quelle (Dark)",
-                value=icon_src_dark,
-                key="menu_icon_src_dark",
-            )
-
-        logo_height_px = branding_box.slider(
-            "Logo Platzhöhe (px)",
-            min_value=24,
-            max_value=128,
-            value=logo_height_px,
-            key="menu_logo_height",
-        )
-        logo_render_height_px = branding_box.slider(
-            "Logo Renderhöhe (px)",
-            min_value=20,
-            max_value=96,
-            value=logo_render_height_px,
-            key="menu_logo_render_height",
-        )
-        icon_render_height_px = branding_box.slider(
-            "Icon Renderhöhe (px)",
-            min_value=16,
-            max_value=64,
-            value=icon_render_height_px,
-            key="menu_icon_render_height",
-        )
-
+    # Menu Configuration (remaining part)
     menu_items = current_menu.get("items", [])
     menu_items_signature = _menu_items_signature(menu_items)
     editor_signature = st.session_state.get(_MENU_EDITOR_SIGNATURE_KEY)
@@ -1821,7 +1283,7 @@ def _render_app_design_configuration(
     if show_menu_editor:
         menu_caption_cols = container.columns([4, 2])
         menu_caption_cols[0].caption(
-            "Menüeinträge: mit ↑ / ↓ sortieren, Spacer / Separator / Theme Toggle einfügen"
+            "Menüeinträge: mit ↑ / ↓ sortieren, Spacer / Separator einfügen"
         )
         menu_caption_cols[1].markdown(
             "[Google Material Icons](https://fonts.google.com/icons)",
@@ -1838,12 +1300,11 @@ def _render_app_design_configuration(
             item["_editor_id"] = row_id
             item_box = container.container(border=True)
 
-            kind_options = ["link", "spacer", "separator", "theme_toggle"]
+            kind_options = ["link", "spacer", "separator"]
             kind_labels = {
                 "link": "Link",
                 "spacer": "Spacer",
                 "separator": "Separator",
-                "theme_toggle": "Theme Toggle",
             }
             current_kind = str(item.get("kind", "link")).strip().lower()
             if current_kind not in kind_options:
@@ -1868,7 +1329,7 @@ def _render_app_design_configuration(
                 }.get(_row_access, ":material/public:")
                 _summary_parts.append(_access_badge)
                 item_box.caption(" · ".join(_summary_parts))
-            elif current_kind in {"spacer", "separator", "theme_toggle"}:
+            elif current_kind in {"spacer", "separator"}:
                 item_box.caption(kind_labels.get(current_kind, current_kind))
 
             header_cols = item_box.columns([2.4, 5.4, 0.6, 0.6, 0.6, 0.6, 0.6])
@@ -1968,15 +1429,13 @@ def _render_app_design_configuration(
                 )
 
     if show_menu_editor:
-        add_cols = container.columns(4)
+        add_cols = container.columns(3)
         if add_cols[0].button("+ Link", key="menu_item_add_link"):
             pending_action_name = "add_link"
         if add_cols[1].button("+ Spacer", key="menu_item_add_spacer"):
             pending_action_name = "add_spacer"
         if add_cols[2].button("+ Separator", key="menu_item_add_separator"):
             pending_action_name = "add_separator"
-        if add_cols[3].button("+ Theme Toggle", key="menu_item_add_theme_toggle"):
-            pending_action_name = "add_theme_toggle"
 
     if show_menu_editor and pending_action_name:
         next_items = _normalize_menu_editor_items(editor_items)
@@ -2030,50 +1489,18 @@ def _render_app_design_configuration(
                     "kind": "separator",
                 }
             )
-        elif pending_action_name == "add_theme_toggle":
-            next_items.append(
-                {
-                    "_editor_id": uuid.uuid4().hex,
-                    "kind": "theme_toggle",
-                }
-            )
 
         st.session_state[_MENU_EDITOR_ITEMS_KEY] = next_items
         st.rerun()
 
     app_menu_payload = {
-        "sidebar_bg": sidebar_bg,
-        "sidebar_text_color": sidebar_text,
-        "sidebar_icon_color": sidebar_icon,
-        "sidebar_hover_bg": sidebar_hover,
-        "sidebar_hover_text_color": sidebar_hover_text,
-        "sidebar_active_bg": sidebar_active,
-        "sidebar_focus_outline": sidebar_focus,
-        "sidebar_separator_color": sidebar_separator,
-        "sidebar_separator_color_light": sidebar_separator_light,
-        "sidebar_separator_color_dark": sidebar_separator_dark,
-        "sidebar_font_size_px": sidebar_font_size,
-        "sidebar_icon_size_px": sidebar_icon_size,
-        "sidebar_collapsed_width_px": sidebar_collapsed_width,
-        "sidebar_hover_width_px": sidebar_hover_width,
-        "sidebar_item_gap_px": sidebar_item_gap,
-        "theme_mode": theme_mode,
-        "theme_preset_light": theme_preset_light,
-        "theme_preset_dark": theme_preset_dark,
-        "logo_src_light": logo_src_light,
-        "logo_src_dark": logo_src_dark,
-        "icon_src_light": icon_src_light,
-        "icon_src_dark": icon_src_dark,
-        "logo_height_px": logo_height_px,
-        "logo_render_height_px": logo_render_height_px,
-        "icon_render_height_px": icon_render_height_px,
         "items": _strip_editor_metadata(editor_items),
     }
     _render_config_dirty_hint(
         container,
         "app_menu",
         app_menu_payload,
-        "Ungespeicherte Menü-/Design-Änderungen.",
+        "Ungespeicherte Menü-Änderungen.",
     )
 
     if container.button("Sidebar Menu speichern", key="save_sidebar_menu"):
@@ -2111,9 +1538,6 @@ def _render_app_design_configuration(
                         "spacer_px": max(4, min(64, spacer_px)),
                     }
                 )
-                continue
-            if item_kind == "theme_toggle":
-                updated_items.append({"kind": "theme_toggle"})
                 continue
 
             label = str(
@@ -2161,34 +1585,6 @@ def _render_app_design_configuration(
         updated_menu = menu_settings.save_menu_settings(
             st.session_state["config"],
             {
-                "sidebar_bg": sidebar_bg,
-                "sidebar_text_color": sidebar_text,
-                "sidebar_icon_color": sidebar_icon,
-                "sidebar_hover_bg": sidebar_hover,
-                "sidebar_hover_text_color": sidebar_hover_text,
-                "sidebar_active_bg": sidebar_active,
-                "sidebar_focus_outline": sidebar_focus,
-                "sidebar_separator_color": sidebar_separator,
-                "sidebar_separator_color_light": sidebar_separator_light,
-                "sidebar_separator_color_dark": sidebar_separator_dark,
-                "sidebar_font_size_px": sidebar_font_size,
-                "sidebar_icon_size_px": sidebar_icon_size,
-                "sidebar_collapsed_width_px": sidebar_collapsed_width,
-                "sidebar_hover_width_px": sidebar_hover_width,
-                "sidebar_item_gap_px": sidebar_item_gap,
-                "theme_mode": theme_mode,
-                "theme_preset_light": theme_preset_light,
-                "theme_preset_dark": theme_preset_dark,
-                "theme_preset_name": (
-                    theme_preset_dark if theme_mode == "dark" else theme_preset_light
-                ),
-                "logo_src_light": logo_src_light,
-                "logo_src_dark": logo_src_dark,
-                "icon_src_light": icon_src_light,
-                "icon_src_dark": icon_src_dark,
-                "logo_height_px": logo_height_px,
-                "logo_render_height_px": logo_render_height_px,
-                "icon_render_height_px": icon_render_height_px,
                 "items": updated_items,
                 "sidebar_transition": str(
                     current_menu.get("sidebar_transition", "0.3s")
@@ -2225,6 +1621,412 @@ def _render_app_design_configuration(
             "app_menu",
             "Sidebar Menu auf Standard zurückgesetzt",
             payload=menu_settings.DEFAULT_MENU_SETTINGS,
+        )
+        st.rerun()
+
+
+def _render_preferences_configuration(
+    container: st.delta_generator.DeltaGenerator,
+) -> None:
+    """Render preferences configuration for the dedicated Preferences page."""
+    _render_config_saved_caption(container, "preferences")
+    _render_config_saved_caption(container, "app_auth")
+
+    config = st.session_state.get("config", {})
+    container.caption(
+        "Configure authentication, access control, and system preferences."
+    )
+
+    # Authentication & Access Section
+    auth_box = container.container(border=True)
+    auth_box.markdown("**Auth & Access**")
+
+    auth_mode_value = auth_service.normalize_auth_mode(config.get("auth_mode"))
+    auth_mode = auth_box.selectbox(
+        "Auth-Modus",
+        options=["local_only", "auth_optional", "auth_required"],
+        index=["local_only", "auth_optional", "auth_required"].index(auth_mode_value),
+        key="cfg_auth_mode",
+    )
+    enable_auth_services = auth_box.checkbox(
+        "Auth-Services aktivieren",
+        value=bool(config.get("enable_auth_services", False)),
+        key="cfg_enable_auth_services",
+    )
+    enable_auth_ui = auth_box.checkbox(
+        "Login/Logout UI anzeigen",
+        value=bool(config.get("enable_auth_ui", False)),
+        key="cfg_enable_auth_ui",
+    )
+    enable_access_guards = auth_box.checkbox(
+        "Access Guards aktivieren",
+        value=bool(config.get("enable_access_guards", False)),
+        key="cfg_enable_access_guards",
+    )
+    auth_provider = auth_box.text_input(
+        "Auth Provider",
+        value=str(config.get("auth_provider") or "auth0"),
+        key="cfg_auth_provider",
+        help="z.B. auth0",
+    )
+    auth_provider_value = str(auth_provider).strip()
+
+    # Show auth readiness status
+    auth_preview_config = {
+        **config,
+        "auth_mode": auth_mode,
+        "enable_auth_services": bool(enable_auth_services),
+        "enable_auth_ui": bool(enable_auth_ui),
+        "enable_access_guards": bool(enable_access_guards),
+    }
+    if auth_provider_value:
+        auth_preview_config["auth_provider"] = auth_provider_value
+    elif "auth_provider" in auth_preview_config:
+        del auth_preview_config["auth_provider"]
+
+    auth_runtime_enabled_preview = auth_service.is_auth_enabled(auth_preview_config)
+    if auth_mode == "local_only":
+        auth_box.info(
+            "Auth ist auf local_only gesetzt. Login/Logout und Access Guards bleiben inaktiv."
+        )
+    elif not bool(enable_auth_services):
+        auth_box.warning(
+            "Auth-Modus aktiv, aber Auth-Services sind deaktiviert. Aktiviere sie für Login/Logout."
+        )
+    elif not bool(enable_auth_ui):
+        auth_box.warning(
+            "Auth-Services sind aktiv, aber die Login/Logout UI ist ausgeblendet."
+        )
+    elif auth_runtime_enabled_preview:
+        auth_box.success(
+            "Auth-Setup ist aktiv. Login/Logout UI und Guards können verwendet werden."
+        )
+    else:
+        auth_box.warning(
+            "Auth ist teilweise konfiguriert. Pruefe Provider und Streamlit Auth-Konfiguration."
+        )
+
+    auth_box.markdown("**Auth Readiness**")
+    auth_box.markdown(
+        f"- [{'x' if auth_mode != 'local_only' else ' '}] Auth mode ist nicht `local_only`"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(enable_auth_services) else ' '}] `enable_auth_services` ist aktiv"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(enable_auth_ui) else ' '}] `enable_auth_ui` ist aktiv"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(enable_access_guards) else ' '}] `enable_access_guards` ist aktiv (optional)"
+    )
+    auth_box.markdown(
+        f"- [{'x' if bool(auth_provider_value) else ' '}] Auth Provider ist gesetzt"
+    )
+
+    auth_payload = {
+        "auth_mode": auth_mode,
+        "enable_auth_services": bool(enable_auth_services),
+        "enable_auth_ui": bool(enable_auth_ui),
+        "enable_access_guards": bool(enable_access_guards),
+        "auth_provider": auth_provider_value,
+    }
+
+    _render_config_dirty_hint(
+        auth_box,
+        "preferences",
+        auth_payload,
+        "Ungespeicherte Auth-Änderungen.",
+    )
+
+    if auth_box.button("Auth-Einstellungen speichern", key="save_auth_preferences"):
+        st.session_state["config"]["auth_mode"] = auth_mode
+        st.session_state["config"]["enable_auth_services"] = bool(enable_auth_services)
+        st.session_state["config"]["enable_auth_ui"] = bool(enable_auth_ui)
+        st.session_state["config"]["enable_access_guards"] = bool(enable_access_guards)
+        provider_value = str(auth_provider).strip()
+        if provider_value:
+            st.session_state["config"]["auth_provider"] = provider_value
+        elif "auth_provider" in st.session_state["config"]:
+            del st.session_state["config"]["auth_provider"]
+        storage.save_config(st.session_state["config"])
+        _mark_config_saved(
+            auth_box,
+            "preferences",
+            "Auth-Einstellungen gespeichert.",
+            payload=auth_payload,
+        )
+        st.rerun()
+
+
+def _render_theme_configuration(container: st.delta_generator.DeltaGenerator) -> None:
+    """Render theme configuration for the dedicated Themes page."""
+    _render_config_saved_caption(container, "themes")
+    _render_config_saved_caption(container, "app_menu")
+
+    current_menu = menu_settings.get_menu_settings(st.session_state["config"])
+    container.caption("Configure visual appearance, colors, and branding.")
+
+    # Theme Preset Section
+    theme_box = container.container(border=True)
+    theme_box.markdown("**Theme Preset**")
+
+    preset_names = sorted(theme_presets.THEME_PRESETS.keys())
+    theme_default = str(current_menu.get("theme_preset") or "").strip()
+    if theme_default not in preset_names and preset_names:
+        theme_default = preset_names[0]
+    theme_preset = theme_box.selectbox(
+        "Theme Preset",
+        options=preset_names,
+        index=preset_names.index(theme_default) if preset_names else None,
+        key="menu_theme_preset",
+    )
+
+    # Get current values
+    sidebar_bg = str(current_menu.get("sidebar_bg", "#343A40"))
+    sidebar_text = str(current_menu.get("sidebar_text_color", "#F8F9FA"))
+    sidebar_icon = str(current_menu.get("sidebar_icon_color", "#F8F9FA"))
+    sidebar_hover = str(current_menu.get("sidebar_hover_bg", "#F22222"))
+    sidebar_hover_text = str(
+        current_menu.get(
+            "sidebar_hover_text_color",
+            current_menu.get("sidebar_text_color", "#F8F9FA"),
+        )
+    )
+    sidebar_active = str(current_menu.get("sidebar_active_bg", "#CC1E1E"))
+    sidebar_focus = str(current_menu.get("sidebar_focus_outline", "#F22222"))
+    sidebar_separator = str(current_menu.get("sidebar_separator_color", "#6C757D"))
+    sidebar_font_size = int(current_menu.get("sidebar_font_size_px", 16))
+    sidebar_icon_size = int(current_menu.get("sidebar_icon_size_px", 28))
+    sidebar_item_gap = int(current_menu.get("sidebar_item_gap_px", 8))
+    sidebar_collapsed_width = int(current_menu.get("sidebar_collapsed_width_px", 64))
+    sidebar_hover_width = int(current_menu.get("sidebar_hover_width_px", 240))
+    logo_src = str(current_menu.get("logo_src", ""))
+    icon_src = str(current_menu.get("icon_src", ""))
+    logo_height_px = int(current_menu.get("logo_height_px", 44))
+    logo_render_height_px = int(current_menu.get("logo_render_height_px", 36))
+    icon_render_height_px = int(current_menu.get("icon_render_height_px", 28))
+
+    show_advanced_design = container.checkbox(
+        "Erweiterte Design-Optionen anzeigen",
+        value=bool(st.session_state.get("cfg_show_advanced_design", False)),
+        key="cfg_show_advanced_design",
+    )
+    if not show_advanced_design:
+        container.caption(
+            "Farben, Größen und Branding sind ausgeblendet. Aktiviere die erweiterten Optionen, um sie anzupassen."
+        )
+    else:
+        # Color Configuration
+        color_box = container.container(border=True)
+        color_box.markdown("**Farben**")
+        color_left, color_right = color_box.columns(2)
+        with color_left:
+            sidebar_bg = st.color_picker(
+                "Sidebar Hintergrund",
+                value=sidebar_bg,
+                key="menu_sidebar_bg",
+            )
+            sidebar_text = st.color_picker(
+                "Sidebar Textfarbe",
+                value=sidebar_text,
+                key="menu_sidebar_text",
+            )
+            sidebar_hover = st.color_picker(
+                "Hover Farbe",
+                value=sidebar_hover,
+                key="menu_sidebar_hover",
+            )
+            sidebar_hover_text = st.color_picker(
+                "Hover Textfarbe",
+                value=sidebar_hover_text,
+                key="menu_sidebar_hover_text",
+            )
+            sidebar_separator = st.color_picker(
+                "Separator Farbe",
+                value=sidebar_separator,
+                key="menu_sidebar_separator",
+            )
+        with color_right:
+            sidebar_icon = st.color_picker(
+                "Icon Farbe",
+                value=sidebar_icon,
+                key="menu_sidebar_icon",
+            )
+            sidebar_active = st.color_picker(
+                "Aktive Farbe",
+                value=sidebar_active,
+                key="menu_sidebar_active",
+            )
+            sidebar_focus = st.color_picker(
+                "Focus Outline",
+                value=sidebar_focus,
+                key="menu_sidebar_focus",
+            )
+
+        # Sizing and Layout
+        sizing_box = container.container(border=True)
+        sizing_box.markdown("**Größen & Layout**")
+        sizing_left, sizing_right = sizing_box.columns(2)
+        with sizing_left:
+            sidebar_font_size = st.slider(
+                "Schriftgröße (px)",
+                min_value=12,
+                max_value=24,
+                value=sidebar_font_size,
+                key="menu_sidebar_font_size",
+            )
+            sidebar_icon_size = st.slider(
+                "Icon Größe (px)",
+                min_value=16,
+                max_value=34,
+                value=sidebar_icon_size,
+                key="menu_sidebar_icon_size",
+            )
+            sidebar_item_gap = st.slider(
+                "Abstand zwischen Menüpunkten (px)",
+                min_value=0,
+                max_value=34,
+                value=sidebar_item_gap,
+                key="menu_sidebar_item_gap",
+            )
+        with sizing_right:
+            sidebar_collapsed_width = st.slider(
+                "Breite eingeklappt (px)",
+                min_value=56,
+                max_value=120,
+                value=sidebar_collapsed_width,
+                key="menu_sidebar_collapsed_width",
+            )
+            sidebar_hover_width = st.slider(
+                "Breite bei Hover (px)",
+                min_value=180,
+                max_value=360,
+                value=sidebar_hover_width,
+                key="menu_sidebar_hover_width",
+            )
+
+        # Branding
+        branding_box = container.container(border=True)
+        branding_box.markdown("**Branding (Logo & Icon)**")
+        branding_col_1, branding_col_2 = branding_box.columns(2)
+        with branding_col_1:
+            logo_src = st.text_input(
+                "Logo Quelle",
+                value=logo_src,
+                key="menu_logo_src",
+            )
+            icon_src = st.text_input(
+                "Icon Quelle",
+                value=icon_src,
+                key="menu_icon_src",
+            )
+        with branding_col_2:
+            logo_height_px = branding_box.slider(
+                "Logo Platzhöhe (px)",
+                min_value=24,
+                max_value=128,
+                value=logo_height_px,
+                key="menu_logo_height",
+            )
+            logo_render_height_px = branding_box.slider(
+                "Logo Renderhöhe (px)",
+                min_value=20,
+                max_value=96,
+                value=logo_render_height_px,
+                key="menu_logo_render_height",
+            )
+            icon_render_height_px = branding_box.slider(
+                "Icon Renderhöhe (px)",
+                min_value=16,
+                max_value=64,
+                value=icon_render_height_px,
+                key="menu_icon_render_height",
+            )
+
+    # Menu Configuration (simplified version for themes page)
+    menu_items = current_menu.get("items", [])
+    menu_items_signature = _menu_items_signature(menu_items)
+    editor_signature = st.session_state.get(_MENU_EDITOR_SIGNATURE_KEY)
+    editor_items = st.session_state.get(_MENU_EDITOR_ITEMS_KEY)
+    if editor_signature != menu_items_signature or not isinstance(editor_items, list):
+        st.session_state[_MENU_EDITOR_ITEMS_KEY] = _normalize_menu_editor_items(
+            menu_items
+        )
+        st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = menu_items_signature
+    editor_items = st.session_state.get(_MENU_EDITOR_ITEMS_KEY, [])
+
+    show_menu_editor = container.checkbox(
+        "Navigation & Menu Editor anzeigen (Erweitert)",
+        value=bool(st.session_state.get("cfg_show_menu_editor", False)),
+        key="cfg_show_menu_editor",
+    )
+    if not show_menu_editor:
+        container.caption(
+            "Der erweiterte Menü-Editor ist ausgeblendet. Aktiviere ihn bei Bedarf für Reihenfolge, Spacer/Separator und Seitenzuordnung."
+        )
+
+    # Build theme payload for save functionality
+    app_menu_payload = {
+        "sidebar_bg": sidebar_bg,
+        "sidebar_text_color": sidebar_text,
+        "sidebar_icon_color": sidebar_icon,
+        "sidebar_hover_bg": sidebar_hover,
+        "sidebar_hover_text_color": sidebar_hover_text,
+        "sidebar_active_bg": sidebar_active,
+        "sidebar_focus_outline": sidebar_focus,
+        "sidebar_separator_color": sidebar_separator,
+        "sidebar_font_size_px": sidebar_font_size,
+        "sidebar_icon_size_px": sidebar_icon_size,
+        "sidebar_collapsed_width_px": sidebar_collapsed_width,
+        "sidebar_hover_width_px": sidebar_hover_width,
+        "sidebar_item_gap_px": sidebar_item_gap,
+        "theme_preset": theme_preset,
+        "logo_src": logo_src,
+        "icon_src": icon_src,
+        "logo_height_px": logo_height_px,
+        "logo_render_height_px": logo_render_height_px,
+        "icon_render_height_px": icon_render_height_px,
+        "items": _strip_editor_metadata(editor_items),
+    }
+
+    _render_config_dirty_hint(
+        container,
+        "themes",
+        app_menu_payload,
+        "Ungespeicherte Theme-Änderungen.",
+    )
+
+    if container.button("Theme Einstellungen speichern", key="save_theme_settings"):
+        # Apply theme preset if selected
+        if theme_preset:
+            _apply_theme_preset_to_config(
+                st.session_state["config"], preset_name=theme_preset
+            )
+
+        # Save all theme settings
+        menu_settings.save_menu_settings(
+            st.session_state["config"],
+            {
+                **app_menu_payload,
+                "sidebar_transition": str(
+                    current_menu.get("sidebar_transition", "0.3s")
+                ),
+            },
+        )
+
+        # Update editor state
+        st.session_state[_MENU_EDITOR_ITEMS_KEY] = _normalize_menu_editor_items(
+            app_menu_payload.get("items", [])
+        )
+        st.session_state[_MENU_EDITOR_SIGNATURE_KEY] = _menu_items_signature(
+            _strip_editor_metadata(st.session_state[_MENU_EDITOR_ITEMS_KEY])
+        )
+
+        _mark_config_saved(
+            container,
+            "themes",
+            "Theme Einstellungen gespeichert",
+            payload=app_menu_payload,
         )
         st.rerun()
 

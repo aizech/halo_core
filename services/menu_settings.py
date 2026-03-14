@@ -72,20 +72,24 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
             "icon": "smart_toy",
             "page": "pages/Agent_Config.py",
         },
-        {"kind": "separator"},
+        {
+            "kind": "link",
+            "label": "Configuration",
+            "icon": "settings",
+            "page": "pages/Configuration.py",
+        },
         {
             "kind": "link",
             "label": "Preferences",
             "icon": "settings_input_component",
-            "page": "pages/Configuration.py",
+            "page": "pages/Preferences.py",
         },
         {
             "kind": "link",
             "label": "Themes",
             "icon": "palette",
-            "page": "pages/Configuration.py",
+            "page": "pages/Themes.py",
         },
-        {"kind": "theme_toggle", "label": "Dark mode", "icon": "dark_mode"},
         {
             "kind": "link",
             "label": "Account",

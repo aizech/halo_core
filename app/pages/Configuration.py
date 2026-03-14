@@ -4,7 +4,6 @@ import streamlit as st
 
 from app import main
 import app.pages.config_sections.advanced as advanced
-import app.pages.config_sections.app_design as app_design
 import app.pages.config_sections.chat_memory as chat_memory
 import app.pages.config_sections.sources as sources
 import app.pages.config_sections.studio as studio
@@ -18,12 +17,13 @@ def render_configuration_page() -> None:
     st.title("Configuration")
     st.caption("Manage app settings by section.")
 
-    app_tab, sources_tab, chat_tab, studio_tab, advanced_tab = st.tabs(
-        ["App", "Sources", "Chat", "Studio", "Advanced"]
+    st.divider()
+    st.caption("Core functionality configuration below.")
+
+    sources_tab, chat_tab, studio_tab, advanced_tab = st.tabs(
+        ["Sources", "Chat", "Studio", "Advanced"]
     )
 
-    with app_tab:
-        app_design.render(st)
     with sources_tab:
         sources.render(st)
     with chat_tab:
@@ -32,21 +32,6 @@ def render_configuration_page() -> None:
         studio.render(st)
     with advanced_tab:
         advanced.render(st)
-
-    st.divider()
-    st.subheader("Agent Configuration (full page)")
-    st.caption(
-        "Im Tab 'Advanced' kannst du Agenten direkt hier konfigurieren. Öffne die Vollansicht nur für fokussierte Bearbeitung auf einer eigenen Seite."
-    )
-    if st.button(
-        "Open full-page Agent Config",
-        key="open_agent_config",
-        width="stretch",
-    ):
-        try:
-            st.switch_page("pages/Agent_Config.py")
-        except Exception:
-            st.error("Agent Config navigation requires Streamlit multipage.")
 
 
 if __name__ == "__main__":
