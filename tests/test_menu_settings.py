@@ -44,7 +44,7 @@ def test_normalize_menu_settings_keeps_custom_item_order_and_kinds() -> None:
             "page": "main.py",
             "access": "logged_in",
         },
-        {"kind": "theme_toggle"},
+        {"kind": "theme_toggle", "label": "Dark mode", "icon": "dark_mode"},
     ]
 
 
@@ -77,7 +77,7 @@ def test_normalize_menu_settings_clamps_spacer_and_gap_values() -> None:
     assert normalized["sidebar_item_gap_px"] == 32
     assert normalized["items"] == [
         {"kind": "spacer", "spacer_px": 4},
-        {"kind": "theme_toggle"},
+        {"kind": "theme_toggle", "label": "Dark mode", "icon": "dark_mode"},
     ]
 
 

@@ -14,7 +14,7 @@ def test_extract_document_payload_text() -> None:
     payload = ingestion.extract_document_payload("note.txt", data)
     assert payload["title"] == "note.txt"
     assert payload["type_label"] == "Text"
-    assert "HALOCore" in payload["body"]
+    assert "HALO Core" in payload["body"]
 
 
 def test_load_directory_documents_reads_supported_files(tmp_path: Path) -> None:
