@@ -1,1 +1,1 @@
-"""Test suite for HALO NotebookLM project."""
+"""Test suite for HALO Core project."""

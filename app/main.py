@@ -1,4 +1,4 @@
-"""Streamlit entrypoint for the NotebookLM-style MVP."""
+"""Streamlit entrypoint for the HALO Core."""
 
 from __future__ import annotations
 
@@ -503,7 +503,7 @@ def _build_download_filename(
 
 def configure_page() -> None:
     st.set_page_config(
-        page_title="HALO NotebookLM",
+        page_title="HALO Core",
         page_icon=":material/book:",
         layout="wide",
         initial_sidebar_state="expanded",
@@ -566,7 +566,34 @@ def render_sidebar() -> None:
     config = st.session_state.get("config", {})
     if not isinstance(config, dict):
         config = {}
+
+    st.markdown(
+        """
+        <style>
+        @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Sharp');
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     menu_cfg = menu_settings.get_menu_settings(config)
+
+    # Handle theme toggle via query param (avoids st.button layout issues)
+    if st.query_params.get("toggle_theme") == "1":
+        st.query_params.pop("toggle_theme")
+        is_dark_now = str(menu_cfg.get("theme_mode") or "light") == "dark"
+        menu_cfg_new = menu_settings.get_menu_settings(config)
+        menu_cfg_new["theme_mode"] = "light" if is_dark_now else "dark"
+        menu_settings.save_menu_settings(config, menu_cfg_new)
+        preset_name = (
+            str(menu_cfg_new.get("theme_preset_light") or "").strip()
+            if is_dark_now
+            else str(menu_cfg_new.get("theme_preset_dark") or "").strip()
+        )
+        if preset_name:
+            _apply_theme_preset_to_config(config, preset_name=preset_name)
+        st.rerun()
+
     auth_user = st.session_state.get("auth_user")
     if auth_user is None:
         auth_user = auth_service.resolve_auth_user(config)
@@ -586,6 +613,41 @@ def render_sidebar() -> None:
         separator_color = str(
             menu_cfg.get("sidebar_separator_color") or "#6C757D"
         ).strip()
+
+    # Sidebar colors based on theme mode
+    sidebar_text_color = (
+        str(menu_cfg.get("sidebar_text_color_dark") or "").strip()
+        if theme_mode == "dark"
+        else str(
+            menu_cfg.get("sidebar_text_color_light")
+            or menu_cfg.get("sidebar_text_color")
+            or ""
+        ).strip()
+    )
+    if not sidebar_text_color:
+        sidebar_text_color = "#FFFFFF" if theme_mode == "dark" else "#212529"
+
+    sidebar_icon_color = (
+        str(menu_cfg.get("sidebar_icon_color_dark") or "").strip()
+        if theme_mode == "dark"
+        else str(
+            menu_cfg.get("sidebar_icon_color_light")
+            or menu_cfg.get("sidebar_icon_color")
+            or ""
+        ).strip()
+    )
+    if not sidebar_icon_color:
+        sidebar_icon_color = "#ADB5BD" if theme_mode == "dark" else "#495057"
+
+    sidebar_bg_color = (
+        str(menu_cfg.get("sidebar_bg_dark") or "").strip()
+        if theme_mode == "dark"
+        else str(
+            menu_cfg.get("sidebar_bg_light") or menu_cfg.get("sidebar_bg") or ""
+        ).strip()
+    )
+    if not sidebar_bg_color:
+        sidebar_bg_color = "#212529" if theme_mode == "dark" else "#F8F9FA"
 
     logo_src = (
         str(menu_cfg.get("logo_src_dark") or "").strip()
@@ -662,258 +724,304 @@ def render_sidebar() -> None:
         f"""
         <style>
             :root {{
-                --sidebar-bg: {menu_cfg['sidebar_bg']};
-                --sidebar-text: {menu_cfg['sidebar_text_color']};
-                --sidebar-icon: {menu_cfg['sidebar_icon_color']};
+                --sidebar-bg: {sidebar_bg_color};
+                --sidebar-text: {sidebar_text_color};
+                --sidebar-icon: {sidebar_icon_color};
                 --sidebar-hover-bg: {menu_cfg['sidebar_hover_bg']};
-                --sidebar-hover-text: {menu_cfg.get('sidebar_hover_text_color', menu_cfg['sidebar_text_color'])};
+                --sidebar-hover-text: {menu_cfg.get('sidebar_hover_text_color', sidebar_text_color)};
                 --sidebar-active-bg: {menu_cfg['sidebar_active_bg']};
                 --sidebar-focus-outline: {menu_cfg['sidebar_focus_outline']};
+                --sidebar-accent: {menu_cfg.get('sidebar_focus_outline', '#3B5998')};
                 --sidebar-separator-color: {separator_color};
                 --sidebar-font-size: {menu_cfg['sidebar_font_size_px']}px;
-                --sidebar-icon-size: {menu_cfg.get('sidebar_icon_size_px', 22)}px;
+                --sidebar-icon-size: {menu_cfg.get('sidebar_icon_size_px', 20)}px;
                 --sidebar-collapsed-width: {menu_cfg['sidebar_collapsed_width_px']}px;
                 --sidebar-hover-width: {menu_cfg['sidebar_hover_width_px']}px;
-                --sidebar-item-gap: {menu_cfg.get('sidebar_item_gap_px', 8)}px;
+                --sidebar-item-gap: {menu_cfg.get('sidebar_item_gap_px', 4)}px;
                 --sidebar-transition: {menu_cfg['sidebar_transition']};
             }}
+            /* Apply sidebar background color and theme mode class */
             section[data-testid='stSidebar'] {{
-                background-color: var(--sidebar-bg);
-                min-width: var(--sidebar-collapsed-width) !important;
-                max-width: var(--sidebar-collapsed-width) !important;
-                width: var(--sidebar-collapsed-width) !important;
-                transition: width var(--sidebar-transition);
-                overflow-x: hidden;
+                background-color: var(--sidebar-bg) !important;
             }}
-            section[data-testid='stSidebarNav'] {{
-                display: none;
+            section[data-testid='stSidebar'].halo-theme-{theme_mode} {{
+                /* Theme-specific styles */
             }}
-            section[data-testid='stSidebarNavItems'] {{
-                display: none;
+            /* Force theme toggle colors based on current theme */
+            section[data-testid='stSidebar'].halo-theme-dark .halo-theme-toggle *,
+            section[data-testid='stSidebar'].halo-theme-dark .halo-theme-toggle {{
+                color: #FFFFFF !important;
             }}
-            section[data-testid='stSidebar']:hover {{
-                min-width: var(--sidebar-hover-width) !important;
-                max-width: var(--sidebar-hover-width) !important;
-                width: var(--sidebar-hover-width) !important;
+            section[data-testid='stSidebar'].halo-theme-light .halo-theme-toggle *,
+            section[data-testid='stSidebar'].halo-theme-light .halo-theme-toggle {{
+                color: #212529 !important;
             }}
-            section[data-testid='stSidebar'] * {{
-                color: var(--sidebar-text) !important;
-                font-size: var(--sidebar-font-size) !important;
+            /* Theme toggle form - prevent extra spacing */
+            section[data-testid='stSidebar'] form {{
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
             }}
-            section[data-testid='stSidebar'] .stButton > button {{
-                width: 100%;
-                text-align: left;
-                border: none;
-                background: transparent;
-                border-radius: 10px;
-                padding: 10px 12px;
-                color: var(--sidebar-text) !important;
-                font-weight: 600;
+            /* Theme toggle HTML link - identical to stPageLink */
+            section[data-testid='stSidebar'] [data-testid='stMarkdownContainer']:has(.halo-theme-toggle) {{
+                margin: 0 !important;
             }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a {{
+            section[data-testid='stSidebar'] .halo-theme-toggle {{
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                border-radius: 10px;
-                padding: 10px 12px;
+                gap: 12px;
+                border-radius: 8px;
+                padding: 6px 12px;
+                height: 50px;
+                box-sizing: border-box;
                 text-decoration: none;
                 white-space: nowrap;
                 overflow: hidden;
                 transition: background-color var(--sidebar-transition);
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] {{
-                margin-bottom: var(--sidebar-item-gap);
-            }}
-            section[data-testid='stSidebar'] .halo-menu-separator {{
-                height: 1px;
-                margin: calc(var(--sidebar-item-gap) / 2) 12px;
-                background-color: var(--sidebar-separator-color);
-                opacity: 0.8;
-            }}
-            section[data-testid='stSidebar'] .halo-menu-spacer {{
+                background-color: transparent;
                 width: 100%;
+                color: var(--sidebar-text) !important;
+                font-size: 16px;
+                line-height: 30px;
             }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'],
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] > div,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] div {{
-                background-color: transparent !important;
-                box-shadow: none !important;
-                border: none !important;
+            /* Ensure button and its children inherit theme colors */
+            section[data-testid='stSidebar'] .halo-theme-toggle button,
+            section[data-testid='stSidebar'] .halo-theme-toggle button *,
+            section[data-testid='stSidebar'] .halo-theme-toggle p,
+            section[data-testid='stSidebar'] .halo-theme-toggle p *,
+            section[data-testid='stSidebar'] .halo-theme-toggle span,
+            section[data-testid='stSidebar'] .halo-theme-toggle span *,
+            section[data-testid='stSidebar'] .halo-theme-toggle .material-icons-sharp {{
+                color: var(--sidebar-text) !important;
             }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a svg {{
-                fill: var(--sidebar-icon) !important;
-                width: var(--sidebar-icon-size) !important;
-                height: var(--sidebar-icon-size) !important;
+            /* Debug: Force colors for dark mode */
+            [data-testid="stSidebar"][data-st-theme="dark"] .halo-theme-toggle *,
+            [data-testid="stSidebar"][data-st-theme="dark"] .halo-theme-toggle {{
+                color: #FFFFFF !important;
             }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'],
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'],
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'],
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] {{
-                background-color: transparent !important;
-                box-shadow: none !important;
-                border: none !important;
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'][aria-current='page'],
-            section[data-testid='stSidebar'] [data-testid='stPageLink'][aria-selected='true'],
-            section[data-testid='stSidebar'] [data-testid='stPageLink'][data-selected='true'],
-            section[data-testid='stSidebar'] [data-testid='stPageLink'][data-active='true'] {{
-                background-color: transparent !important;
-                box-shadow: none !important;
-                border: none !important;
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'] > div:first-child,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'] > div:first-child,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'] > div:first-child,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] > div:first-child {{
-                background-color: transparent !important;
-                width: auto;
-                height: auto;
-                border-radius: 0;
-                display: block;
-                padding: 0;
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'] div,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'] div,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'] div,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] div {{
-                background-color: transparent !important;
-                box-shadow: none !important;
-                border: none !important;
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'] svg,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'] svg,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'] svg,
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] svg {{
-                display: block;
-                background-color: var(--sidebar-hover-bg) !important;
-                border-radius: 999px;
-                padding: 6px;
-                box-sizing: content-box;
-            }}
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a {{
-                justify-content: center;
-                padding-left: 8px;
-                padding-right: 8px;
-                border-radius: 0;
-                background-color: transparent !important;
-                box-shadow: none !important;
-            }}
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a:hover,
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[aria-current='page'],
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[aria-selected='true'],
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[data-selected='true'],
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a[data-active='true'] {{
-                background-color: transparent !important;
-                box-shadow: none !important;
-                border: none !important;
-            }}
-            section[data-testid='stSidebar'] [aria-current='page'],
-            section[data-testid='stSidebar'] [aria-selected='true'],
-            section[data-testid='stSidebar'] [data-selected='true'],
-            section[data-testid='stSidebar'] [data-active='true'] {{
-                background-color: transparent !important;
-                box-shadow: none !important;
-                border: none !important;
-            }}
-            section[data-testid='stSidebar'] [aria-current='page']::before,
-            section[data-testid='stSidebar'] [aria-selected='true']::before,
-            section[data-testid='stSidebar'] [data-selected='true']::before,
-            section[data-testid='stSidebar'] [data-active='true']::before,
-            section[data-testid='stSidebar'] [aria-current='page']::after,
-            section[data-testid='stSidebar'] [aria-selected='true']::after,
-            section[data-testid='stSidebar'] [data-selected='true']::after,
-            section[data-testid='stSidebar'] [data-active='true']::after {{
-                background-color: transparent !important;
-                box-shadow: none !important;
-                border: none !important;
-            }}
-            section[data-testid='stSidebar'] [aria-current='page'] svg,
-            section[data-testid='stSidebar'] [aria-selected='true'] svg,
-            section[data-testid='stSidebar'] [data-selected='true'] svg,
-            section[data-testid='stSidebar'] [data-active='true'] svg {{
-                display: block;
-                background-color: var(--sidebar-hover-bg) !important;
-                border-radius: 999px;
-                padding: 6px;
-                box-sizing: content-box;
-            }}
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a p {{
-                opacity: 0;
-                max-width: 0;
-                margin: 0;
-                overflow: hidden;
-            }}
-            section[data-testid='stSidebar']:not(:hover) h1,
-            section[data-testid='stSidebar']:not(:hover) h2,
-            section[data-testid='stSidebar']:not(:hover) h3,
-            section[data-testid='stSidebar']:not(:hover) [data-testid='stSidebarUserContent'] > div > div > p,
-            section[data-testid='stSidebar']:not(:hover) .stCaption,
-            section[data-testid='stSidebar']:not(:hover) .stMarkdown p,
-            section[data-testid='stSidebar']:not(:hover) .stButton {{
-                opacity: 0;
-                max-height: 0;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: hidden;
-                pointer-events: none;
-            }}
-            section[data-testid='stSidebar']:hover [data-testid='stPageLink'] a p {{
-                opacity: 1;
-                max-width: 260px;
-                transition: opacity var(--sidebar-transition);
-            }}
-            section[data-testid='stSidebar'] button:hover {{
-                background-color: var(--sidebar-hover-bg) !important;
-                color: var(--sidebar-hover-text) !important;
-            }}
-            section[data-testid='stSidebar'] button:hover svg {{
-                fill: var(--sidebar-hover-text) !important;
-                stroke: var(--sidebar-hover-text) !important;
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover {{
-                background-color: var(--sidebar-hover-bg) !important;
-                color: var(--sidebar-hover-text) !important;
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover svg {{
-                fill: var(--sidebar-hover-text) !important;
-                stroke: var(--sidebar-hover-text) !important;
-            }}
-            section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover p {{
-                color: var(--sidebar-hover-text) !important;
-            }}
-            section[data-testid='stSidebar'] button:focus {{
-                outline-color: var(--sidebar-focus-outline) !important;
-            }}
-            section[data-testid='stSidebar'] div[data-testid='stToggle'] {{
-                padding: 6px 12px;
-                margin-bottom: var(--sidebar-item-gap);
-                border-radius: 10px;
-            }}
-            section[data-testid='stSidebar']:not(:hover) div[data-testid='stToggle'] {{
-                display: flex;
-                justify-content: center;
-                padding-left: 8px;
-                padding-right: 8px;
-                border-radius: 0;
-            }}
-            section[data-testid='stSidebar']:not(:hover)
-            div[data-testid='stHorizontalBlock']:has(.halo-theme-toggle-label) {{
-                justify-content: center;
-                gap: 0 !important;
-            }}
-            section[data-testid='stSidebar'] .halo-theme-toggle-label {{
+            section[data-testid='stSidebar'] .halo-theme-toggle .halo-theme-icon {{
+                font-size: var(--sidebar-icon-size);
+                color: var(--sidebar-icon);
+                flex-shrink: 0;
+                width: var(--sidebar-icon-size);
+                height: var(--sidebar-icon-size);
+                line-height: 1;
                 display: flex;
                 align-items: center;
-                height: 100%;
             }}
-            section[data-testid='stSidebar']:not(:hover) .halo-theme-toggle-label {{
-                display: none;
+            section[data-testid='stSidebar'] .halo-theme-toggle:hover {{
+                background-color: var(--sidebar-hover-bg);
+            }}
+            section[data-testid='stSidebar'] .halo-theme-toggle p.halo-theme-label {{
+                margin: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                color: var(--sidebar-text);
+                font-size: 16px;
+                line-height: 30px;
+            }}
+            section[data-testid='stSidebar']:not(:hover) .halo-theme-toggle {{
+                justify-content: center !important;
+                padding: 0 !important;
+                width: var(--sidebar-collapsed-width) !important;
+                height: 30px !important;
+                gap: 0 !important;
+            }}
+            section[data-testid='stSidebar']:not(:hover) .halo-theme-toggle p.halo-theme-label {{
+                display: none !important;
+            }}
+
+            /* Page Links and Buttons - Expanded State */
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a,
+            section[data-testid='stSidebar'] .stButton button {{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                border-radius: 8px;
+                padding: 6px 12px;
+                height: 50px;
+                box-sizing: border-box;
+                text-decoration: none;
+                white-space: nowrap;
+                overflow: hidden;
+                transition: background-color var(--sidebar-transition);
+                background-color: transparent !important;
+                border: none !important;
+                width: 100%;
+                text-align: left;
+                justify-content: flex-start !important;
+            }}
+
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a:hover,
+            section[data-testid='stSidebar'] .stButton button:hover {{
+                background-color: var(--sidebar-hover-bg) !important;
+            }}
+
+            /* Active State */
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-selected='true'],
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-selected='true'],
+            section[data-testid='stSidebar'] .stButton button[data-active='true'] {{
+                background-color: #f1f3f5 !important;
+                box-shadow: none !important;
+            }}
+
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a svg,
+            section[data-testid='stSidebar'] .stButton button svg,
+            section[data-testid='stSidebar'] .stButton button [data-testid='stIconMaterial'] {{
+                fill: var(--sidebar-icon) !important;
+                color: var(--sidebar-icon) !important;
+            }}
+
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[aria-current='page'] svg,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a[data-active='true'] svg,
+            section[data-testid='stSidebar'] .stButton button[data-active='true'] svg {{
+                fill: var(--sidebar-accent) !important;
+                color: var(--sidebar-accent) !important;
+            }}
+
+            /* Rail Mode Adjustments */
+            section[data-testid='stSidebar']:not(:hover) {{
+                width: var(--sidebar-collapsed-width) !important;
+                min-width: var(--sidebar-collapsed-width) !important;
+                max-width: var(--sidebar-collapsed-width) !important;
+            }}
+
+            section[data-testid='stSidebar']:not(:hover) > div:first-child,
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stSidebarContent'],
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stSidebarUserContent'] {{
+                width: var(--sidebar-collapsed-width) !important;
+                min-width: var(--sidebar-collapsed-width) !important;
+                padding: 0 !important;
+            }}
+
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stElementContainer'],
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stVerticalBlock'] {{
+                width: var(--sidebar-collapsed-width) !important;
+                display: flex !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }}
+
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'],
+            section[data-testid='stSidebar']:not(:hover) .stButton {{
+                width: var(--sidebar-collapsed-width) !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: flex !important;
+                justify-content: center !important;
+            }}
+            
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a,
+            section[data-testid='stSidebar']:not(:hover) .stButton button {{
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: center !important;
+                align-items: center !important;
+                padding: 0 !important;
+                width: var(--sidebar-collapsed-width) !important;
+                height:42px !important;
+                margin: 0 !important;
+                gap: 0 !important;
+                border-radius: 8px !important;
+                padding-left: 0 !important;
+            }}
+
+            /* Override Streamlit default 16px gap between sidebar items */
+            section[data-testid='stSidebar'] [data-testid='stVerticalBlock'] {{
+                gap: var(--sidebar-item-gap) !important;
+                row-gap: var(--sidebar-item-gap) !important;
+            }}
+
+            section[data-testid='stSidebar'] [data-testid='stElementContainer'] {{
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+            }}
+
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a p,
+            section[data-testid='stSidebar'] .stButton button p {{
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+            }}
+
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] a p,
+            section[data-testid='stSidebar']:not(:hover) .stButton button p,
+            section[data-testid='stSidebar']:not(:hover) .halo-menu-header,
+            section[data-testid='stSidebar']:not(:hover) .halo-user-info,
+            section[data-testid='stSidebar']:not(:hover) .stMarkdown p {{
+                display: none !important;
+            }}
+
+            section[data-testid='stSidebar']:not(:hover) .stButton {{
+                padding: 0 !important;
+                margin: 0 !important;
+            }}
+            section[data-testid='stSidebar']:not(:hover) [data-testid='stPageLink'] {{
+                padding: 0 !important;
+                margin: 0 !important;
+            }}
+            section[data-testid='stSidebar']:not(:hover) .halo-avatar {{
+                margin: 0 auto !important;
+            }}
+            section[data-testid='stSidebar']:not(:hover) .halo-user-profile {{
+                justify-content: center !important;
+                padding: 12px 0 !important;
+            }}
+
+            section[data-testid='stSidebar']:hover [data-testid='stPageLink'] a p,
+            section[data-testid='stSidebar']:hover .stButton button p {{
+                opacity: 1;
+                max-width: 200px;
+            }}
+
+            /* Custom Components */
+            section[data-testid='stSidebar'] .halo-menu-separator {{
+                height: 1px;
+                margin: 8px 12px;
+                background-color: var(--sidebar-separator-color);
+            }}
+
+            section[data-testid='stSidebar'] .halo-menu-header {{
+                padding: 16px 12px 8px 12px;
+            }}
+
+            section[data-testid='stSidebar'] .halo-user-profile {{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                margin-top: auto;
+                border-top: 1px solid var(--sidebar-separator-color);
+            }}
+
+            section[data-testid='stSidebar'] .halo-avatar {{
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background-color: #DEE2E6;
+                flex-shrink: 0;
+            }}
+
+            section[data-testid='stSidebar']:hover [data-testid='stPageLink'] a p {{
+                opacity: 1;
+                max-width: 200px;
             }}
         </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {{
+                const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+                if (sidebar) {{
+                    sidebar.classList.add('halo-theme-{theme_mode}');
+                }}
+            }});
+        </script>
         """,
         unsafe_allow_html=True,
     )
-    render_theme_toggle = False
+    # render_theme_toggle = False
     for index, item in enumerate(menu_cfg.get("items", [])):
         item_kind = str(item.get("kind", "link")).strip().lower()
         if item_kind == "separator":
@@ -933,12 +1041,58 @@ def render_sidebar() -> None:
                 unsafe_allow_html=True,
             )
             continue
+        if item_kind == "header":
+            continue
+        if item_kind == "user_profile":
+            display_name = "Brooklyn"
+            plan = "Pro trial"
+            if auth_user and getattr(auth_user, "is_logged_in", False):
+                display_name = (
+                    str(getattr(auth_user, "name", "")).strip()
+                    or str(getattr(auth_user, "email", "")).strip()
+                )
+
+            st.sidebar.markdown(
+                f"""
+                <div class='halo-user-profile'>
+                    <div class='halo-avatar'></div>
+                    <div class='halo-user-info' style="flex-grow: 1;">
+                        <div style="font-weight: 600; font-size: 13px;">{display_name}</div>
+                        <div style="font-weight: 300; font-size: 10px;">{plan}</div>
+                    </div>
+                    <div class='halo-user-info'>
+                        <span class="material-icons-sharp" style="font-size: 16px; color: #6C757D;">unfold_more</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            continue
         if item_kind == "theme_toggle":
-            render_theme_toggle = True
+            is_dark = str(menu_cfg.get("theme_mode") or "light") == "dark"
+            icon = "light_mode" if is_dark else "dark_mode"
+            label = "Light mode" if is_dark else "Dark mode"
+            st.sidebar.markdown(
+                f"""
+                <div class="halo-theme-toggle" onclick="toggleThemeClick()" style="cursor: pointer;">
+                    <span class="material-icons-sharp halo-theme-icon">{icon}</span>
+                    <p class="halo-theme-label">{label}</p>
+                </div>
+                <script>
+                function toggleThemeClick() {{
+                    const url = new URL(window.location);
+                    url.searchParams.set('toggle_theme', '1');
+                    window.location.href = url.toString();
+                }}
+                </script>
+                """,
+                unsafe_allow_html=True,
+            )
             continue
         label = str(item.get("label", "")).strip()
         page = str(item.get("page", "")).strip()
         icon = str(item.get("icon", "")).strip()
+        badge = str(item.get("badge", "")).strip()
         access_level = str(item.get("access") or "public").strip().lower()
         if access_level not in {"public", "logged_in", "admin"}:
             access_level = "public"
@@ -951,13 +1105,40 @@ def render_sidebar() -> None:
         if not label or not page:
             continue
         icon_token = f":material/{icon}:" if icon else None
+
+        # Add badge to label if present
+        full_label = label
+        if badge:
+            full_label = f"{label} <span class='halo-badge'>{badge}</span>"
+
         try:
             st.sidebar.page_link(
                 page,
-                label=label,
+                label=(
+                    full_label if not badge else label
+                ),  # page_link doesn't support HTML in label easily, we might need custom CSS/HTML
                 icon=icon_token,
                 width="stretch",
             )
+            if badge:
+                # Custom injection for badge since st.page_link doesn't support it directly
+                st.markdown(
+                    f"""
+                    <style>
+                        section[data-testid='stSidebar'] [data-testid='stPageLink']:has(p:contains('{label}')) a::after {{
+                            content: '{badge}';
+                            background: #E9ECEF;
+                            color: #495057;
+                            padding: 2px 6px;
+                            border-radius: 10px;
+                            font-size: 11px;
+                            font-weight: 600;
+                            margin-left: auto;
+                        }}
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
             continue
         except Exception:
             pass
@@ -969,29 +1150,7 @@ def render_sidebar() -> None:
             except Exception:
                 st.sidebar.error(f"{label} navigation requires Streamlit multipage.")
 
-    if render_theme_toggle:
-        toggle_key = "menu_theme_mode_toggle"
-        if toggle_key not in st.session_state:
-            st.session_state[toggle_key] = (
-                str(menu_cfg.get("theme_mode") or "light") == "dark"
-            )
-        toggle_cols = st.sidebar.columns([1, 3], vertical_alignment="center")
-        toggle_cols[0].toggle(
-            "Dark mode",
-            key=toggle_key,
-            on_change=_handle_theme_mode_change,
-            kwargs={
-                "config": st.session_state.get("config", {}),
-                "toggle_key": toggle_key,
-            },
-            help="Dark mode",
-            label_visibility="collapsed",
-        )
-        toggle_cols[1].markdown(
-            "<div class='halo-theme-toggle-label'>Dark mode</div>",
-            unsafe_allow_html=True,
-        )
-
+    # Remove deferred theme toggle block
     auth_mode = auth_service.normalize_auth_mode(config.get("auth_mode"))
     auth_enabled = auth_service.is_auth_enabled(config)
     if bool(config.get("enable_auth_ui", False)) and auth_mode != "local_only":
@@ -1026,9 +1185,8 @@ def render_sidebar() -> None:
                 except Exception as exc:
                     st.sidebar.error(f"Login failed: {exc}")
 
-    st.sidebar.button("New Notebook", width="stretch", key="new_notebook")
     st.sidebar.divider()
-    st.sidebar.caption("2026 | Made with :heart: by Corpus Analytica")
+    st.sidebar.caption("2026 | Made with ❤️ by Corpus Analytica")
 
 
 def _init_state() -> None:
@@ -1451,7 +1609,7 @@ def _render_app_design_configuration(
         )
     )
     sidebar_font_size = int(current_menu.get("sidebar_font_size_px", 16))
-    sidebar_icon_size = int(current_menu.get("sidebar_icon_size_px", 22))
+    sidebar_icon_size = int(current_menu.get("sidebar_icon_size_px", 28))
     sidebar_item_gap = int(current_menu.get("sidebar_item_gap_px", 8))
     sidebar_collapsed_width = int(current_menu.get("sidebar_collapsed_width_px", 64))
     sidebar_hover_width = int(current_menu.get("sidebar_hover_width_px", 240))
@@ -1461,7 +1619,7 @@ def _render_app_design_configuration(
     icon_src_dark = str(current_menu.get("icon_src_dark", ""))
     logo_height_px = int(current_menu.get("logo_height_px", 44))
     logo_render_height_px = int(current_menu.get("logo_render_height_px", 36))
-    icon_render_height_px = int(current_menu.get("icon_render_height_px", 24))
+    icon_render_height_px = int(current_menu.get("icon_render_height_px", 28))
 
     show_advanced_design = container.checkbox(
         "Erweiterte Design-Optionen anzeigen",
@@ -1543,14 +1701,14 @@ def _render_app_design_configuration(
             sidebar_icon_size = st.slider(
                 "Icon Größe (px)",
                 min_value=16,
-                max_value=32,
+                max_value=34,
                 value=sidebar_icon_size,
                 key="menu_sidebar_icon_size",
             )
             sidebar_item_gap = st.slider(
                 "Abstand zwischen Menüpunkten (px)",
                 min_value=0,
-                max_value=32,
+                max_value=34,
                 value=sidebar_item_gap,
                 key="menu_sidebar_item_gap",
             )
@@ -2068,6 +2226,7 @@ def _render_app_design_configuration(
             "Sidebar Menu auf Standard zurückgesetzt",
             payload=menu_settings.DEFAULT_MENU_SETTINGS,
         )
+        st.rerun()
 
 
 def _render_configuration_panel(
@@ -4054,12 +4213,14 @@ def render_sources_panel() -> None:
         bulk_cols = st.columns([0.2, 0.2, 0.6])
         with bulk_cols[0]:
             if st.button(
-                "🗑️",
+                "",
+                icon=":material/delete:",
                 disabled=not selected_ids,
                 help="Entfernt alle markierten Quellen aus dem Projekt.",
                 width="content",
                 key="bulk_delete_button",
             ):
+
                 st.session_state["confirm_bulk_delete"] = True
         if st.session_state.get("confirm_bulk_delete") and selected_ids:
             _open_bulk_delete_dialog(selected_ids)
@@ -4392,7 +4553,7 @@ def render_chat_panel() -> None:
         st.rerun()
     selected_count = len(_selected_source_names())
     user_submission = st.chat_input(
-        f"Frage stellen oder Audio aufnehmen… ({selected_count} Quellen ausgewählt)",
+        f"Frag mich etwas… ({selected_count} Quellen ausgewählt)",
         accept_audio=True,
         accept_file=True,
         file_type=["jpg", "jpeg", "png"],
@@ -4459,7 +4620,7 @@ def render_studio_panel() -> None:
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+        @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Sharp');
         .studio-card-anchor {
             display: none;
         }

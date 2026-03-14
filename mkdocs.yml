@@ -10,7 +10,7 @@ theme:
   name: material
   logo: assets/logo_dark.png
   logo_dark: assets/logo_light.png
-  favicon: assets/icon_dark.png
+  favicon: assets/icon_light.png
   palette:
     # Light mode
     - media: "(prefers-color-scheme: light)"

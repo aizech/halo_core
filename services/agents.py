@@ -48,7 +48,7 @@ def set_logging_preferences(
 
 def _build_agent(
     instructions: str | None = None,
-    name: str = "NotebookLMClone",
+    name: str = "HALO Core",
     model_id: object = None,
     session_id: str | None = None,
     user_id: str | None = None,

@@ -13,21 +13,21 @@ _HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 _ALLOWED_ACCESS_LEVELS = {"public", "logged_in", "admin"}
 
 DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
-    "sidebar_bg": "#343A40",
-    "sidebar_text_color": "#F8F9FA",
-    "sidebar_icon_color": "#F8F9FA",
-    "sidebar_hover_bg": "#F22222",
-    "sidebar_hover_text_color": "#F8F9FA",
-    "sidebar_active_bg": "#CC1E1E",
-    "sidebar_focus_outline": "#F22222",
-    "sidebar_separator_color": "#6C757D",
-    "sidebar_separator_color_light": "#D0D0D0",
-    "sidebar_separator_color_dark": "#6C757D",
-    "theme_mode": "dark",
-    "theme_preset_light": "Black & White (Light)",
-    "theme_preset_dark": "Black & White (Dark)",
-    "theme_preset_name": "Black & White (Dark)",
-    "logo_src": "assets/logo_dark.png",
+    "sidebar_bg": "#F8F9FA",
+    "sidebar_text_color": "#212529",
+    "sidebar_icon_color": "#495057",
+    "sidebar_hover_bg": "#E9ECEF",
+    "sidebar_hover_text_color": "#212529",
+    "sidebar_active_bg": "#FFFFFF",
+    "sidebar_focus_outline": "#3B5998",
+    "sidebar_separator_color": "#DEE2E6",
+    "sidebar_separator_color_light": "#DEE2E6",
+    "sidebar_separator_color_dark": "#495057",
+    "theme_mode": "light",
+    "theme_preset_light": "Light (Screenshot)",
+    "theme_preset_dark": "Dark (Screenshot)",
+    "theme_preset_name": "Light (Screenshot)",
+    "logo_src": "assets/logo_light.png",
     "logo_src_light": "assets/logo_light.png",
     "logo_src_dark": "assets/logo_dark.png",
     "icon_src_light": "assets/icon_light.png",
@@ -35,65 +35,70 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
     "logo_height_px": 44,
     "logo_render_height_px": 36,
     "icon_render_height_px": 36,
-    "sidebar_font_size_px": 16,
-    "sidebar_icon_size_px": 22,
-    "sidebar_collapsed_width_px": 64,
-    "sidebar_hover_width_px": 240,
-    "sidebar_item_gap_px": 8,
-    "sidebar_transition": "0.3s",
+    "sidebar_font_size_px": 14,
+    "sidebar_icon_size_px": 20,
+    "sidebar_collapsed_width_px": 68,
+    "sidebar_hover_width_px": 260,
+    "sidebar_item_gap_px": 4,
+    "sidebar_transition": "0.2s",
     "items": [
         {
             "kind": "link",
             "label": "Home",
             "icon": "home",
             "page": "main.py",
-            "access": "public",
         },
         {
             "kind": "link",
             "label": "Dashboard",
-            "icon": "dashboard",
+            "icon": "grid_view",
             "page": "pages/Dashboard.py",
-            "access": "logged_in",
         },
         {
             "kind": "link",
             "label": "DICOM Tools",
             "icon": "medical_services",
             "page": "pages/DICOM_Tools.py",
-            "access": "logged_in",
         },
         {
             "kind": "link",
             "label": "DICOM Analysis",
             "icon": "analytics",
             "page": "pages/DICOM_Analysis.py",
-            "access": "logged_in",
-            "auth_mode": "local_only",
         },
         {
             "kind": "link",
-            "label": "Configuration",
-            "icon": "settings",
-            "page": "pages/Configuration.py",
-            "access": "logged_in",
+            "label": "Agent Config",
+            "icon": "smart_toy",
+            "page": "pages/Agent_Config.py",
         },
+        {"kind": "separator"},
+        {
+            "kind": "link",
+            "label": "Preferences",
+            "icon": "settings_input_component",
+            "page": "pages/Configuration.py",
+        },
+        {
+            "kind": "link",
+            "label": "Themes",
+            "icon": "palette",
+            "page": "pages/Configuration.py",
+        },
+        {"kind": "theme_toggle", "label": "Dark mode", "icon": "dark_mode"},
         {
             "kind": "link",
             "label": "Account",
             "icon": "account_circle",
             "page": "pages/Account.py",
-            "access": "logged_in",
         },
         {
             "kind": "link",
             "label": "Help",
-            "icon": "help",
+            "icon": "help_outline",
             "page": "pages/Help.py",
-            "access": "public",
         },
-        {"kind": "separator"},
-        {"kind": "theme_toggle"},
+        {"kind": "user_profile"},
     ],
 }
 
@@ -112,7 +117,17 @@ def _as_int(value: Any, *, default: int, minimum: int, maximum: int) -> int:
 
 def _normalize_item_kind(value: Any) -> str:
     item_kind = str(value or "link").strip().lower()
-    if item_kind in {"link", "separator", "spacer", "theme_toggle"}:
+    if item_kind in {
+        "link",
+        "separator",
+        "spacer",
+        "theme_toggle",
+        "search",
+        "badge_link",
+        "header",
+        "upgrade_card",
+        "user_profile",
+    }:
         return item_kind
     return "link"
 
@@ -150,28 +165,63 @@ def _normalize_items(value: Any) -> List[Dict[str, Any]]:
             )
             continue
         if item_kind == "theme_toggle":
-            cleaned.append({"kind": "theme_toggle"})
+            cleaned.append(
+                {
+                    "kind": "theme_toggle",
+                    "label": str(raw.get("label") or "Dark mode").strip(),
+                    "icon": str(raw.get("icon") or "dark_mode").strip(),
+                }
+            )
             continue
+        if item_kind == "search":
+            cleaned.append(
+                {
+                    "kind": "search",
+                    "label": str(raw.get("label") or "Quick search").strip(),
+                    "icon": str(raw.get("icon") or "search").strip(),
+                }
+            )
+            continue
+        if item_kind == "header":
+            cleaned.append(
+                {
+                    "kind": "header",
+                    "label": str(raw.get("label") or "").strip(),
+                }
+            )
+            continue
+        if item_kind == "upgrade_card":
+            cleaned.append({"kind": "upgrade_card"})
+            continue
+        if item_kind == "user_profile":
+            cleaned.append({"kind": "user_profile"})
+            continue
+
         label = str(raw.get("label") or "").strip()
         icon = str(raw.get("icon") or "").strip()
         page = str(raw.get("page") or "").strip()
         if not label or not page:
             continue
-        cleaned.append(
-            {
-                "kind": "link",
-                "label": label,
-                "icon": icon,
-                "page": page,
-                "access": _normalize_access_level(raw.get("access")),
-            }
-        )
+
+        item = {
+            "kind": item_kind,
+            "label": label,
+            "icon": icon,
+            "page": page,
+            "access": _normalize_access_level(raw.get("access")),
+        }
+        if item_kind == "badge_link":
+            item["badge"] = str(raw.get("badge") or "").strip()
+
+        cleaned.append(item)
 
     if not any(
         str(item.get("kind") or "").strip().lower() == "theme_toggle"
         for item in cleaned
     ):
-        cleaned.append({"kind": "theme_toggle"})
+        cleaned.append(
+            {"kind": "theme_toggle", "label": "Dark mode", "icon": "dark_mode"}
+        )
 
     return cleaned or defaults
 

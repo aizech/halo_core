@@ -10,11 +10,11 @@ from services import ingestion
 
 
 def test_extract_document_payload_text() -> None:
-    data = b"Hello NotebookLM"
+    data = b"Hello HALO Core"
     payload = ingestion.extract_document_payload("note.txt", data)
     assert payload["title"] == "note.txt"
     assert payload["type_label"] == "Text"
-    assert "NotebookLM" in payload["body"]
+    assert "HALOCore" in payload["body"]
 
 
 def test_load_directory_documents_reads_supported_files(tmp_path: Path) -> None:
