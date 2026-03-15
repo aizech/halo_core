@@ -873,13 +873,12 @@ def render_sidebar() -> None:
         if item_kind == "header":
             continue
         if item_kind == "user_profile":
-            display_name = "Mustername"
             plan = "Pro trial"
-            if auth_user and getattr(auth_user, "is_logged_in", False):
-                display_name = (
-                    str(getattr(auth_user, "name", "")).strip()
-                    or str(getattr(auth_user, "email", "")).strip()
-                )
+            display_name = (
+                str(getattr(auth_user, "name", "")).strip()
+                or str(getattr(auth_user, "email", "")).strip()
+                or "Local User"
+            ) if auth_user else "Local User"
 
             st.sidebar.markdown(
                 f"""
@@ -979,12 +978,14 @@ def render_sidebar() -> None:
                 except Exception as exc:
                     st.sidebar.error(f"Logout failed: {exc}")
         else:
-            if st.sidebar.button(
+            login_clicked = st.sidebar.button(
                 "Log in",
                 key="sidebar_auth_login",
+                icon=":material/login:",
                 width="stretch",
                 disabled=not auth_enabled,
-            ):
+            )
+            if login_clicked:
                 provider = (
                     str(config.get("auth_provider") or "auth0").strip() or "auth0"
                 )
