@@ -573,9 +573,14 @@ def render_sidebar() -> None:
     sidebar_icon_color = str(menu_cfg.get("sidebar_icon_color") or "").strip()
     sidebar_bg_color = str(menu_cfg.get("sidebar_bg") or "").strip()
 
-    # Logo and icon sources (no theme-specific variants)
+    # Logo and icon sources – prefer plain key, fall back to light/dark variants
     logo_src = str(menu_cfg.get("logo_src") or "").strip()
-    icon_src = str(menu_cfg.get("icon_src") or "").strip()
+    theme_mode = str(menu_cfg.get("theme_mode") or "light").strip().lower()
+    _icon_variant_key = "icon_src_dark" if theme_mode == "dark" else "icon_src_light"
+    icon_src = (
+        str(menu_cfg.get("icon_src") or "").strip()
+        or str(menu_cfg.get(_icon_variant_key) or "").strip()
+    )
 
     logo_css_url = _src_to_css_url(logo_src)
     icon_css_url = _src_to_css_url(icon_src)
@@ -868,7 +873,7 @@ def render_sidebar() -> None:
         if item_kind == "header":
             continue
         if item_kind == "user_profile":
-            display_name = "Brooklyn"
+            display_name = "Mustername"
             plan = "Pro trial"
             if auth_user and getattr(auth_user, "is_logged_in", False):
                 display_name = (
