@@ -30,7 +30,6 @@ from services.dicom_analyzer import (
 from services.dicom_analyzer_optimized import (
     BenchmarkResult,
     analyze_optimized,
-    CACHE_PATH,
 )
 from services.dicom_scoring import (
     SeriesAnalysisResult,
@@ -84,24 +83,32 @@ def render() -> None:
     if "opt_analysis_stop" not in st.session_state:
         st.session_state.opt_analysis_stop = False
 
-    # Worker / cache settings (unique to Optimized page)
+    # Worker / cache / sampling settings (unique to Optimized page)
     with st.expander(":material/settings: Optimierungs-Einstellungen", expanded=False):
         import os
 
         _sc1, _sc2 = st.columns(2)
         with _sc1:
             max_workers = st.slider(
-                "Parallele Worker",
+                "Metadaten-Worker (parallel)",
                 min_value=1,
                 max_value=min(16, (os.cpu_count() or 4) * 2),
                 value=min(8, os.cpu_count() or 4),
                 help="Anzahl paralleler Prozesse für die Metadaten-Extraktion.",
                 key="opt_max_workers",
             )
+            ai_workers = st.slider(
+                "KI-Analyse-Threads (parallel)",
+                min_value=1,
+                max_value=16,
+                value=8,
+                help="Anzahl gleichzeitiger KI-Agenten-Aufrufe. Begrenzt durch API-Rate-Limits.",
+                key="opt_ai_workers",
+            )
             use_cache = st.checkbox(
                 "Datei-Hash-Cache aktivieren",
                 value=True,
-                help="Bereits analysierte (unveränderte) Dateien werden sofort aus dem Cache geladen.",
+                help="Bereits analysierte (unveränderte) Dateien werden sofort aus dem Cache geladen (Metadaten + KI-Ergebnisse).",
                 key="opt_use_cache",
             )
         with _sc2:
@@ -111,16 +118,32 @@ def render() -> None:
                 value=50,
                 key="opt_chunk_size",
             )
+            sample_threshold = st.number_input(
+                "KI-Sampling ab (Dateien)",
+                min_value=10,
+                max_value=500,
+                value=50,
+                step=10,
+                help="Ab dieser Dateianzahl wird nur jede N-te Scheibe per KI analysiert. Darunter werden alle Dateien analysiert.",
+                key="opt_sample_threshold",
+            )
+            sample_step = st.slider(
+                "KI-Sampling: jede N-te Scheibe",
+                min_value=1,
+                max_value=50,
+                value=10,
+                help="Bei großen Serien: nur jede N-te Scheibe per KI analysieren. Übersprungene Scheiben erben das Ergebnis der nächsten analysierten Scheibe.",
+                key="opt_sample_step",
+            )
         _cc, _ = st.columns([1, 3])
         with _cc:
             if st.button(
                 ":material/delete: Cache leeren", width="stretch", key="opt_clear_cache"
             ):
-                if CACHE_PATH.exists():
-                    CACHE_PATH.unlink()
-                    st.success("Cache geleert.")
-                else:
-                    st.info("Kein Cache gefunden.")
+                from services.dicom_analyzer_optimized import clear_cache
+
+                clear_cache()
+                st.success("Cache geleert (Metadaten + KI-Ergebnisse).")
 
     # Input tabs
     tab1, tab2, tab3 = st.tabs(
@@ -132,10 +155,24 @@ def render() -> None:
     )
 
     with tab1:
-        _render_directory_tab(max_workers, use_cache, chunk_size)
+        _render_directory_tab(
+            max_workers,
+            use_cache,
+            chunk_size,
+            ai_workers,
+            sample_step,
+            int(sample_threshold),
+        )
 
     with tab2:
-        _render_upload_tab(max_workers, use_cache, chunk_size)
+        _render_upload_tab(
+            max_workers,
+            use_cache,
+            chunk_size,
+            ai_workers,
+            sample_step,
+            int(sample_threshold),
+        )
 
     with tab3:
         _render_pacs_tab()
@@ -163,7 +200,14 @@ def render() -> None:
 # ── Input tabs ────────────────────────────────────────────────────────────────
 
 
-def _render_directory_tab(max_workers: int, use_cache: bool, chunk_size: int) -> None:
+def _render_directory_tab(
+    max_workers: int,
+    use_cache: bool,
+    chunk_size: int,
+    ai_workers: int = 8,
+    sample_step: int = 10,
+    sample_threshold: int = 50,
+) -> None:
     st.subheader("DICOM-Verzeichnis analysieren")
 
     st.markdown("""
@@ -205,6 +249,21 @@ def _render_directory_tab(max_workers: int, use_cache: bool, chunk_size: int) ->
     elif dir_path:
         st.warning(f"Verzeichnis nicht gefunden: {dir_path}")
 
+    # Auto-suggest sampling when file count is large
+    if dir_path and Path(dir_path).exists():
+        try:
+            from services.dicom_analyzer import _get_dicom_files_from_directory
+
+            file_count = len(_get_dicom_files_from_directory(Path(dir_path)))
+            if file_count > sample_threshold:
+                st.info(
+                    f":material/bolt: **{file_count} Dateien** erkannt – "
+                    f"KI-Analyse wird auf **~{max(1, file_count // sample_step)} "
+                    f"repräsentative Scheiben** reduziert (jede {sample_step}. Scheibe)."
+                )
+        except Exception:
+            pass
+
     if st.button(
         ":material/search: Analyse starten",
         type="primary",
@@ -212,11 +271,26 @@ def _render_directory_tab(max_workers: int, use_cache: bool, chunk_size: int) ->
         key="opt_analyze_dir_btn",
     ):
         _run_directory_analysis(
-            Path(dir_path), anonymize, save_results, max_workers, use_cache, chunk_size
+            Path(dir_path),
+            anonymize,
+            save_results,
+            max_workers,
+            use_cache,
+            chunk_size,
+            ai_workers,
+            sample_step,
+            sample_threshold,
         )
 
 
-def _render_upload_tab(max_workers: int, use_cache: bool, chunk_size: int) -> None:
+def _render_upload_tab(
+    max_workers: int,
+    use_cache: bool,
+    chunk_size: int,
+    ai_workers: int = 8,
+    sample_step: int = 10,
+    sample_threshold: int = 50,
+) -> None:
     st.subheader("DICOM-Dateien hochladen")
 
     st.markdown("""
@@ -252,6 +326,14 @@ def _render_upload_tab(max_workers: int, use_cache: bool, chunk_size: int) -> No
     if uploaded_files:
         _preview_uploaded_files(uploaded_files)
 
+    # Auto-suggest sampling when many files uploaded
+    if uploaded_files and len(uploaded_files) > sample_threshold:
+        st.info(
+            f":material/bolt: **{len(uploaded_files)} Dateien** erkannt – "
+            f"KI-Analyse wird auf **~{max(1, len(uploaded_files) // sample_step)} "
+            f"repräsentative Dateien** reduziert (jede {sample_step}. Datei)."
+        )
+
     if st.button(
         ":material/search: Analyse starten",
         type="primary",
@@ -259,7 +341,15 @@ def _render_upload_tab(max_workers: int, use_cache: bool, chunk_size: int) -> No
         key="opt_analyze_upload_btn",
     ):
         _run_upload_analysis(
-            uploaded_files, anonymize, save_results, max_workers, use_cache, chunk_size
+            uploaded_files,
+            anonymize,
+            save_results,
+            max_workers,
+            use_cache,
+            chunk_size,
+            ai_workers,
+            sample_step,
+            sample_threshold,
         )
 
 
@@ -364,6 +454,9 @@ def _run_directory_analysis(
     max_workers: int,
     use_cache: bool,
     chunk_size: int,
+    ai_workers: int = 8,
+    sample_step: int = 10,
+    sample_threshold: int = 50,
 ) -> None:
     """Pre-extract metadata with optimized engine, then run full AI pipeline on the directory."""
     from services.settings import get_settings
@@ -426,6 +519,9 @@ def _run_directory_analysis(
             agent_run_func=agent_runner,
             anonymize=anonymize,
             progress_callback=progress_callback,
+            ai_workers=ai_workers,
+            sample_step=sample_step,
+            sample_threshold=sample_threshold,
         )
 
         result.overall_summary = generate_overall_summary(result, agent_runner)
@@ -465,6 +561,9 @@ def _run_upload_analysis(
     max_workers: int,
     use_cache: bool,
     chunk_size: int,
+    ai_workers: int = 8,
+    sample_step: int = 10,
+    sample_threshold: int = 50,
 ) -> None:
     """Pre-extract metadata with optimized engine, then run full AI pipeline on uploads."""
     import tempfile
@@ -548,6 +647,9 @@ def _run_upload_analysis(
             agent_run_func=agent_runner,
             anonymize=anonymize,
             progress_callback=progress_callback,
+            ai_workers=ai_workers,
+            sample_step=sample_step,
+            sample_threshold=sample_threshold,
         )
 
         result.overall_summary = generate_overall_summary(result, agent_runner)

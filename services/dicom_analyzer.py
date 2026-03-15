@@ -10,6 +10,7 @@ import io
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -344,6 +345,99 @@ def _extract_summary_from_text(text: str) -> str:
     return text[:500]
 
 
+# ── Series deduplication ──────────────────────────────────────────────────────
+
+# Default: analyse every Nth slice when series has many files.
+# Below this count, all files are analysed.
+_SAMPLE_ALL_THRESHOLD = 50
+_DEFAULT_SAMPLE_STEP = 10  # every 10th slice for large series
+
+
+def _sample_series_slices(
+    dicom_files: List[Path],
+    sample_step: int = _DEFAULT_SAMPLE_STEP,
+    threshold: int = _SAMPLE_ALL_THRESHOLD,
+) -> Tuple[List[Path], Dict[str, str]]:
+    """Return (files_to_analyse, inheritance_map).
+
+    For a series with many files, pick representative slices and map
+    skipped files to their nearest sampled neighbour.
+
+    ``inheritance_map`` maps skipped_path -> sampled_path so callers can
+    copy the AI result across without re-running the agent.
+    """
+    if len(dicom_files) <= threshold:
+        return list(dicom_files), {}
+
+    sampled: List[Path] = []
+    skipped_map: Dict[str, str] = {}  # skipped_str -> sampled_str
+
+    # Always include first + last; sample every Nth in between
+    indices_to_sample: set[int] = {0, len(dicom_files) - 1}
+    for i in range(0, len(dicom_files), sample_step):
+        indices_to_sample.add(i)
+
+    sorted_sampled_idx = sorted(indices_to_sample)
+    sampled = [dicom_files[i] for i in sorted_sampled_idx]
+
+    # Map each skipped file to its nearest sampled neighbour (by index)
+    sampled_set = set(sorted_sampled_idx)
+    for i, f in enumerate(dicom_files):
+        if i not in sampled_set:
+            # Find nearest sampled index
+            nearest = min(sorted_sampled_idx, key=lambda s: abs(s - i))
+            skipped_map[str(f)] = str(dicom_files[nearest])
+
+    return sampled, skipped_map
+
+
+# ── Concurrent AI analysis helpers ───────────────────────────────────────────
+
+# Default thread concurrency for AI calls.
+# Bounded by API rate limits; 8 is a safe default for most providers.
+_DEFAULT_AI_WORKERS = 8
+
+
+def _run_single_dicom_with_cache(
+    filepath: Path,
+    agent_run_func: Optional[callable],
+    anonymize: bool,
+    fingerprint: str,
+) -> DicomAnalysisResult:
+    """Analyse one file, checking the AI cache first."""
+    from services.dicom_analyzer_optimized import (
+        load_ai_cache_entry,
+        save_ai_cache_entry,
+    )
+
+    data = filepath.read_bytes()
+
+    # Check AI cache before calling the agent
+    if agent_run_func and fingerprint:
+        cached = load_ai_cache_entry(fingerprint, anonymize)
+        if cached is not None:
+            try:
+                return DicomAnalysisResult.from_dict(cached)
+            except Exception:
+                pass  # fall through to fresh analysis
+
+    result = analyze_single_dicom(
+        dicom_data=data,
+        file_path=str(filepath),
+        agent_run_func=agent_run_func,
+        anonymize=anonymize,
+    )
+
+    # Persist AI result to cache
+    if agent_run_func and fingerprint and not result.error:
+        try:
+            save_ai_cache_entry(fingerprint, anonymize, result.to_dict())
+        except Exception:
+            pass
+
+    return result
+
+
 def analyze_single_dicom(
     dicom_data: bytes,
     file_path: str,
@@ -445,6 +539,9 @@ def analyze_dicom_series(
     agent_run_func: Optional[callable] = None,
     anonymize: bool = True,
     progress_callback: Optional[callable] = None,
+    ai_workers: int = _DEFAULT_AI_WORKERS,
+    sample_step: int = _DEFAULT_SAMPLE_STEP,
+    sample_threshold: int = _SAMPLE_ALL_THRESHOLD,
 ) -> SeriesAnalysisResult:
     """Analyze all DICOM files in a directory.
 
@@ -453,6 +550,9 @@ def analyze_dicom_series(
         agent_run_func: Function to run AI agent analysis
         anonymize: Whether to anonymize before analysis
         progress_callback: Optional callback(current, total, filename) for progress updates
+        ai_workers: Number of concurrent threads for AI agent calls (default 8)
+        sample_step: Analyse every Nth slice when file count > sample_threshold (default 10)
+        sample_threshold: Below this count all files are analysed (default 50)
 
     Returns:
         SeriesAnalysisResult with aggregated findings
@@ -476,56 +576,78 @@ def analyze_dicom_series(
         raise ValueError(f"No DICOM files found in {directory}")
 
     analysis_id = generate_analysis_id()
-    dicom_results: List[DicomAnalysisResult] = []
 
-    # Track series/study UIDs for aggregation
+    # ── Step 1: extract series/study metadata from first file (no pixel read) ─
     study_uid = ""
     series_uid = ""
     study_info: Dict[str, Any] = {}
     series_info: Dict[str, Any] = {}
     patient_info: Dict[str, Any] = {}
 
-    total = len(dicom_files)
-    for i, filepath in enumerate(dicom_files):
-        try:
-            data = filepath.read_bytes()
-            result = analyze_single_dicom(
-                dicom_data=data,
-                file_path=str(filepath),
-                agent_run_func=agent_run_func,
-                anonymize=anonymize,
-            )
-            dicom_results.append(result)
+    try:
+        first_data = dicom_files[0].read_bytes()
+        meta0 = _extract_dicom_metadata(first_data, str(dicom_files[0]))
+        study_uid = meta0.get("study_instance_uid", "")
+        series_uid = meta0.get("series_instance_uid", "")
+        study_info = {
+            "study_description": meta0.get("study_description", ""),
+            "modality": meta0.get("modality", ""),
+        }
+        series_info = {
+            "series_description": meta0.get("series_description", ""),
+            "series_number": meta0.get("series_number", 0),
+        }
+        patient_info = {
+            "patient_id": "ANONYMIZED",
+            "patient_name": "ANONYMIZED",
+        }
+    except Exception as exc:
+        _logger.warning("Could not extract metadata from first file: %s", exc)
 
-            # Capture UIDs from first successful result
-            if i == 0 and result.sop_instance_uid:
-                # Re-read to get full metadata
-                metadata = _extract_dicom_metadata(data, str(filepath))
-                study_uid = metadata.get("study_instance_uid", "")
-                series_uid = metadata.get("series_instance_uid", "")
-                study_info = {
-                    "study_description": metadata.get("study_description", ""),
-                    "modality": metadata.get("modality", ""),
-                }
-                series_info = {
-                    "series_description": metadata.get("series_description", ""),
-                    "series_number": metadata.get("series_number", 0),
-                }
-                # Anonymized patient info
-                patient_info = {
-                    "patient_id": "ANONYMIZED",
-                    "patient_name": "ANONYMIZED",
-                }
+    # ── Step 2: series deduplication – sample representative slices ───────────
+    files_to_analyse, inheritance_map = _sample_series_slices(
+        dicom_files, sample_step=sample_step, threshold=sample_threshold
+    )
+    skipped_count = len(dicom_files) - len(files_to_analyse)
+    if skipped_count:
+        _logger.info(
+            "Series deduplication: analysing %d of %d files (every %dth slice)",
+            len(files_to_analyse),
+            len(dicom_files),
+            sample_step,
+        )
 
-            # Progress callback
-            if progress_callback:
-                progress_callback(i + 1, total, filepath.name)
+    # ── Step 3: fingerprint files for AI cache lookup ─────────────────────────
+    try:
+        from services.dicom_analyzer_optimized import _file_fingerprint
 
-        except Exception as e:
-            _logger.error("Failed to analyze %s: %s", filepath, e)
-            dicom_results.append(
-                DicomAnalysisResult(
-                    file_path=str(filepath),
+        fingerprints: Dict[str, str] = {
+            str(f): _file_fingerprint(str(f)) for f in files_to_analyse
+        }
+    except Exception:
+        fingerprints = {}
+
+    # ── Step 4: concurrent AI analysis ───────────────────────────────────────
+    completed_count = [0]  # mutable for closure
+
+    # result_map: filepath_str -> DicomAnalysisResult (for sampled files)
+    result_map: Dict[str, DicomAnalysisResult] = {}
+
+    def _analyse_one(filepath: Path) -> Tuple[str, DicomAnalysisResult]:
+        fp = fingerprints.get(str(filepath), "")
+        res = _run_single_dicom_with_cache(filepath, agent_run_func, anonymize, fp)
+        return str(filepath), res
+
+    with ThreadPoolExecutor(max_workers=ai_workers) as executor:
+        future_to_path = {executor.submit(_analyse_one, f): f for f in files_to_analyse}
+        for future in as_completed(future_to_path):
+            try:
+                path_str, res = future.result()
+                result_map[path_str] = res
+            except Exception as exc:
+                path_str = str(future_to_path[future])
+                result_map[path_str] = DicomAnalysisResult(
+                    file_path=path_str,
                     sop_instance_uid="",
                     series_number=0,
                     instance_number=0,
@@ -534,9 +656,53 @@ def analyze_dicom_series(
                     quality=QualityScore.default(),
                     summary="",
                     raw_agent_response="",
-                    error=str(e),
+                    error=str(exc),
                 )
-            )
+            finally:
+                completed_count[0] += 1
+                if progress_callback:
+                    name = future_to_path[future].name
+                    progress_callback(completed_count[0], len(files_to_analyse), name)
+
+    # ── Step 5: reassemble full ordered result list ───────────────────────────
+    dicom_results: List[DicomAnalysisResult] = []
+    for filepath in dicom_files:
+        path_str = str(filepath)
+        if path_str in result_map:
+            dicom_results.append(result_map[path_str])
+        elif path_str in inheritance_map:
+            # Skipped slice: copy result from nearest sampled neighbour
+            source_path = inheritance_map[path_str]
+            source_result = result_map.get(source_path)
+            if source_result:
+                inherited = DicomAnalysisResult(
+                    file_path=path_str,
+                    sop_instance_uid=source_result.sop_instance_uid,
+                    series_number=source_result.series_number,
+                    instance_number=source_result.instance_number,
+                    anomalies=source_result.anomalies,
+                    anomaly_count=source_result.anomaly_count,
+                    quality=source_result.quality,
+                    summary=source_result.summary,
+                    raw_agent_response="[inherited from nearest sampled slice]",
+                    image_bytes=None,  # don't duplicate image bytes
+                )
+                dicom_results.append(inherited)
+            else:
+                dicom_results.append(
+                    DicomAnalysisResult(
+                        file_path=path_str,
+                        sop_instance_uid="",
+                        series_number=0,
+                        instance_number=0,
+                        anomalies=[],
+                        anomaly_count=0,
+                        quality=QualityScore.default(),
+                        summary="",
+                        raw_agent_response="",
+                        error="skipped slice – source result missing",
+                    )
+                )
 
     return SeriesAnalysisResult(
         analysis_id=analysis_id,
@@ -564,6 +730,9 @@ def analyze_uploaded_dicoms(
     agent_run_func: Optional[callable] = None,
     anonymize: bool = True,
     progress_callback: Optional[callable] = None,
+    ai_workers: int = _DEFAULT_AI_WORKERS,
+    sample_step: int = _DEFAULT_SAMPLE_STEP,
+    sample_threshold: int = _SAMPLE_ALL_THRESHOLD,
 ) -> SeriesAnalysisResult:
     """Analyze uploaded DICOM files.
 
@@ -572,6 +741,9 @@ def analyze_uploaded_dicoms(
         agent_run_func: Function to run AI agent analysis
         anonymize: Whether to anonymize before analysis
         progress_callback: Optional callback for progress updates
+        ai_workers: Number of concurrent threads for AI agent calls (default 8)
+        sample_step: Analyse every Nth item when count > sample_threshold (default 10)
+        sample_threshold: Below this count all files are analysed (default 50)
 
     Returns:
         SeriesAnalysisResult with aggregated findings
@@ -589,51 +761,125 @@ def analyze_uploaded_dicoms(
         )
 
     analysis_id = generate_analysis_id()
-    dicom_results: List[DicomAnalysisResult] = []
 
+    # ── Step 1: extract series/study metadata from first file (no pixel read) ─
     study_uid = ""
     series_uid = ""
     study_info: Dict[str, Any] = {}
     series_info: Dict[str, Any] = {}
     patient_info: Dict[str, Any] = {}
 
-    total = len(files)
-    for i, (filename, data) in enumerate(files):
+    if files:
         try:
-            result = analyze_single_dicom(
-                dicom_data=data,
-                file_path=filename,
-                agent_run_func=agent_run_func,
-                anonymize=anonymize,
+            first_name, first_data = files[0]
+            meta0 = _extract_dicom_metadata(first_data, first_name)
+            study_uid = meta0.get("study_instance_uid", "")
+            series_uid = meta0.get("series_instance_uid", "")
+            study_info = {
+                "study_description": meta0.get("study_description", ""),
+                "modality": meta0.get("modality", ""),
+            }
+            series_info = {
+                "series_description": meta0.get("series_description", ""),
+                "series_number": meta0.get("series_number", 0),
+            }
+            patient_info = {
+                "patient_id": "ANONYMIZED",
+                "patient_name": "ANONYMIZED",
+            }
+        except Exception as exc:
+            _logger.warning(
+                "Could not extract metadata from first uploaded file: %s", exc
             )
-            dicom_results.append(result)
 
-            # Capture UIDs from first successful result
-            if i == 0 and result.sop_instance_uid:
-                metadata = _extract_dicom_metadata(data, filename)
-                study_uid = metadata.get("study_instance_uid", "")
-                series_uid = metadata.get("series_instance_uid", "")
-                study_info = {
-                    "study_description": metadata.get("study_description", ""),
-                    "modality": metadata.get("modality", ""),
-                }
-                series_info = {
-                    "series_description": metadata.get("series_description", ""),
-                    "series_number": metadata.get("series_number", 0),
-                }
-                patient_info = {
-                    "patient_id": "ANONYMIZED",
-                    "patient_name": "ANONYMIZED",
-                }
+    # ── Step 2: series deduplication for uploads ──────────────────────────────
+    total = len(files)
+    if total > sample_threshold:
+        indices_to_sample: set[int] = {0, total - 1}
+        for i in range(0, total, sample_step):
+            indices_to_sample.add(i)
+        sorted_sampled = sorted(indices_to_sample)
+        files_to_analyse = [files[i] for i in sorted_sampled]
+        sampled_set = set(sorted_sampled)
+        # Map skipped index -> nearest sampled index
+        skip_idx_map: Dict[int, int] = {
+            i: min(sorted_sampled, key=lambda s: abs(s - i))
+            for i in range(total)
+            if i not in sampled_set
+        }
+        _logger.info(
+            "Upload deduplication: analysing %d of %d files",
+            len(files_to_analyse),
+            total,
+        )
+    else:
+        files_to_analyse = list(files)
+        skip_idx_map = {}
 
-            if progress_callback:
-                progress_callback(i + 1, total, filename)
+    # ── Step 3: fingerprint uploaded bytes for AI cache lookup ────────────────
+    import hashlib as _hashlib
 
-        except Exception as e:
-            _logger.error("Failed to analyze %s: %s", filename, e)
-            dicom_results.append(
-                DicomAnalysisResult(
-                    file_path=filename,
+    def _bytes_fingerprint(data: bytes) -> str:
+        return _hashlib.md5(data[:8192] + str(len(data)).encode()).hexdigest()
+
+    try:
+        from services.dicom_analyzer_optimized import (
+            load_ai_cache_entry,
+            save_ai_cache_entry,
+        )
+
+        use_ai_cache = True
+    except Exception:
+        use_ai_cache = False
+
+    fingerprints_upload: Dict[str, str] = {
+        fname: _bytes_fingerprint(data) for fname, data in files_to_analyse
+    }
+
+    # ── Step 4: concurrent AI analysis ───────────────────────────────────────
+    completed_count = [0]
+    result_map: Dict[str, DicomAnalysisResult] = {}  # filename -> result
+
+    def _analyse_one_upload(fname: str, data: bytes) -> Tuple[str, DicomAnalysisResult]:
+        fp = fingerprints_upload.get(fname, "")
+        # Check AI cache first
+        if use_ai_cache and agent_run_func and fp:
+            cached = load_ai_cache_entry(fp, anonymize)
+            if cached is not None:
+                try:
+                    return fname, DicomAnalysisResult.from_dict(cached)
+                except Exception:
+                    pass
+
+        res = analyze_single_dicom(
+            dicom_data=data,
+            file_path=fname,
+            agent_run_func=agent_run_func,
+            anonymize=anonymize,
+        )
+
+        # Save to AI cache
+        if use_ai_cache and agent_run_func and fp and not res.error:
+            try:
+                save_ai_cache_entry(fp, anonymize, res.to_dict())
+            except Exception:
+                pass
+
+        return fname, res
+
+    with ThreadPoolExecutor(max_workers=ai_workers) as executor:
+        future_to_fname = {
+            executor.submit(_analyse_one_upload, fname, data): fname
+            for fname, data in files_to_analyse
+        }
+        for future in as_completed(future_to_fname):
+            fname = future_to_fname[future]
+            try:
+                _, res = future.result()
+                result_map[fname] = res
+            except Exception as exc:
+                result_map[fname] = DicomAnalysisResult(
+                    file_path=fname,
                     sop_instance_uid="",
                     series_number=0,
                     instance_number=0,
@@ -642,7 +888,64 @@ def analyze_uploaded_dicoms(
                     quality=QualityScore.default(),
                     summary="",
                     raw_agent_response="",
-                    error=str(e),
+                    error=str(exc),
+                )
+            finally:
+                completed_count[0] += 1
+                if progress_callback:
+                    progress_callback(completed_count[0], len(files_to_analyse), fname)
+
+    # ── Step 5: reassemble ordered result list ────────────────────────────────
+    dicom_results: List[DicomAnalysisResult] = []
+    for i, (fname, data) in enumerate(files):
+        if fname in result_map:
+            dicom_results.append(result_map[fname])
+        elif i in skip_idx_map:
+            # Inherit from nearest sampled file
+            src_fname = files[skip_idx_map[i]][0]
+            src_result = result_map.get(src_fname)
+            if src_result:
+                inherited = DicomAnalysisResult(
+                    file_path=fname,
+                    sop_instance_uid=src_result.sop_instance_uid,
+                    series_number=src_result.series_number,
+                    instance_number=src_result.instance_number,
+                    anomalies=src_result.anomalies,
+                    anomaly_count=src_result.anomaly_count,
+                    quality=src_result.quality,
+                    summary=src_result.summary,
+                    raw_agent_response="[inherited from nearest sampled slice]",
+                    image_bytes=None,
+                )
+                dicom_results.append(inherited)
+            else:
+                dicom_results.append(
+                    DicomAnalysisResult(
+                        file_path=fname,
+                        sop_instance_uid="",
+                        series_number=0,
+                        instance_number=0,
+                        anomalies=[],
+                        anomaly_count=0,
+                        quality=QualityScore.default(),
+                        summary="",
+                        raw_agent_response="",
+                        error="skipped slice – source result missing",
+                    )
+                )
+        else:
+            dicom_results.append(
+                DicomAnalysisResult(
+                    file_path=fname,
+                    sop_instance_uid="",
+                    series_number=0,
+                    instance_number=0,
+                    anomalies=[],
+                    anomaly_count=0,
+                    quality=QualityScore.default(),
+                    summary="",
+                    raw_agent_response="",
+                    error="result not found",
                 )
             )
 

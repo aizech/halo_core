@@ -22,6 +22,7 @@ import hashlib
 import json
 import logging
 import os
+import sqlite3
 import tempfile
 import time
 from concurrent.futures import ProcessPoolExecutor
@@ -34,7 +35,8 @@ logger = logging.getLogger(__name__)
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 HALO_DATA_DIR = Path(os.environ.get("HALO_DATA_DIR", "data"))
-CACHE_PATH = HALO_DATA_DIR / "dicom_opt_cache.json"
+CACHE_PATH = HALO_DATA_DIR / "dicom_opt_cache.db"  # SQLite (replaces legacy .json)
+_LEGACY_JSON_CACHE = HALO_DATA_DIR / "dicom_opt_cache.json"  # migrated on first run
 
 # Tags we actually care about – skipping unused tags is free speed.
 # Must be (group, element) tuples or pydicom Tag objects; plain strings are
@@ -141,21 +143,119 @@ def _file_fingerprint(path: str) -> str:
         return ""
 
 
-def _load_cache() -> dict[str, dict]:
+# ── SQLite cache helpers ──────────────────────────────────────────────────────
+# Schema: two tables
+#   metadata_cache  – fingerprint → DicomRecord JSON  (metadata pre-pass)
+#   ai_cache        – fingerprint+anonymize → AI response JSON  (agent results)
+
+
+def _get_db() -> sqlite3.Connection:
+    """Open (and initialise) the SQLite cache database."""
+    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(str(CACHE_PATH), check_same_thread=False, timeout=10)
+    con.execute("PRAGMA journal_mode=WAL")
+    con.execute("PRAGMA synchronous=NORMAL")
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS metadata_cache "
+        "(fingerprint TEXT PRIMARY KEY, record_json TEXT NOT NULL)"
+    )
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS ai_cache "
+        "(cache_key TEXT PRIMARY KEY, result_json TEXT NOT NULL)"
+    )
+    con.commit()
+    _migrate_json_cache(con)
+    return con
+
+
+def _migrate_json_cache(con: sqlite3.Connection) -> None:
+    """One-time migration: import legacy JSON cache into SQLite."""
+    if not _LEGACY_JSON_CACHE.exists():
+        return
     try:
-        if CACHE_PATH.exists():
-            return json.loads(CACHE_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        pass
-    return {}
+        data = json.loads(_LEGACY_JSON_CACHE.read_text(encoding="utf-8"))
+        rows = [(fp, json.dumps(rec, default=str)) for fp, rec in data.items()]
+        con.executemany(
+            "INSERT OR IGNORE INTO metadata_cache (fingerprint, record_json) VALUES (?, ?)",
+            rows,
+        )
+        con.commit()
+        _LEGACY_JSON_CACHE.rename(_LEGACY_JSON_CACHE.with_suffix(".json.migrated"))
+        logger.info("Migrated %d records from legacy JSON cache to SQLite", len(rows))
+    except Exception as exc:
+        logger.warning("JSON cache migration failed (non-fatal): %s", exc)
+
+
+def _load_cache() -> dict[str, dict]:
+    """Load metadata cache from SQLite. Returns {fingerprint: record_dict}."""
+    try:
+        con = _get_db()
+        rows = con.execute(
+            "SELECT fingerprint, record_json FROM metadata_cache"
+        ).fetchall()
+        con.close()
+        return {fp: json.loads(val) for fp, val in rows}
+    except Exception as exc:
+        logger.warning("Could not load metadata cache: %s", exc)
+        return {}
 
 
 def _save_cache(cache: dict[str, dict]) -> None:
+    """Persist metadata cache records to SQLite (upsert)."""
     try:
-        CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        CACHE_PATH.write_text(json.dumps(cache, default=str), encoding="utf-8")
+        con = _get_db()
+        rows = [(fp, json.dumps(rec, default=str)) for fp, rec in cache.items()]
+        con.executemany(
+            "INSERT OR REPLACE INTO metadata_cache (fingerprint, record_json) VALUES (?, ?)",
+            rows,
+        )
+        con.commit()
+        con.close()
     except Exception as exc:
-        logger.warning("Could not save DICOM cache: %s", exc)
+        logger.warning("Could not save metadata cache: %s", exc)
+
+
+def load_ai_cache_entry(fingerprint: str, anonymize: bool) -> dict | None:
+    """Return cached AI result dict, or None if not cached."""
+    key = f"{fingerprint}:{int(anonymize)}"
+    try:
+        con = _get_db()
+        row = con.execute(
+            "SELECT result_json FROM ai_cache WHERE cache_key = ?", (key,)
+        ).fetchone()
+        con.close()
+        return json.loads(row[0]) if row else None
+    except Exception:
+        return None
+
+
+def save_ai_cache_entry(fingerprint: str, anonymize: bool, result: dict) -> None:
+    """Store AI result dict in cache."""
+    key = f"{fingerprint}:{int(anonymize)}"
+    try:
+        con = _get_db()
+        con.execute(
+            "INSERT OR REPLACE INTO ai_cache (cache_key, result_json) VALUES (?, ?)",
+            (key, json.dumps(result, default=str)),
+        )
+        con.commit()
+        con.close()
+    except Exception as exc:
+        logger.warning("Could not save AI cache entry: %s", exc)
+
+
+def clear_cache() -> None:
+    """Delete the SQLite cache database entirely."""
+    try:
+        if CACHE_PATH.exists():
+            CACHE_PATH.unlink()
+        # Also remove WAL/SHM sidecar files if present
+        for suffix in ("-wal", "-shm"):
+            p = CACHE_PATH.with_suffix(".db" + suffix)
+            if p.exists():
+                p.unlink()
+    except Exception as exc:
+        logger.warning("Could not clear cache: %s", exc)
 
 
 # ── Per-file workers (must be top-level for ProcessPoolExecutor pickling) ─────
