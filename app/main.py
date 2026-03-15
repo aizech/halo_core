@@ -875,10 +875,14 @@ def render_sidebar() -> None:
         if item_kind == "user_profile":
             plan = "Pro trial"
             display_name = (
-                str(getattr(auth_user, "name", "")).strip()
-                or str(getattr(auth_user, "email", "")).strip()
-                or "Local User"
-            ) if auth_user else "Local User"
+                (
+                    str(getattr(auth_user, "name", "")).strip()
+                    or str(getattr(auth_user, "email", "")).strip()
+                    or "Local User"
+                )
+                if auth_user
+                else "Local User"
+            )
 
             st.sidebar.markdown(
                 f"""
