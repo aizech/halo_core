@@ -961,18 +961,7 @@ def render_sidebar() -> None:
             color: {_input_text}88 !important;
         }}
 
-        /* Chat input bar */
-        [data-testid="stChatInput"] {{
-            background-color: {_input_bg} !important;
-            border-color: {_input_border} !important;
-        }}
-        [data-testid="stChatInput"] textarea {{
-            background-color: {_input_bg} !important;
-            color: {_input_text} !important;
-        }}
-        [data-testid="stChatInput"] textarea::placeholder {{
-            color: {_input_text}88 !important;
-        }}
+        /* Chat input bar – use light theme (inherits Streamlit native colors) */
         [data-testid="stChatInput"]:focus-within {{
             border-color: {_input_focus} !important;
             box-shadow: 0 0 0 2px {_input_focus}40 !important;
