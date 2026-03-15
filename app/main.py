@@ -235,7 +235,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             description="Konvertiere Erkenntnisse in Hörstücke.",
             status="BETA",
             icon=":material/headphones:",
-            color="#F3ECFF",
+            color="#E8F0F5",
             badge="BETA",
             actions=default_actions,
             agent={"instructions": "Erzeuge ein strukturiertes Podcast-Skript."},
@@ -245,7 +245,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Videoübersicht",
             description="Erstelle ein kurzes Drehbuch für Clips.",
             icon=":material/movie:",
-            color="#DFF5EC",
+            color="#E8F5EA",
             actions=default_actions,
             agent={"instructions": "Erstelle ein Clip-Storyboard mit Szenen."},
         ),
@@ -254,7 +254,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Mindmap",
             description="Visualisiere Kernthemen und Beziehungen.",
             icon=":material/hub:",
-            color="#FFEEDB",
+            color="#FFF4EB",
             actions=default_actions,
             agent={"instructions": "Extrahiere Hauptthemen und Beziehungen."},
         ),
@@ -263,7 +263,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Berichte",
             description="Fasse Erkenntnisse in professionellen Reports zusammen.",
             icon=":material/bar_chart:",
-            color="#E7F0FF",
+            color="#EBF0F4",
             actions=default_actions,
             agent={"instructions": "Erstelle einen Bericht mit klaren Abschnitten."},
         ),
@@ -272,7 +272,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Karteikarten",
             description="Lerne mit automatisch generierten Fragen.",
             icon=":material/folder_open:",
-            color="#FFE4E2",
+            color="#FFEDEB",
             actions=default_actions,
             agent={"instructions": "Erzeuge Q&A-Karteikarten."},
         ),
@@ -281,7 +281,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Quiz",
             description="Teste dein Wissen mit individuellen Quizfragen.",
             icon=":material/quiz:",
-            color="#E0F4FF",
+            color="#EBF4F8",
             actions=default_actions,
             agent={"instructions": "Erstelle Quizfragen mit Lösungen."},
         ),
@@ -291,7 +291,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             description="Stelle Statistiken grafisch dar.",
             status="BETA",
             icon=":material/trending_up:",
-            color="#EDE7FF",
+            color="#F0EBF5",
             badge="BETA",
             actions=default_actions,
             agent={"instructions": "Fasse Kennzahlen als Infografik-Story zusammen."},
@@ -302,7 +302,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             description="Erstelle Slides als Grundlage für Vorträge.",
             status="BETA",
             icon=":material/computer:",
-            color="#FFF4E0",
+            color="#FFF5EB",
             badge="BETA",
             actions=default_actions,
             agent={"instructions": "Erzeuge eine Folienstruktur mit Agenda."},
@@ -312,7 +312,7 @@ def _default_studio_templates() -> List[StudioTemplate]:
             title="Datentabelle",
             description="Strukturiere Fakten in tabellarischer Form.",
             icon=":material/table_chart:",
-            color="#F1F5F9",
+            color="#F1F3F5",
             actions=default_actions,
             agent={"instructions": "Erstelle eine tabellarische Zusammenfassung."},
         ),
@@ -519,7 +519,7 @@ def _apply_theme_preset_to_config(
 
     current = menu_settings.get_menu_settings(config)
     updated: Dict[str, object] = dict(current)
-    updated["theme_preset"] = preset_name
+    updated["theme_preset_name"] = preset_name
     for key, value in preset.items():
         updated[key] = value
     menu_settings.save_menu_settings(config, updated)
@@ -573,13 +573,21 @@ def render_sidebar() -> None:
     sidebar_icon_color = str(menu_cfg.get("sidebar_icon_color") or "").strip()
     sidebar_bg_color = str(menu_cfg.get("sidebar_bg") or "").strip()
 
-    # Logo and icon sources – prefer plain key, fall back to light/dark variants
-    logo_src = str(menu_cfg.get("logo_src") or "").strip()
+    # Logo and icon sources – choose light/dark variant based on sidebar background brightness
+    # If sidebar_bg is a dark color (starts with #3 or #2 or #1 in the HALO palette), use dark-mode assets
+    _sidebar_bg_hex = sidebar_bg_color.lstrip("#").lower()
+    _bg_luminance_hint = int(_sidebar_bg_hex[:2], 16) if len(_sidebar_bg_hex) >= 2 else 255
+    _use_dark_assets = _bg_luminance_hint < 128  # dark sidebar → use light-colored (dark-mode) logo/icon
     theme_mode = str(menu_cfg.get("theme_mode") or "light").strip().lower()
-    _icon_variant_key = "icon_src_dark" if theme_mode == "dark" else "icon_src_light"
+    _logo_variant_key = "logo_src_dark" if _use_dark_assets else "logo_src_light"
+    _icon_variant_key = "icon_src_dark" if _use_dark_assets else "icon_src_light"
+    logo_src = (
+        str(menu_cfg.get(_logo_variant_key) or "").strip()
+        or str(menu_cfg.get("logo_src") or "").strip()
+    )
     icon_src = (
-        str(menu_cfg.get("icon_src") or "").strip()
-        or str(menu_cfg.get(_icon_variant_key) or "").strip()
+        str(menu_cfg.get(_icon_variant_key) or "").strip()
+        or str(menu_cfg.get("icon_src") or "").strip()
     )
 
     logo_css_url = _src_to_css_url(logo_src)
@@ -703,6 +711,16 @@ def render_sidebar() -> None:
             section[data-testid='stSidebar'] .stButton button[data-active='true'] {{
                 background-color: #f1f3f5 !important;
                 box-shadow: none !important;
+            }}
+
+            /* Text color for menu labels */
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a p,
+            section[data-testid='stSidebar'] [data-testid='stPageLink'] a span,
+            section[data-testid='stSidebar'] .stButton button p,
+            section[data-testid='stSidebar'] .stButton button span,
+            section[data-testid='stSidebar'] .stMarkdown p,
+            section[data-testid='stSidebar'] .stMarkdown span {{
+                color: var(--sidebar-text) !important;
             }}
 
             section[data-testid='stSidebar'] [data-testid='stPageLink'] a svg,
@@ -839,18 +857,138 @@ def render_sidebar() -> None:
                 width: 32px;
                 height: 32px;
                 border-radius: 50%;
-                background-color: #DEE2E6;
+                background-color: #3A4750;
                 flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #EEEEEE;
+                font-size: 13px;
+                font-weight: 600;
+            }}
+
+            /* Sidebar caption, small text, auth notices */
+            section[data-testid='stSidebar'] [data-testid='stCaptionContainer'] p,
+            section[data-testid='stSidebar'] small,
+            section[data-testid='stSidebar'] .stCaption p,
+            section[data-testid='stSidebar'] [data-testid='stText'] p {{
+                color: var(--sidebar-text) !important;
+                opacity: 0.75;
+            }}
+
+            /* Log in / Log out buttons in sidebar */
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-secondary'],
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-primary'] {{
+                color: var(--sidebar-text) !important;
+                border-color: var(--sidebar-separator-color) !important;
+                background-color: transparent !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-secondary']:hover,
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-primary']:hover {{
+                background-color: var(--sidebar-hover-bg) !important;
+                border-color: var(--sidebar-focus-outline) !important;
+            }}
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-secondary'] p,
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-primary'] p,
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-secondary'] [data-testid='stIconMaterial'],
+            section[data-testid='stSidebar'] [data-testid='stBaseButton-primary'] [data-testid='stIconMaterial'] {{
+                color: var(--sidebar-text) !important;
             }}
 
             section[data-testid='stSidebar']:hover [data-testid='stPageLink'] a p {{
                 opacity: 1;
                 max-width: 200px;
             }}
+
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+    # Global input field styling – injected separately so it applies outside the sidebar scope
+    _input_bg = str(menu_cfg.get("input_bg") or "#FFFFFF").strip()
+    _input_text = str(menu_cfg.get("input_text_color") or "#212529").strip()
+    _input_border = str(menu_cfg.get("input_border_color") or "#DEE2E6").strip()
+    _input_border_hover = str(menu_cfg.get("input_border_hover") or "#3B5998").strip()
+    _input_hover_bg = str(menu_cfg.get("input_hover_bg") or "#F8F9FA").strip()
+    _input_focus = str(menu_cfg.get("input_focus_outline") or "#3B5998").strip()
+    st.markdown(
+        f"""
+        <style>
+        /* ── HALO input field theme ── */
+
+        /* Text inputs */
+        [data-testid="stTextInput"] input,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stTextArea"] textarea {{
+            background-color: {_input_bg} !important;
+            color: {_input_text} !important;
+            border-color: {_input_border} !important;
+        }}
+
+        /* Input wrappers */
+        [data-testid="stTextInput"] > div > div,
+        [data-testid="stNumberInput"] > div > div,
+        [data-testid="stTextArea"] > div > div {{
+            background-color: {_input_bg} !important;
+            border-color: {_input_border} !important;
+        }}
+
+        /* Hover */
+        [data-testid="stTextInput"] input:hover,
+        [data-testid="stNumberInput"] input:hover,
+        [data-testid="stTextArea"] textarea:hover {{
+            background-color: {_input_hover_bg} !important;
+            border-color: {_input_border_hover} !important;
+        }}
+
+        /* Focus */
+        [data-testid="stTextInput"] input:focus,
+        [data-testid="stNumberInput"] input:focus,
+        [data-testid="stTextArea"] textarea:focus {{
+            background-color: {_input_hover_bg} !important;
+            border-color: {_input_focus} !important;
+            box-shadow: 0 0 0 2px {_input_focus}40 !important;
+            outline: none !important;
+        }}
+
+        /* Placeholder */
+        [data-testid="stTextInput"] input::placeholder,
+        [data-testid="stTextArea"] textarea::placeholder {{
+            color: {_input_text}88 !important;
+        }}
+
+        /* Chat input bar */
+        [data-testid="stChatInput"] {{
+            background-color: {_input_bg} !important;
+            border-color: {_input_border} !important;
+        }}
+        [data-testid="stChatInput"] textarea {{
+            background-color: {_input_bg} !important;
+            color: {_input_text} !important;
+        }}
+        [data-testid="stChatInput"] textarea::placeholder {{
+            color: {_input_text}88 !important;
+        }}
+        [data-testid="stChatInput"]:focus-within {{
+            border-color: {_input_focus} !important;
+            box-shadow: 0 0 0 2px {_input_focus}40 !important;
+        }}
+
+        /* Selectbox wrapper */
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div:first-child {{
+            background-color: {_input_bg} !important;
+            border-color: {_input_border} !important;
+            color: {_input_text} !important;
+        }}
+        [data-testid="stSelectbox"] [data-baseweb="select"]:hover > div:first-child {{
+            border-color: {_input_border_hover} !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     for index, item in enumerate(menu_cfg.get("items", [])):
         item_kind = str(item.get("kind", "link")).strip().lower()
         if item_kind == "separator":
@@ -888,12 +1026,12 @@ def render_sidebar() -> None:
                 f"""
                 <div class='halo-user-profile'>
                     <div class='halo-avatar'></div>
-                    <div class='halo-user-info' style="flex-grow: 1;">
-                        <div style="font-weight: 600; font-size: 13px;">{display_name}</div>
-                        <div style="font-weight: 300; font-size: 10px;">{plan}</div>
+                    <div class='halo-user-info' style="flex-grow: 1; color: #EEEEEE;">
+                        <div style="font-weight: 600; font-size: 13px; color: #EEEEEE;">{display_name}</div>
+                        <div style="font-weight: 300; font-size: 10px; color: #EEEEEE; opacity: 0.7;">{plan}</div>
                     </div>
                     <div class='halo-user-info'>
-                        <span class="material-icons-sharp" style="font-size: 16px; color: #6C757D;">unfold_more</span>
+                        <span class="material-icons-sharp" style="font-size: 16px; color: #EEEEEE; opacity: 0.7;">unfold_more</span>
                     </div>
                 </div>
                 """,
@@ -1781,7 +1919,7 @@ def _render_theme_configuration(container: st.delta_generator.DeltaGenerator) ->
     theme_box.markdown("**Theme Preset**")
 
     preset_names = sorted(theme_presets.THEME_PRESETS.keys())
-    theme_default = str(current_menu.get("theme_preset") or "").strip()
+    theme_default = str(current_menu.get("theme_preset_name") or "").strip()
     if theme_default not in preset_names and preset_names:
         theme_default = preset_names[0]
     theme_preset = theme_box.selectbox(
@@ -1990,7 +2128,7 @@ def _render_theme_configuration(container: st.delta_generator.DeltaGenerator) ->
         "sidebar_collapsed_width_px": sidebar_collapsed_width,
         "sidebar_hover_width_px": sidebar_hover_width,
         "sidebar_item_gap_px": sidebar_item_gap,
-        "theme_preset": theme_preset,
+        "theme_preset_name": theme_preset,
         "logo_src": logo_src,
         "icon_src": icon_src,
         "logo_height_px": logo_height_px,

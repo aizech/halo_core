@@ -81,4 +81,26 @@ THEME_PRESETS: dict[str, dict[str, str]] = {
         "sidebar_focus_outline": "#EBEBEB",
         "sidebar_separator_color": "#4A4F57",
     },
+    "HALO Core Palette": {
+        "sidebar_bg": "#313841",  # High Tide (Secondary)
+        "sidebar_text_color": "#EEEEEE",  # Pebble (Tertiary)
+        "sidebar_icon_color": "#EEEEEE",  # Pebble (Tertiary)
+        "sidebar_hover_bg": "#3A4750",  # Cadet Blue (Primary)
+        "sidebar_hover_text_color": "#EEEEEE",  # Pebble (Tertiary)
+        "sidebar_active_bg": "#EA9216",  # Yam (Accent)
+        "sidebar_focus_outline": "#EA9216",  # Yam (Accent)
+        "sidebar_separator_color": "#3A4750",  # Cadet Blue (Primary)
+        "sidebar_separator_color_light": "#3A4750",  # Cadet Blue (Primary)
+        "sidebar_separator_color_dark": "#3A4750",  # Cadet Blue (Primary)
+        "sidebar_rail_bg": "#313841",  # High Tide (Secondary) - for rail mode
+        "sidebar_rail_text_color": "#EEEEEE",  # Pebble (Tertiary) - for rail mode
+        "input_bg": "#313841",  # High Tide (Secondary)
+        "input_text_color": "#EEEEEE",  # Pebble (Tertiary)
+        "input_border_color": "#3A4750",  # Cadet Blue (Primary)
+        "input_border_hover": "#EA9216",  # Yam (Accent)
+        "input_hover_bg": "#3A4750",  # Cadet Blue (Primary)
+        "input_focus_outline": "#EA9216",  # Yam (Accent)
+        "theme_mode": "dark",
+        "logo_src": "assets/logo_dark.png",
+    },
 }

@@ -6,8 +6,8 @@ runOnSave = true
 showSidebarNavigation = false
 
 [theme]
-primaryColor = "#6750A4"
-backgroundColor = "#F6F4F8"
+primaryColor = "#EA9216"
+backgroundColor = "#F6F6F6"
 secondaryBackgroundColor = "#FFFFFF"
-textColor = "#1F1F1F"
+textColor = "#313841"
 font = "sans serif"
