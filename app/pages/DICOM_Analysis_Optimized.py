@@ -1,34 +1,33 @@
 """DICOM Analysis (Optimized) page for medical imaging AI analysis.
 
-Drop-in replacement for DICOM_Analysis.py that uses the parallel,
-metadata-only, cache-backed analyzer from services/dicom_analyzer_optimized.py.
+Drop-in replacement for DICOM_Analysis.py that pre-extracts metadata with the
+parallel, cache-backed optimizer before delegating to the standard AI pipeline.
 
 Key differences vs. the original page:
-- Parallel ProcessPoolExecutor workers (stop_before_pixels + specific_tags)
+- analyze_optimized() runs first for fast parallel metadata extraction
 - File-hash cache: unchanged files are instant on re-run
-- Performance summary shown after each run (workers, cache hits, elapsed)
-- AI analysis step is identical (radiologist agent, same prompt)
+- Performance badge shown after each run (workers, cache hits, elapsed)
+- AI analysis pipeline is identical (same service calls as DICOM_Analysis.py)
 """
 
 from __future__ import annotations
 
 import logging
-import os
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
 import streamlit as st
 
 from app import main
 from services import parsers
 from services.dicom_analyzer import (
+    analyze_dicom_series,
+    analyze_uploaded_dicoms,
     generate_overall_summary,
     is_dicom_available,
     save_analysis_result,
 )
 from services.dicom_analyzer_optimized import (
-    DicomRecord,
     BenchmarkResult,
     analyze_optimized,
     CACHE_PATH,
@@ -46,39 +45,6 @@ from services.dicom_report import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-
-def _save_uploads_to_temp(uploaded_files: List) -> List[str]:
-    """Persist Streamlit UploadedFile objects to a temp dir, return paths."""
-    tmp = tempfile.mkdtemp(prefix="halo_opt_")
-    paths: List[str] = []
-    for uf in uploaded_files:
-        dest = Path(tmp) / uf.name
-        dest.write_bytes(uf.read())
-        paths.append(str(dest))
-    return paths
-
-
-def _get_dicom_paths_from_directory(directory: Path) -> List[Path]:
-    """Collect all .dcm files recursively."""
-    from services.dicom_analyzer import _get_dicom_files_from_directory
-
-    return _get_dicom_files_from_directory(directory)
-
-
-def _dicom_record_to_metadata(rec: DicomRecord) -> Dict[str, Any]:
-    return {
-        "modality": rec.modality,
-        "rows": rec.rows,
-        "columns": rec.columns,
-        "file_path": rec.file,
-        "patient_id": rec.patient_id,
-        "study_date": rec.study_date,
-        "institution": rec.institution,
-        "manufacturer": rec.manufacturer,
-    }
 
 
 # ── Page ──────────────────────────────────────────────────────────────────────
@@ -108,18 +74,20 @@ def render() -> None:
         )
         st.stop()
 
-    # Session state
-    for key, default in [
-        ("opt_analysis_result", None),
-        ("opt_benchmark", None),
-        ("opt_analysis_running", False),
-        ("opt_analysis_stop", False),
-    ]:
-        if key not in st.session_state:
-            st.session_state[key] = default
+    # Initialize session state
+    if "opt_analysis_result" not in st.session_state:
+        st.session_state.opt_analysis_result = None
+    if "opt_benchmark" not in st.session_state:
+        st.session_state.opt_benchmark = None
+    if "opt_analysis_running" not in st.session_state:
+        st.session_state.opt_analysis_running = False
+    if "opt_analysis_stop" not in st.session_state:
+        st.session_state.opt_analysis_stop = False
 
-    # Worker / cache settings
-    with st.expander(":material/settings: Analyse-Einstellungen", expanded=False):
+    # Worker / cache settings (unique to Optimized page)
+    with st.expander(":material/settings: Optimierungs-Einstellungen", expanded=False):
+        import os
+
         _sc1, _sc2 = st.columns(2)
         with _sc1:
             max_workers = st.slider(
@@ -143,12 +111,6 @@ def render() -> None:
                 value=50,
                 key="opt_chunk_size",
             )
-            anonymize = st.checkbox(
-                "Vor KI-Analyse anonymisieren",
-                value=True,
-                help="Entfernt Patientendaten vor der KI-Bildanalyse.",
-                key="opt_anonymize",
-            )
         _cc, _ = st.columns([1, 3])
         with _cc:
             if st.button(
@@ -160,8 +122,6 @@ def render() -> None:
                 else:
                     st.info("Kein Cache gefunden.")
 
-    st.divider()
-
     # Input tabs
     tab1, tab2, tab3 = st.tabs(
         [
@@ -172,15 +132,15 @@ def render() -> None:
     )
 
     with tab1:
-        _render_directory_tab(max_workers, use_cache, chunk_size, anonymize)
+        _render_directory_tab(max_workers, use_cache, chunk_size)
 
     with tab2:
-        _render_upload_tab(max_workers, use_cache, chunk_size, anonymize)
+        _render_upload_tab(max_workers, use_cache, chunk_size)
 
     with tab3:
         _render_pacs_tab()
 
-    # Performance badge
+    # Performance badge (unique to Optimized page)
     bench: BenchmarkResult | None = st.session_state.get("opt_benchmark")
     if bench:
         st.divider()
@@ -194,7 +154,7 @@ def render() -> None:
                 f":material/warning: {bench.failed_files} Dateien fehlgeschlagen."
             )
 
-    # Analysis results
+    # Show results if available
     if st.session_state.opt_analysis_result:
         st.divider()
         _render_analysis_results(st.session_state.opt_analysis_result)
@@ -203,16 +163,18 @@ def render() -> None:
 # ── Input tabs ────────────────────────────────────────────────────────────────
 
 
-def _render_directory_tab(
-    max_workers: int, use_cache: bool, chunk_size: int, anonymize: bool
-) -> None:
+def _render_directory_tab(max_workers: int, use_cache: bool, chunk_size: int) -> None:
     st.subheader("DICOM-Verzeichnis analysieren")
-    st.markdown(
-        "Wähle ein Verzeichnis mit DICOM-Dateien. Alle .dcm-Dateien (inkl. Unterordner) "
-        "werden parallel extrahiert und anschließend per KI analysiert."
-    )
 
-    default_path = st.session_state.get("opt_dicom_dir_path", "")
+    st.markdown("""
+        Wähle ein Verzeichnis mit DICOM-Dateien. Die Analyse wird automatisch
+        alle DICOM-Dateien im Verzeichnis (inkl. Unterordner) erkennen und analysieren.
+        """)
+
+    default_path = ""
+    if "opt_dicom_dir_path" in st.session_state:
+        default_path = st.session_state.opt_dicom_dir_path
+
     dir_path = st.text_input(
         "Verzeichnispfad",
         value=default_path,
@@ -222,6 +184,13 @@ def _render_directory_tab(
     )
 
     col1, col2 = st.columns(2)
+    with col1:
+        anonymize = st.checkbox(
+            "Vor Analyse anonymisieren",
+            value=True,
+            help="Entfernt Patientendaten vor der KI-Analyse",
+            key="opt_dir_anonymize",
+        )
     with col2:
         save_results = st.checkbox(
             "Ergebnisse speichern",
@@ -242,32 +211,36 @@ def _render_directory_tab(
         disabled=not dir_path or not Path(dir_path).exists(),
         key="opt_analyze_dir_btn",
     ):
-        paths = [str(p) for p in _get_dicom_paths_from_directory(Path(dir_path))]
-        if not paths:
-            st.warning("Keine DICOM-Dateien im Verzeichnis gefunden.")
-        else:
-            _run_optimized_analysis(
-                paths, max_workers, use_cache, chunk_size, anonymize, save_results
-            )
+        _run_directory_analysis(
+            Path(dir_path), anonymize, save_results, max_workers, use_cache, chunk_size
+        )
 
 
-def _render_upload_tab(
-    max_workers: int, use_cache: bool, chunk_size: int, anonymize: bool
-) -> None:
+def _render_upload_tab(max_workers: int, use_cache: bool, chunk_size: int) -> None:
     st.subheader("DICOM-Dateien hochladen")
-    st.markdown(
-        "Lade einzelne oder mehrere DICOM-Dateien hoch. Die Metadaten werden parallel "
-        "extrahiert; anschließend erfolgt die KI-Bildanalyse."
-    )
+
+    st.markdown("""
+        Lade einzelne oder mehrere DICOM-Dateien hoch. Die Analyse wird
+        jede Datei einzeln untersuchen und die Ergebnisse aggregieren.
+        """)
 
     uploaded_files = st.file_uploader(
         "DICOM-Dateien (.dcm, .dicom oder ohne Erweiterung)",
         type=["dcm", "dicom"],
         accept_multiple_files=True,
+        help="Lade eine oder mehrere DICOM-Dateien hoch. "
+        "Dateien ohne Erweiterung werden automatisch erkannt.",
         key="opt_uploader",
     )
 
     col1, col2 = st.columns(2)
+    with col1:
+        anonymize = st.checkbox(
+            "Vor Analyse anonymisieren",
+            value=True,
+            help="Entfernt Patientendaten vor der KI-Analyse",
+            key="opt_upload_anonymize",
+        )
     with col2:
         save_results = st.checkbox(
             "Ergebnisse speichern",
@@ -285,9 +258,8 @@ def _render_upload_tab(
         disabled=not uploaded_files,
         key="opt_analyze_upload_btn",
     ):
-        paths = _save_uploads_to_temp(uploaded_files)
-        _run_optimized_analysis(
-            paths, max_workers, use_cache, chunk_size, anonymize, save_results
+        _run_upload_analysis(
+            uploaded_files, anonymize, save_results, max_workers, use_cache, chunk_size
         )
 
 
@@ -346,10 +318,13 @@ def _render_pacs_tab() -> None:
 
 
 def _preview_directory(directory: Path) -> None:
+    from services.dicom_analyzer import _get_dicom_files_from_directory
+
     try:
-        dicom_files = _get_dicom_paths_from_directory(directory)
+        dicom_files = _get_dicom_files_from_directory(directory)
         if dicom_files:
             st.info(f":material/folder: **{len(dicom_files)}** DICOM-Dateien gefunden")
+
             with st.expander("Dateien anzeigen", expanded=False):
                 for f in dicom_files[:10]:
                     st.text(f.name)
@@ -365,153 +340,94 @@ def _preview_uploaded_files(uploaded_files: List) -> None:
     st.info(
         f":material/upload: **{len(uploaded_files)}** Dateien zum Analysieren bereit"
     )
+
     valid_count = 0
     for f in uploaded_files:
         data = f.read()
         f.seek(0)
         if parsers.is_dicom_file(data):
             valid_count += 1
+
     if valid_count != len(uploaded_files):
         st.warning(
             f":material/warning: {len(uploaded_files) - valid_count} Dateien sind keine gültigen DICOM-Dateien"
         )
 
 
-# ── Core analysis runner ──────────────────────────────────────────────────────
+# ── Analysis runners ──────────────────────────────────────────────────────────
 
 
-def _run_optimized_analysis(
-    paths: List[str],
+def _run_directory_analysis(
+    directory: Path,
+    anonymize: bool,
+    save_results: bool,
     max_workers: int,
     use_cache: bool,
     chunk_size: int,
-    anonymize: bool,
-    save_results: bool,
 ) -> None:
-    """Extract metadata with the optimized engine, then run AI analysis per file."""
+    """Pre-extract metadata with optimized engine, then run full AI pipeline on the directory."""
     from services.settings import get_settings
 
     st.session_state.opt_analysis_running = True
     st.session_state.opt_analysis_stop = False
 
-    progress_bar = st.progress(0, text="Starte optimierte Metadaten-Extraktion…")
+    progress_bar = st.progress(0, text="Initialisiere Analyse...")
     stop_container = st.empty()
 
     with stop_container.container():
         if st.button(
             ":material/stop: Analyse stoppen",
             type="secondary",
-            key="opt_stop_btn",
+            key="opt_stop_dir_analysis_btn",
         ):
             st.session_state.opt_analysis_stop = True
-            st.info("Stoppe Analyse…")
+            st.info("Stoppe Analyse...")
 
+    # ── Step 1: fast parallel metadata extraction ─────────────────────────────
     try:
-        # ── Step 1: parallel metadata extraction ─────────────────────────────
-        progress_bar.progress(0.05, text="Extrahiere Metadaten (parallel)…")
-        bench: BenchmarkResult = analyze_optimized(
-            paths,
-            max_workers=max_workers,
-            use_cache=use_cache,
-            chunk_size=chunk_size,
-        )
-        st.session_state.opt_benchmark = bench
+        dicom_paths = [str(p) for p in _get_dicom_files_from_dir(directory)]
+        if dicom_paths:
+            progress_bar.progress(0.05, text="Extrahiere Metadaten (parallel)...")
+            bench: BenchmarkResult = analyze_optimized(
+                dicom_paths,
+                max_workers=max_workers,
+                use_cache=use_cache,
+                chunk_size=chunk_size,
+            )
+            st.session_state.opt_benchmark = bench
+            progress_bar.progress(
+                0.1,
+                text=f"Metadaten fertig – {bench.cache_hits} Cache-Treffer. Starte KI-Analyse...",
+            )
+    except Exception as exc:
+        _LOGGER.warning("Optimized metadata pre-pass failed: %s", exc)
+        st.session_state.opt_benchmark = None
 
-        progress_bar.progress(
-            0.3,
-            text=f"Metadaten fertig – {bench.cache_hits} Cache-Treffer, starte KI-Analyse…",
-        )
+    if st.session_state.get("opt_analysis_stop"):
+        progress_bar.empty()
+        stop_container.empty()
+        st.session_state.opt_analysis_running = False
+        st.session_state.opt_analysis_stop = False
+        st.warning("Analyse durch Benutzer abgebrochen")
+        return
 
-        if st.session_state.get("opt_analysis_stop"):
+    # ── Step 2: full AI pipeline via standard service ─────────────────────────
+    def progress_callback(current: int, total: int, filename: str) -> None:
+        pct = 0.1 + 0.85 * (current / total)
+        progress_bar.progress(pct, text=f"Analysiere: {filename} ({current}/{total})")
+        if st.session_state.get("opt_analysis_stop", False):
             raise InterruptedError("Analyse durch Benutzer abgebrochen")
 
-        # ── Step 2: build SeriesAnalysisResult skeleton ───────────────────────
-        from services.dicom_scoring import (
-            SeriesAnalysisResult,
-            DicomAnalysisResult,
-            QualityScore,
-        )
-        import uuid
-
+    try:
         agent_runner = _create_agent_runner()
-        dicom_results: List[DicomAnalysisResult] = []
-        total = len(bench.records)
 
-        for idx, rec in enumerate(bench.records):
-            if st.session_state.get("opt_analysis_stop"):
-                raise InterruptedError("Analyse durch Benutzer abgebrochen")
-
-            pct = 0.3 + 0.65 * ((idx + 1) / max(total, 1))
-            progress_bar.progress(
-                pct, text=f"KI-Analyse: {Path(rec.file).name} ({idx+1}/{total})"
-            )
-
-            if rec.error:
-                dicom_results.append(
-                    DicomAnalysisResult(
-                        file_path=rec.file,
-                        sop_instance_uid=rec.sop_uid,
-                        series_number=0,
-                        instance_number=idx,
-                        anomalies=[],
-                        anomaly_count=0,
-                        quality=QualityScore(),
-                        summary="",
-                        raw_agent_response="",
-                        error=rec.error,
-                    )
-                )
-                continue
-
-            # Run AI analysis on the file
-            metadata = _dicom_record_to_metadata(rec)
-            image_bytes: bytes | None = None
-            ai_text = ""
-            try:
-                image_bytes = _extract_image_bytes(rec.file, anonymize)
-                ai_text = agent_runner(image_bytes, metadata) if image_bytes else ""
-                parsed = _parse_agent_response(ai_text)
-            except Exception as exc:
-                _LOGGER.warning("AI analysis failed for %s: %s", rec.file, exc)
-                parsed = {"anomalies": [], "quality": {}, "summary": ""}
-
-            anomalies = parsed.get("anomalies", [])
-            dicom_results.append(
-                DicomAnalysisResult(
-                    file_path=rec.file,
-                    sop_instance_uid=rec.sop_uid,
-                    series_number=0,
-                    instance_number=idx,
-                    anomalies=anomalies,
-                    anomaly_count=len(anomalies),
-                    quality=_parse_quality(parsed.get("quality", {})),
-                    summary=parsed.get("summary", ""),
-                    raw_agent_response=ai_text,
-                    image_bytes=image_bytes,
-                )
-            )
-
-        first = bench.records[0] if bench.records else None
-        result = SeriesAnalysisResult(
-            analysis_id=f"opt_{uuid.uuid4().hex[:12]}",
-            study_instance_uid=first.study_uid if first else "",
-            series_instance_uid=first.series_uid if first else "",
-            patient_info={
-                "patient_id": first.patient_id if first else "",
-                "patient_name": first.patient_name if first else "",
-                "patient_birthdate": first.patient_birthdate if first else "",
-                "patient_sex": first.patient_sex if first else "",
-            },
-            study_info={
-                "modality": first.modality if first else "",
-                "study_date": first.study_date if first else "",
-                "study_description": first.study_description if first else "",
-            },
-            series_info={},
-            dicom_results=dicom_results,
+        result = analyze_dicom_series(
+            directory=directory,
+            agent_run_func=agent_runner,
+            anonymize=anonymize,
+            progress_callback=progress_callback,
         )
 
-        progress_bar.progress(0.97, text="Erstelle Gesamt-Zusammenfassung…")
         result.overall_summary = generate_overall_summary(result, agent_runner)
 
         progress_bar.progress(1.0, text="Analyse abgeschlossen!")
@@ -525,6 +441,7 @@ def _run_optimized_analysis(
 
         st.session_state.opt_analysis_result = result
         st.session_state.opt_analysis_running = False
+
         st.rerun()
 
     except InterruptedError as e:
@@ -541,44 +458,141 @@ def _run_optimized_analysis(
         _LOGGER.error("Optimized DICOM analysis failed: %s", e, exc_info=True)
 
 
-# ── AI agent helpers ──────────────────────────────────────────────────────────
+def _run_upload_analysis(
+    uploaded_files: List,
+    anonymize: bool,
+    save_results: bool,
+    max_workers: int,
+    use_cache: bool,
+    chunk_size: int,
+) -> None:
+    """Pre-extract metadata with optimized engine, then run full AI pipeline on uploads."""
+    import tempfile
+    from services.settings import get_settings
 
+    st.session_state.opt_analysis_running = True
+    st.session_state.opt_analysis_stop = False
 
-def _extract_image_bytes(file_path: str, anonymize: bool) -> bytes | None:
-    """Convert a DICOM file to PNG bytes for the AI agent."""
+    progress_bar = st.progress(0, text="Initialisiere Analyse...")
+    stop_container = st.empty()
+
+    with stop_container.container():
+        if st.button(
+            ":material/stop: Analyse stoppen",
+            type="secondary",
+            key="opt_stop_upload_analysis_btn",
+        ):
+            st.session_state.opt_analysis_stop = True
+            st.info("Stoppe Analyse...")
+
+    # Prepare file data for the AI pipeline
+    files_data = []
+    for f in uploaded_files:
+        data = f.read()
+        f.seek(0)
+        if parsers.is_dicom_file(data):
+            files_data.append((f.name, data))
+
+    if not files_data:
+        progress_bar.empty()
+        stop_container.empty()
+        st.error("Keine gültigen DICOM-Dateien gefunden")
+        st.session_state.opt_analysis_running = False
+        return
+
+    # ── Step 1: fast parallel metadata extraction ─────────────────────────────
     try:
-        import pydicom
-        import numpy as np
-        from PIL import Image as PILImage
-        import io
+        tmp_dir = tempfile.mkdtemp(prefix="halo_opt_")
+        tmp_paths = []
+        for fname, fdata in files_data:
+            p = Path(tmp_dir) / fname
+            p.write_bytes(fdata)
+            tmp_paths.append(str(p))
 
-        ds = pydicom.dcmread(file_path)
-        if not hasattr(ds, "PixelData"):
-            return None
-
-        arr = ds.pixel_array
-        if arr.ndim == 3:
-            arr = arr[0]
-
-        arr = arr.astype(float)
-        arr_min, arr_max = arr.min(), arr.max()
-        if arr_max > arr_min:
-            arr = (arr - arr_min) / (arr_max - arr_min) * 255
-        arr = arr.astype(np.uint8)
-
-        img = PILImage.fromarray(arr)
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        return buf.getvalue()
+        progress_bar.progress(0.05, text="Extrahiere Metadaten (parallel)...")
+        bench: BenchmarkResult = analyze_optimized(
+            tmp_paths,
+            max_workers=max_workers,
+            use_cache=use_cache,
+            chunk_size=chunk_size,
+        )
+        st.session_state.opt_benchmark = bench
+        progress_bar.progress(
+            0.1,
+            text=f"Metadaten fertig – {bench.cache_hits} Cache-Treffer. Starte KI-Analyse...",
+        )
     except Exception as exc:
-        _LOGGER.debug("Could not extract image from %s: %s", file_path, exc)
-        return None
+        _LOGGER.warning("Optimized metadata pre-pass failed: %s", exc)
+        st.session_state.opt_benchmark = None
+
+    if st.session_state.get("opt_analysis_stop"):
+        progress_bar.empty()
+        stop_container.empty()
+        st.session_state.opt_analysis_running = False
+        st.session_state.opt_analysis_stop = False
+        st.warning("Analyse durch Benutzer abgebrochen")
+        return
+
+    # ── Step 2: full AI pipeline via standard service ─────────────────────────
+    def progress_callback(current: int, total: int, filename: str) -> None:
+        pct = 0.1 + 0.85 * (current / total)
+        progress_bar.progress(pct, text=f"Analysiere: {filename} ({current}/{total})")
+        if st.session_state.get("opt_analysis_stop", False):
+            raise InterruptedError("Analyse durch Benutzer abgebrochen")
+
+    try:
+        agent_runner = _create_agent_runner()
+
+        result = analyze_uploaded_dicoms(
+            files=files_data,
+            agent_run_func=agent_runner,
+            anonymize=anonymize,
+            progress_callback=progress_callback,
+        )
+
+        result.overall_summary = generate_overall_summary(result, agent_runner)
+
+        progress_bar.progress(1.0, text="Analyse abgeschlossen!")
+        stop_container.empty()
+
+        if save_results:
+            settings = get_settings()
+            output_dir = Path(settings.data_dir) / "dicom_analyses"
+            saved_path = save_analysis_result(result, output_dir)
+            st.toast(f"Ergebnisse gespeichert: {saved_path.name}")
+
+        st.session_state.opt_analysis_result = result
+        st.session_state.opt_analysis_running = False
+
+        st.rerun()
+
+    except InterruptedError as e:
+        progress_bar.empty()
+        stop_container.empty()
+        st.session_state.opt_analysis_running = False
+        st.session_state.opt_analysis_stop = False
+        st.warning(str(e))
+    except Exception as e:
+        progress_bar.empty()
+        stop_container.empty()
+        st.session_state.opt_analysis_running = False
+        st.error(f"Analyse fehlgeschlagen: {e}")
+        _LOGGER.error("Optimized DICOM upload analysis failed: %s", e, exc_info=True)
+
+
+def _get_dicom_files_from_dir(directory: Path) -> List[Path]:
+    from services.dicom_analyzer import _get_dicom_files_from_directory
+
+    return _get_dicom_files_from_directory(directory)
+
+
+# ── AI agent runner (mirrors DICOM_Analysis.py exactly) ──────────────────────
 
 
 def _create_agent_runner():
-    """Create the AI agent runner (identical to DICOM_Analysis.py)."""
+    """Create a function to run AI agent analysis on DICOM images."""
 
-    def run_agent_analysis(image_bytes: bytes, metadata: Dict[str, Any]) -> str:
+    def run_agent_analysis(image_bytes: bytes, metadata) -> str:
         from agno.media import Image
         from services.agents import _build_agent_from_config
         from services.agents_config import load_agent_configs
@@ -636,20 +650,25 @@ def _create_agent_runner():
 
 Falls keine Anomalien gefunden werden, gib ein leeres `anomalies`-Array zurück.
 """
+
         try:
             import tempfile
 
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 tmp.write(image_bytes)
                 tmp_path = Path(tmp.name)
+
             try:
                 image = Image(filepath=str(tmp_path))
+
                 result = agent.run(prompt, images=[image])
+
                 if hasattr(result, "content"):
                     return result.content
                 return str(result)
             finally:
                 tmp_path.unlink(missing_ok=True)
+
         except Exception as e:
             _LOGGER.error("Agent analysis failed: %s", e)
             return f"Analysis error: {e}"
@@ -657,79 +676,37 @@ Falls keine Anomalien gefunden werden, gib ein leeres `anomalies`-Array zurück.
     return run_agent_analysis
 
 
-def _parse_agent_response(text: str) -> Dict[str, Any]:
-    """Best-effort JSON extraction from agent response. Returns anomalies as AnomalyFinding list."""
-    import json
-    import re
-    from services.dicom_scoring import AnomalyFinding
-
-    if not text:
-        return {"anomalies": [], "quality": {}, "summary": ""}
-    match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
-    raw = match.group(1) if match else text
-    try:
-        data = json.loads(raw)
-    except Exception:
-        return {"anomalies": [], "quality": {}, "summary": text[:500]}
-
-    raw_anomalies = data.get("anomalies", [])
-    anomalies = []
-    for item in raw_anomalies:
-        if isinstance(item, dict):
-            try:
-                anomalies.append(AnomalyFinding.from_dict(item))
-            except Exception:
-                pass
-        elif isinstance(item, AnomalyFinding):
-            anomalies.append(item)
-
-    return {
-        "anomalies": anomalies,
-        "quality": data.get("quality", {}),
-        "summary": data.get("summary", ""),
-    }
-
-
-def _parse_quality(raw: Dict[str, Any]):
-    from services.dicom_scoring import QualityScore
-
-    try:
-        return QualityScore(
-            positioning=int(raw.get("positioning", 3)),
-            contrast=int(raw.get("contrast", 3)),
-            artifacts=int(raw.get("artifacts", 3)),
-            noise_level=int(raw.get("noise_level", 3)),
-            motion_blur=int(raw.get("motion_blur", 3)),
-        )
-    except Exception:
-        from services.dicom_scoring import QualityScore
-
-        return QualityScore()
-
-
 # ── Results rendering (identical to DICOM_Analysis.py) ───────────────────────
 
 
-def _render_analysis_results(result: SeriesAnalysisResult) -> None:
+def _render_analysis_results(result: SeriesAnalysisResult):
+    """Render analysis results with drill-down."""
     st.header("Analyse-Ergebnisse")
 
+    # Overall summary at the top
     if result.overall_summary:
         st.subheader("Gesamt-Zusammenfassung")
         st.markdown(result.overall_summary)
         st.divider()
 
+    # Summary metrics
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("DICOM-Dateien", len(result.dicom_results))
     col2.metric("Gesamt-Anomalien", result.total_anomalies)
     col3.metric("Ø Qualität", f"{result.avg_quality:.1f}/5")
     col4.metric("Kritische Befunde", len(result.critical_findings))
 
+    # Severity distribution
     st.subheader("Schweregrad-Verteilung")
     severity_cols = st.columns(5)
     severity_labels = ["Normal", "Mild", "Moderate", "Severe", "Critical"]
-    for i, label in enumerate(severity_labels):
-        severity_cols[i].metric(label, result.anomaly_distribution.get(label, 0))
+    severity_colors = ["green", "lightgreen", "yellow", "orange", "red"]
 
+    for i, (label, color) in enumerate(zip(severity_labels, severity_colors)):
+        count = result.anomaly_distribution.get(label, 0)
+        severity_cols[i].metric(label, count)
+
+    # Critical findings alert
     if result.critical_findings:
         st.error(
             f":material/warning: **{len(result.critical_findings)}** kritische Befunde erfordern sofortige Aufmerksamkeit!"
@@ -740,23 +717,26 @@ def _render_analysis_results(result: SeriesAnalysisResult) -> None:
                     f"- **{finding.anomaly_type}** in {finding.location}: {finding.description}"
                 )
 
+    # Series info
     if result.study_info or result.series_info:
         st.subheader("Studien-Informationen")
         col1, col2 = st.columns(2)
         with col1:
             if result.study_info:
-                st.markdown(
-                    f"- **Studie:** {result.study_info.get('study_description', 'N/A')}\n"
-                    f"- **Modalität:** {result.study_info.get('modality', 'N/A')}"
-                )
+                st.markdown(f"""
+                - **Studie:** {result.study_info.get('study_description', 'N/A')}
+                - **Modalität:** {result.study_info.get('modality', 'N/A')}
+                """)
         with col2:
             if result.series_info:
-                st.markdown(
-                    f"- **Serie:** {result.series_info.get('series_description', 'N/A')}\n"
-                    f"- **Serien-Nr.:** {result.series_info.get('series_number', 'N/A')}"
-                )
+                st.markdown(f"""
+                - **Serie:** {result.series_info.get('series_description', 'N/A')}
+                - **Serien-Nr.:** {result.series_info.get('series_number', 'N/A')}
+                """)
 
+    # Per-DICOM results
     st.subheader("Einzelne DICOM-Analysen")
+
     for dicom_result in result.dicom_results:
         with st.expander(
             f":material/description: {Path(dicom_result.file_path).name} - {dicom_result.anomaly_count} Anomalien",
@@ -766,18 +746,19 @@ def _render_analysis_results(result: SeriesAnalysisResult) -> None:
                 st.error(f"Fehler: {dicom_result.error}")
                 continue
 
+            # Quality scores
             col1, col2 = st.columns([1, 2])
             with col1:
                 st.markdown("**Qualitätsbewertung:**")
                 quality = dicom_result.quality
-                st.markdown(
-                    f"- Positionierung: {quality.positioning}/5\n"
-                    f"- Kontrast: {quality.contrast}/5\n"
-                    f"- Artefakte: {quality.artifacts}/5\n"
-                    f"- Rauschen: {quality.noise_level}/5\n"
-                    f"- Bewegungsunschärfe: {quality.motion_blur}/5\n"
-                    f"- **Gesamt:** {quality.overall:.1f}/5"
-                )
+                st.markdown(f"""
+                - Positionierung: {quality.positioning}/5
+                - Kontrast: {quality.contrast}/5
+                - Artefakte: {quality.artifacts}/5
+                - Rauschen: {quality.noise_level}/5
+                - Bewegungsunschärfe: {quality.motion_blur}/5
+                - **Gesamt:** {quality.overall:.1f}/5
+                """)
                 if quality.is_diagnostic():
                     st.success(":material/check_circle: Diagnostische Qualität")
                 else:
@@ -789,22 +770,23 @@ def _render_analysis_results(result: SeriesAnalysisResult) -> None:
                 if dicom_result.anomalies:
                     st.markdown("**Anomalien:**")
                     for anomaly in dicom_result.anomalies:
-                        severity_icon = {
+                        severity_color = {
                             Severity.NORMAL: "🟢",
                             Severity.MILD: "🟡",
                             Severity.MODERATE: "🟠",
                             Severity.SEVERE: "🔴",
                             Severity.CRITICAL: "🚨",
                         }.get(anomaly.severity, ":material/help:")
-                        st.markdown(
-                            f"{severity_icon} **{anomaly.anomaly_type}** ({anomaly.severity.to_label()})\n"
-                            f"- Ort: {anomaly.location}\n"
-                            f"- Konfidenz: {anomaly.confidence:.0%}\n"
-                            f"- {anomaly.description}"
-                        )
+                        st.markdown(f"""
+                        {severity_color} **{anomaly.anomaly_type}** ({anomaly.severity.to_label()})
+                        - Ort: {anomaly.location}
+                        - Konfidenz: {anomaly.confidence:.0%}
+                        - {anomaly.description}
+                        """)
                 else:
                     st.info("Keine Anomalien gefunden")
 
+            # Summary with image on the left
             image_bytes = getattr(dicom_result, "image_bytes", None)
             if dicom_result.summary or image_bytes:
                 st.divider()
@@ -821,40 +803,52 @@ def _render_analysis_results(result: SeriesAnalysisResult) -> None:
                     st.markdown("**Zusammenfassung:**")
                     st.markdown(dicom_result.summary)
 
+    # Export section
     st.subheader("Export")
     _render_export_section(result)
 
 
-def _render_export_section(result: SeriesAnalysisResult) -> None:
+def _render_export_section(result: SeriesAnalysisResult):
+    """Render export options."""
     from services import storage
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+        # JSON export
+        json_data = generate_json_export(result)
         st.download_button(
             ":material/data_object: JSON-Export",
-            data=generate_json_export(result),
+            data=json_data,
             file_name=f"{result.analysis_id}.json",
             mime="application/json",
             key="opt_export_json_btn",
         )
+
     with col2:
+        # Markdown report
+        md_report = generate_markdown_report(result)
         st.download_button(
             ":material/description: Markdown-Report",
-            data=generate_markdown_report(result),
+            data=md_report,
             file_name=f"{result.analysis_id}.md",
             mime="text/markdown",
             key="opt_export_md_btn",
         )
+
     with col3:
+        # CSV summary
+        csv_data = generate_csv_summary(result)
         st.download_button(
             ":material/table_chart: CSV-Zusammenfassung",
-            data=generate_csv_summary(result),
+            data=csv_data,
             file_name=f"{result.analysis_id}_summary.csv",
             mime="text/csv",
             key="opt_export_csv_btn",
         )
+
     with col4:
+        # PDF export
         if is_pdf_available():
             pdf_bytes = generate_pdf_report(result)
             if pdf_bytes:
@@ -870,6 +864,7 @@ def _render_export_section(result: SeriesAnalysisResult) -> None:
         else:
             st.info("PDF erfordert fpdf2")
 
+    # Add to notes/sources section
     st.markdown("---")
     col5, col6 = st.columns(2)
 
@@ -879,6 +874,7 @@ def _render_export_section(result: SeriesAnalysisResult) -> None:
             key="opt_save_to_notes_btn",
             width="stretch",
         ):
+            # Create note content from analysis
             note_content = generate_markdown_report(result)
             note = {
                 "title": f"DICOM Analyse (Opt): {result.analysis_id}",
@@ -896,21 +892,32 @@ def _render_export_section(result: SeriesAnalysisResult) -> None:
             key="opt_save_to_sources_btn",
             width="stretch",
         ):
-            from app.main import SourceItem
-            from services import ingestion
-
+            # Create source content
             source_content = generate_markdown_report(result)
             source_name = f"DICOM (Opt): {result.analysis_id[:20]}..."
+
+            # Import SourceItem from main
+            from app.main import SourceItem
+
+            # Create source item
             source = SourceItem(
                 name=source_name,
                 type_label="DICOM Analysis Optimized",
                 meta=f"{result.total_anomalies} Anomalien, {len(result.critical_findings)} kritisch",
             )
+
+            # Add to sources in session state
             sources = st.session_state.setdefault("sources", [])
             sources.append(source)
+
+            # Persist sources (convert dataclass to dict)
             storage.save_sources(
                 [src.__dict__ if hasattr(src, "__dict__") else src for src in sources]
             )
+
+            # Ingest for knowledge retrieval
+            from services import ingestion
+
             ingestion.ingest_source_content(
                 title=source_name,
                 body=source_content,
@@ -920,9 +927,11 @@ def _render_export_section(result: SeriesAnalysisResult) -> None:
                     "source_id": source.id,
                 },
             )
+
             st.toast("Analyse als Quelle hinzugefügt")
 
-    if st.button(":material/refresh: Neue Analyse", key="opt_reset_btn"):
+    # Reset button
+    if st.button(":material/refresh: Neue Analyse", key="opt_reset_analysis_btn"):
         st.session_state.opt_analysis_result = None
         st.session_state.opt_benchmark = None
         st.rerun()
