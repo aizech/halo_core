@@ -576,9 +576,12 @@ def render_sidebar() -> None:
     # Logo and icon sources – choose light/dark variant based on sidebar background brightness
     # If sidebar_bg is a dark color (starts with #3 or #2 or #1 in the HALO palette), use dark-mode assets
     _sidebar_bg_hex = sidebar_bg_color.lstrip("#").lower()
-    _bg_luminance_hint = int(_sidebar_bg_hex[:2], 16) if len(_sidebar_bg_hex) >= 2 else 255
-    _use_dark_assets = _bg_luminance_hint < 128  # dark sidebar → use light-colored (dark-mode) logo/icon
-    theme_mode = str(menu_cfg.get("theme_mode") or "light").strip().lower()
+    _bg_luminance_hint = (
+        int(_sidebar_bg_hex[:2], 16) if len(_sidebar_bg_hex) >= 2 else 255
+    )
+    _use_dark_assets = (
+        _bg_luminance_hint < 128
+    )  # dark sidebar → use light-colored (dark-mode) logo/icon
     _logo_variant_key = "logo_src_dark" if _use_dark_assets else "logo_src_light"
     _icon_variant_key = "icon_src_dark" if _use_dark_assets else "icon_src_light"
     logo_src = (
