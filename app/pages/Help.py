@@ -10,52 +10,54 @@ def render_help_page() -> None:
     main.render_sidebar()
     st.title("HALO Core - User Handbook")
     st.caption("Made with :material/favorite: by Corpus Analytica")
+
+    with st.expander("Quick Start", expanded=False):
+        st.code(
+            """# Clone and setup
+git clone https://github.com/aizech/halo_core.git
+cd halo_core
+python -m venv .venv
+. .venv/Scripts/activate
+pip install -r requirements.txt
+
+# Configure API key
+echo 'OPENAI_API_KEY = "sk-..."' > .streamlit/secrets.toml
+
+# Run
+streamlit run app/main.py""",
+            language="bash",
+        )
+
     st.markdown("""
 
 ## Welcome to HALO Core
 
-**HALO** means **Holistic Agent Logical Orchestrator**.
-
-HALO is built for one outcome: helping you move from information overload to clear, shippable decisions.
-
-In one workspace, you can:
-- collect and control your evidence,
-- orchestrate specialist AI agents,
-- produce decision-ready outputs,
-- and keep high-value insights reusable.
-
-If your current workflow feels like tabs, copy-paste, and uncertainty, HALO is your upgrade.
+**HALO** means **Holistic Agent Logical Orchestrator**. It turns information overload into clear, shippable decisions — collect sources, run grounded AI chat, generate outputs, and save reusable insights, all in one workspace.
 
 ---
 
-## Why HALO feels different
+## Key Features
 
-### 1) Workflow-first intelligence
-HALO is designed around a full operating loop:
-1. Add sources
-2. Ask grounded questions
-3. Save the strongest insights
-4. Generate artifacts (report, infographic, podcast, presentation, and more)
+### Team-Based AI Collaboration
+Run specialized AI agents with different roles, instructions, and tools in a single session.
 
-### 2) AI collaboration, not just one assistant
-HALO can run role-based agents with different instructions, tools, and delegation behavior.
-You can work with a coordinated system that behaves like a researcher, analyst, editor, and producer.
+### Smart Delegation
+Multiple coordination modes: `direct_only`, `delegate_on_complexity`, `always_delegate`, `coordinated_rag`.
 
-### 3) Transparent where it matters
-When needed, you can inspect tool calls, agent actions, and runtime traces.
-This gives you trust and control without slowing down execution.
+### Source-Grounded Responses
+Answers are grounded in your selected documents with citation-aware structure.
 
-### 4) Source-grounded by default
-You choose active sources. HALO answers against that context and can preserve citation-aware structure.
+### Transparent Execution
+Inspect tool calls, agent actions, and runtime traces on demand.
 
-### 5) Built for usable outcomes
-HALO does not stop at answers. It turns context into assets your team can review, reuse, and share.
+### Studio Pipeline
+Generate reports, presentations, podcasts, and more directly from your research context.
 
 ---
 
 ## Your first win in 90 seconds
 
-1. In **Sources**, click **+ Quellen hinzufügen** and upload 1-3 files.
+1. In **Sources**, click **+ Quellen hinzufügen** and upload 1–3 files.
 2. Select those files.
 3. In **Chat**, ask: "From selected sources only, list key decisions, risks, and next actions."
 4. Save the strongest response as a note.
@@ -65,25 +67,24 @@ You now have an end-to-end, source-grounded pipeline running.
 
 ---
 
-## Product tour
+## Product Tour
 
-### A) Sources: your evidence control center
+### Sources: your content library
 
 Use Sources to ingest, curate, and activate context.
 
-You can:
-- upload documents, data files, images, audio, and video,
-- import connector results,
-- rename/download/delete items,
-- select exactly what HALO is allowed to use.
+- Upload documents, data files, images, audio, and video.
+- Import connector results.
+- Rename, download, or delete items.
+- Select exactly what HALO is allowed to use.
 
-Why it matters: stronger source control means stronger answers.
+Use **Zusammenfassung aller Quellen** in Chat to get a fast strategic briefing before deep analysis, or after changing your source set.
 
 ---
 
-### B) Chat: where intelligence becomes decisions
+### Chat: AI conversations and multimodal input
 
-Chat supports text prompts and multimodal workflows (including image/audio-enabled interactions).
+Chat supports text prompts and multimodal workflows (image/audio-enabled interactions).
 
 Key strengths:
 - source-grounded responses,
@@ -96,34 +97,17 @@ Prompt pattern:
 
 ---
 
-### C) Summary of All Sources: instant orientation
+### Studio: generating outputs from templates
 
-In Chat, **Zusammenfassung aller Quellen** gives you a fast strategic briefing.
+Studio templates transform your context into structured assets.
 
-Use it to:
-- get aligned before deep analysis,
-- detect stale summaries after source changes,
-- pin high-value summaries into notes.
-
----
-
-### D) Studio: from insight to deliverable
-
-Studio templates transform context into structured assets.
-
-Common templates:
-- Bericht
-- Infografik
-- Podcast
-- Videouebersicht
-- Praesentation
-- Datentabelle
+Available templates include: Bericht, Infografik, Podcast, Videoübersicht, Präsentation, Datentabelle, Mindmap, Karteikarten, Quiz.
 
 Use Studio when you need outputs your team can immediately review and share.
 
 ---
 
-### E) Notes: your reusable intelligence layer
+### Notes: reusable intelligence layer
 
 Notes preserve your best outputs from chat and summaries.
 
@@ -135,23 +119,21 @@ Typical uses:
 
 ---
 
-### F) Configuration + Agent Config: tailor HALO to your mission
+### Configuration and Agent Config
 
-In **Configuration**, you tune app behavior, presets, and runtime settings.
+In **Configuration**, tune app behavior, presets, and runtime settings.
 
 In **Agent Config**, power users control:
 - role instructions,
 - tool access,
 - MCP server usage,
-- coordination modes like `direct_only`, `delegate_on_complexity`, `always_delegate`, `coordinated_rag`.
-
-This is where HALO shifts from helpful to formidable.
+- coordination mode (`direct_only`, `delegate_on_complexity`, `always_delegate`, `coordinated_rag`).
 
 ---
 
-## High-impact workflows
+## Workflows
 
-### Workflow 1: Rapid due diligence brief
+### Rapid Due Diligence Brief
 1. Import source bundle.
 2. Ask Chat for thesis, evidence, contradictions, and missing data.
 3. Save key outputs as notes.
@@ -159,15 +141,15 @@ This is where HALO shifts from helpful to formidable.
 
 Outcome: executive-ready draft in a single session.
 
-### Workflow 2: Research to presentation
+### Research to Presentation
 1. Build source set.
 2. Generate all-sources summary.
 3. Ask Chat for slide storyline.
-4. Generate **Praesentation** output.
+4. Generate **Präsentation** output.
 
 Outcome: clear narrative structure you can polish fast.
 
-### Workflow 3: Multimodal analysis sprint
+### Multimodal Analysis Sprint
 1. Upload document + image + optional audio notes.
 2. Ask for integrated interpretation.
 3. Save final synthesis as note.
@@ -177,36 +159,25 @@ Outcome: richer analysis from mixed inputs without tool hopping.
 
 ---
 
-## Tips for premium results
+## Tips for Premium Results
 
-1. **Set explicit scope**
-   - Example: "Use only selected Q4 sources."
-
-2. **Ask for structure**
-   - Example: "Return findings, risks, actions, and assumptions."
-
-3. **Run iterative passes**
-   - Pass 1: broad summary
-   - Pass 2: critical challenge
-   - Pass 3: decision-ready output
-
-4. **Save strong outputs as notes**
-   - Convert one great answer into reusable project intelligence.
-
-5. **Tune agents/tools for your domain**
-   - Targeted setup can dramatically improve quality and consistency.
+1. **Set explicit scope** — "Use only selected Q4 sources."
+2. **Ask for structure** — "Return findings, risks, actions, and assumptions."
+3. **Run iterative passes** — broad summary → critical challenge → decision-ready output.
+4. **Save strong outputs as notes** — convert one great answer into reusable project intelligence.
+5. **Tune agents and tools for your domain** — targeted setup improves quality and consistency.
 
 ---
 
-## Troubleshooting quick fixes
+## Troubleshooting
 
 ### "Answers are generic"
 - Confirm sources are selected.
-- Refresh source summary.
+- Refresh the source summary.
 - Add explicit structure and constraints to your prompt.
 
 ### "Import failed"
-- Check supported file type.
+- Check the supported file type.
 - For audio/video workflows, ensure local dependencies are installed.
 
 ### "Memory not visible in Account"
@@ -229,6 +200,9 @@ By default in local project data files.
 ### Can I control tools and models?
 Yes, via Configuration and Agent Config.
 
+### What coordination modes are available?
+`direct_only`, `delegate_on_complexity`, `always_delegate`, and `coordinated_rag` — configurable per agent in Agent Config.
+
 ### Can HALO handle multimodal input?
 Yes. Text workflows can be extended with image/audio-enabled flows.
 
@@ -237,11 +211,18 @@ HALO includes fallback behavior to preserve response continuity where possible.
 
 ---
 
-## Final note
+## Resources
 
-HALO is strongest when you use it as a **collaborative intelligence system**, not a one-prompt chatbot.
+- [Full Documentation](https://docs.corpusanalytica.com)
+- [User Handbook](https://docs.corpusanalytica.com/handbook/)
+- [Admin Guide](https://docs.corpusanalytica.com/admin/)
+- [Technical Reference](https://docs.corpusanalytica.com/reference/)
+- [Changelog](https://docs.corpusanalytica.com/changelog/)
+- [GitHub Repository](https://github.com/aizech/halo_core)
+- [Live Demo](https://halocore.streamlit.app/)
+- [Corpus Analytica](https://www.corpusanalytica.com/)
 
-Curate evidence. Ask sharper questions. Capture winning outputs. Then ship.
+---
 
 Made with :material/favorite: by Corpus Analytica
         """)
