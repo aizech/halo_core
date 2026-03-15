@@ -743,7 +743,7 @@ def _render_export_section(result: SeriesAnalysisResult):
         if st.button(
             ":material/note_add: Als Notiz speichern",
             key="save_to_notes_btn",
-            use_container_width=True,
+            width="stretch",
         ):
             # Create note content from analysis
             note_content = generate_markdown_report(result)
@@ -761,7 +761,7 @@ def _render_export_section(result: SeriesAnalysisResult):
         if st.button(
             ":material/push_pin: Als Quelle hinzufügen",
             key="save_to_sources_btn",
-            use_container_width=True,
+            width="stretch",
         ):
             # Create source content
             source_content = generate_markdown_report(result)
