@@ -1,54 +1,76 @@
-streamlit>=1.33.0
+# Core application
+streamlit>=1.28.0
 agno>=0.1.0
-langchain>=0.2.0
-black>=26.3.1
-langgraph>=1.0.10
-orjson>=3.11.6
-PyJWT>=2.12.0
-tornado>=6.5.5
-openai>=1.7.0
 python-dotenv>=1.0.1
-pydantic>=2.6.1
-pydantic-settings>=2.2.1
-tiktoken>=0.6.0
-requests>=2.31.0
-faster-whisper>=1.0.1
-uvicorn>=0.24.0
-pypdf>=6.7.2
-python-docx>=1.0.0
-python-pptx>=0.6.23
-openpyxl>=3.1.2
-xlrd>=2.0.1
-aiofiles>=23.2.1
-moviepy>=1.0.3
-lancedb>=0.7.0
-numpy>=1.26.0
-pubmed>=0.0.2
-wikipedia>=1.4.0
-streamlit-on-hover-tabs
-sqlalchemy>=2.0.36
-aiosqlite>=0.19.0
-ddgs>=0.1.0
-mkdocs>=1.6.0
-mkdocs-material>=9.5.0
-youtube_transcript_api>=0.5.0
-pillow>=10.0.0
-# asyncio is built into Python 3.11+
-cryptography>=46.0.5
-protobuf>=6.33.5
-python-multipart>=0.0.22
-Authlib>=1.6.7
-pydicom>=2.4.0
-fpdf2>=2.8.0
 
-# Security and audit tools
-bandit[toml]>=1.7.5
-pip-audit>=2.6.1
-safety>=3.0.0
-pip-licenses>=4.3.0
-cyclonedx-bom>=4.2.0
+# AI/ML dependencies
+langchain>=0.2.0
+langgraph>=1.0.10
+openai>=1.7.0
+tiktoken>=0.6.0
+
+# Data processing
+numpy>=1.24.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+orjson>=3.9.0
+
+# Web/API
+requests>=2.28.0
+PyJWT>=2.8.0
+tornado>=6.2.0
+uvicorn>=0.20.0
+aiofiles>=22.1.0
+python-multipart>=0.0.22
+
+# Database
+sqlalchemy>=2.0.0
+aiosqlite>=0.17.0
+lancedb>=0.5.0
+
+# Document processing
+pypdf>=3.17.0
+python-docx>=0.8.11
+python-pptx>=0.6.21
+openpyxl>=3.0.10
+xlrd>=2.0.1
+pillow>=9.5.0
+
+# Media processing
+faster-whisper>=0.9.0
+moviepy>=1.0.3
+
+# External sources
+wikipedia>=1.4.0
+ddgs>=0.1.0
+youtube_transcript_api>=0.5.0
+pubmed>=0.0.2
+
+# UI/Docs
+streamlit-on-hover-tabs
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+
+# Security/Auth
+cryptography>=40.0.0
+Authlib>=1.2.0
+protobuf>=3.20.0
+
+# Medical/Imaging
+pydicom>=2.4.0
+fpdf2>=2.7.0
+
+# Development tools
+black>=23.0.0
+
+# Security scanning tools
+bandit[toml]>=1.7.0
+pip-audit>=2.5.0
+safety>=2.3.0
+pip-licenses>=4.0.0
+cyclonedx-bom>=4.0.0
 trufflehog>=2.2.0
 
-# Updated security dependencies
-langfuse>=3.144.0
-gitpython>=3.1.41
+# Monitoring/Analytics  
+langfuse>=3.0.0
+gitpython>=3.0.6
