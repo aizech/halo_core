@@ -47,7 +47,7 @@ pip-audit>=2.6.1
 safety>=3.0.0
 pip-licenses>=4.3.0
 cyclonedx-bom>=4.2.0
-trufflehog>=3.86.0
+trufflehog>=2.2.0
 
 # Updated security dependencies
 langfuse>=3.144.0
