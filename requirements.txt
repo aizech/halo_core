@@ -69,8 +69,7 @@ pip-audit>=2.5.0
 safety>=2.3.0
 pip-licenses>=4.0.0
 cyclonedx-bom>=4.0.0
-trufflehog>=2.2.0
+# trufflehog installed separately in CI workflows
 
 # Monitoring/Analytics  
 langfuse>=3.0.0
-gitpython>=3.0.6

@@ -19,6 +19,9 @@ jobs:
         with:
           fetch-depth: 0  # Full history for thorough secret scanning
       
+      - name: Install TruffleHog
+        run: pip install trufflehog>=2.2.0
+      
       - name: TruffleHog Secret Scanning
         uses: trufflesecurity/trufflehog@main
         with:
