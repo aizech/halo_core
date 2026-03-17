@@ -49,7 +49,7 @@ jobs:
           bandit -r . -f text -o bandit-report.txt || true
       
       - name: Upload Bandit reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bandit-reports
@@ -86,7 +86,7 @@ jobs:
           safety check --output=text > safety-report.txt || true
       
       - name: Upload dependency reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: dependency-reports
@@ -129,7 +129,7 @@ jobs:
           fi
       
       - name: Upload license reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: license-reports
           path: |
