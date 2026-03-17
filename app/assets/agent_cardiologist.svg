@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2a1f3d"/>
+      <stop offset="100%" stop-color="#1a1225"/>
+    </radialGradient>
+    <radialGradient id="face" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#f5c5a3"/>
+      <stop offset="100%" stop-color="#e8a87c"/>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg)" stroke="#e05a7a" stroke-width="2.5"/>
+  <!-- Body / scrubs -->
+  <rect x="24" y="84" width="72" height="34" rx="8" fill="#2d6b9e"/>
+  <ellipse cx="60" cy="84" rx="28" ry="8" fill="#2d6b9e"/>
+  <!-- Head -->
+  <ellipse cx="60" cy="52" rx="22" ry="24" fill="url(#face)"/>
+  <!-- Hair -->
+  <ellipse cx="60" cy="33" rx="22" ry="9" fill="#1a1a2e"/>
+  <rect x="38" y="33" width="44" height="7" fill="#1a1a2e"/>
+  <!-- Eyes -->
+  <ellipse cx="52" cy="50" rx="3.5" ry="4" fill="#fff"/>
+  <ellipse cx="68" cy="50" rx="3.5" ry="4" fill="#fff"/>
+  <circle cx="53" cy="51" r="2.2" fill="#1a3a5c"/>
+  <circle cx="69" cy="51" r="2.2" fill="#1a3a5c"/>
+  <circle cx="54" cy="50" r="0.8" fill="#fff"/>
+  <circle cx="70" cy="50" r="0.8" fill="#fff"/>
+  <!-- Eyebrows -->
+  <path d="M48 45 Q52 43 56 45" stroke="#1a1a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M64 45 Q68 43 72 45" stroke="#1a1a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M58 54 Q60 58 62 54" stroke="#c47a50" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Smile -->
+  <path d="M52 62 Q60 68 68 62" stroke="#c47a50" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- ECG line on chest -->
+  <path d="M30 96 L38 96 L41 88 L44 104 L47 92 L50 96 L90 96" stroke="#e05a7a" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Big heart -->
+  <path d="M60 78 C60 78 50 70 50 64 C50 60 53 57 56 58 C58 59 60 61 60 61 C60 61 62 59 64 58 C67 57 70 60 70 64 C70 70 60 78 60 78Z" fill="#e05a7a"/>
+  <!-- Heart highlight -->
+  <path d="M55 61 Q57 59 59 61" stroke="#ff9ab0" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+</svg>

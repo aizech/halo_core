@@ -52,6 +52,7 @@ safety-*.txt
 license-*.json
 license-*.txt
 sbom*.cdx.json
+sbom*.json
 trivy-*.sarif
 trivy-*.json
 *.sbom

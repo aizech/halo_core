@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e2a1e"/>
+      <stop offset="100%" stop-color="#121e12"/>
+    </radialGradient>
+    <radialGradient id="face" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#f5d5b8"/>
+      <stop offset="100%" stop-color="#e8b894"/>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg)" stroke="#26a69a" stroke-width="2.5"/>
+  <!-- White coat -->
+  <rect x="24" y="84" width="72" height="34" rx="8" fill="#f5f5f5"/>
+  <ellipse cx="60" cy="84" rx="28" ry="8" fill="#f5f5f5"/>
+  <!-- Teal blouse underneath -->
+  <rect x="50" y="84" width="20" height="20" rx="2" fill="#26a69a"/>
+  <!-- Head -->
+  <ellipse cx="60" cy="52" rx="22" ry="24" fill="url(#face)"/>
+  <!-- Hair - longer, friendly -->
+  <ellipse cx="60" cy="33" rx="22" ry="9" fill="#3d2b1a"/>
+  <path d="M38 38 Q38 70 42 76" stroke="#3d2b1a" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M82 38 Q82 70 78 76" stroke="#3d2b1a" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <rect x="38" y="33" width="44" height="10" fill="#3d2b1a"/>
+  <!-- Eyes -->
+  <ellipse cx="52" cy="50" rx="3.5" ry="4" fill="#fff"/>
+  <ellipse cx="68" cy="50" rx="3.5" ry="4" fill="#fff"/>
+  <circle cx="53" cy="51" r="2.2" fill="#26504a"/>
+  <circle cx="69" cy="51" r="2.2" fill="#26504a"/>
+  <circle cx="54" cy="50" r="0.8" fill="#fff"/>
+  <circle cx="70" cy="50" r="0.8" fill="#fff"/>
+  <!-- Eyebrows -->
+  <path d="M48 45 Q52 43 56 45" stroke="#3d2b1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M64 45 Q68 43 72 45" stroke="#3d2b1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M58 55 Q60 59 62 55" stroke="#c47a50" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Big warm smile -->
+  <path d="M51 62 Q60 70 69 62" stroke="#c47a50" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Clipboard in hands -->
+  <rect x="30" y="86" width="22" height="26" rx="3" fill="#fff" stroke="#26a69a" stroke-width="1.5"/>
+  <rect x="37" y="83" width="8" height="5" rx="2" fill="#26a69a"/>
+  <!-- Lines on clipboard -->
+  <line x1="33" y1="93" x2="49" y2="93" stroke="#b0bec5" stroke-width="1.2"/>
+  <line x1="33" y1="97" x2="49" y2="97" stroke="#b0bec5" stroke-width="1.2"/>
+  <line x1="33" y1="101" x2="49" y2="101" stroke="#b0bec5" stroke-width="1.2"/>
+  <line x1="33" y1="105" x2="43" y2="105" stroke="#b0bec5" stroke-width="1.2"/>
+  <!-- Checkmarks -->
+  <path d="M33 93 L35 95 L38 91" stroke="#26a69a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <path d="M33 97 L35 99 L38 95" stroke="#26a69a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Pen/stylus -->
+  <line x1="56" y1="84" x2="66" y2="104" stroke="#EA9216" stroke-width="2" stroke-linecap="round"/>
+  <polygon points="66,104 64,110 68,108" fill="#EA9216"/>
+  <rect x="54" y="82" width="4" height="4" rx="1" fill="#EA9216" transform="rotate(-30 56 84)"/>
+</svg>

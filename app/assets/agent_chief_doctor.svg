@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2a3448"/>
+      <stop offset="100%" stop-color="#1a1f2e"/>
+    </radialGradient>
+    <radialGradient id="face" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#f5c5a3"/>
+      <stop offset="100%" stop-color="#e8a87c"/>
+    </radialGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="58" fill="url(#bg)" stroke="#EA9216" stroke-width="2.5"/>
+  <!-- White coat body -->
+  <ellipse cx="60" cy="105" rx="36" ry="22" fill="#ffffff"/>
+  <rect x="24" y="86" width="72" height="30" rx="8" fill="#ffffff"/>
+  <!-- Coat lapels -->
+  <path d="M60 86 L48 72 L52 68 L60 78 L68 68 L72 72 Z" fill="#e8e8e8"/>
+  <!-- Shirt/tie -->
+  <rect x="54" y="72" width="12" height="20" rx="2" fill="#4a7fc1"/>
+  <polygon points="60,76 57,80 60,92 63,80" fill="#2d5a9e"/>
+  <!-- Head -->
+  <ellipse cx="60" cy="52" rx="22" ry="24" fill="url(#face)"/>
+  <!-- Hair -->
+  <ellipse cx="60" cy="34" rx="22" ry="10" fill="#3d2b1a"/>
+  <rect x="38" y="34" width="44" height="8" rx="0" fill="#3d2b1a"/>
+  <!-- Eyes -->
+  <ellipse cx="52" cy="50" rx="3.5" ry="4" fill="#fff"/>
+  <ellipse cx="68" cy="50" rx="3.5" ry="4" fill="#fff"/>
+  <circle cx="53" cy="51" r="2.2" fill="#2d4a7a"/>
+  <circle cx="69" cy="51" r="2.2" fill="#2d4a7a"/>
+  <circle cx="54" cy="50" r="0.8" fill="#fff"/>
+  <circle cx="70" cy="50" r="0.8" fill="#fff"/>
+  <!-- Eyebrows -->
+  <path d="M48 45 Q52 43 56 45" stroke="#3d2b1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M64 45 Q68 43 72 45" stroke="#3d2b1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M58 54 Q60 58 62 54" stroke="#c47a50" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Friendly smile -->
+  <path d="M52 62 Q60 68 68 62" stroke="#c47a50" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Stethoscope -->
+  <path d="M44 82 Q36 90 38 98 Q40 104 46 102 Q52 100 50 94" stroke="#555" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="50" cy="93" r="4" fill="none" stroke="#EA9216" stroke-width="2"/>
+  <circle cx="50" cy="93" r="2" fill="#EA9216" opacity="0.6"/>
+  <!-- Gold star badge -->
+  <circle cx="78" cy="82" r="7" fill="#EA9216"/>
+  <text x="78" y="86" text-anchor="middle" font-size="8" fill="#1a1f2e" font-weight="bold">✦</text>
+</svg>

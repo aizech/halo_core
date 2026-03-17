@@ -116,6 +116,12 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
         },
         {
             "kind": "link",
+            "label": "Agent Cards",
+            "icon": "style",
+            "page": "pages/Agent_Cards.py",
+        },
+        {
+            "kind": "link",
             "label": "Help",
             "icon": "help_outline",
             "page": "pages/Help.py",
