@@ -9,12 +9,46 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      
       - name: Build Docker image
         run: |
           docker build -t halo-core:${{ github.ref_name }} .
+          docker tag halo-core:${{ github.ref_name }} halo-core:latest
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'halo-core:${{ github.ref_name }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Upload Trivy reports as artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-reports-${{ github.run_number }}
+          path: |
+            trivy-results.sarif
+          retention-days: 90
+      
       - name: Build summary
-        run: echo "Built halo-core:${{ github.ref_name }}"
+        run: |
+          echo "Built halo-core:${{ github.ref_name }}"
+          echo "Security scan completed - see Security tab for detailed results"

@@ -40,3 +40,15 @@ python-multipart>=0.0.22
 Authlib>=1.6.7
 pydicom>=2.4.0
 fpdf2>=2.8.0
+
+# Security and audit tools
+bandit[toml]>=1.7.5
+pip-audit>=2.6.1
+safety>=3.0.0
+pip-licenses>=4.3.0
+cyclonedx-bom>=4.2.0
+trufflehog
+
+# Updated security dependencies
+langfuse>=3.144.0
+gitpython>=3.1.41

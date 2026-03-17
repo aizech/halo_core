@@ -1,0 +1,192 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: "0 2 * * 1"  # Weekly on Monday at 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  # Secret scanning
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for thorough secret scanning
+      
+      - name: TruffleHog Secret Scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: .
+          base: main
+          head: HEAD
+          extra_args: --debug --json
+
+  # Static Application Security Testing (SAST)
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit[toml]
+      
+      - name: Run Bandit SAST
+        run: |
+          bandit -r . -f json -o bandit-report.json || true
+          bandit -r . -f txt -o bandit-report.txt
+      
+      - name: Upload Bandit reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-reports
+          path: |
+            bandit-report.json
+            bandit-report.txt
+          retention-days: 30
+
+  # Dependency vulnerability scanning
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install audit tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit safety
+      
+      - name: Run pip-audit
+        run: |
+          pip-audit -r requirements.txt --format=json --output=pip-audit-report.json || true
+          pip-audit -r requirements.txt --format=plain --output=pip-audit-report.txt
+      
+      - name: Run Safety check
+        run: |
+          safety check --json --output=safety-report.json || true
+          safety check --output=safety-report.txt
+      
+      - name: Upload dependency reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-reports
+          path: |
+            pip-audit-report.json
+            pip-audit-report.txt
+            safety-report.json
+            safety-report.txt
+          retention-days: 30
+
+  # License compliance check
+  licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install pip-licenses
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-licenses
+      
+      - name: Generate license report
+        run: |
+          pip-licenses --format=markdown --output-file=license-report.txt
+      
+      - name: Check for problematic licenses
+        run: |
+          # Flag GPL, AGPL, and other copyleft licenses
+          if pip-licenses --fail-on="GPL;AGPL;LGPL;EUPL" --from-requirements=requirements.txt; then
+            echo "No problematic licenses found"
+          else
+            echo "WARNING: Copyleft licenses detected"
+            echo "These may require additional compliance measures"
+          fi
+      
+      - name: Upload license reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            license-report.txt
+          retention-days: 30
+
+  # SBOM generation
+  sbom:
+    runs-on: ubuntu-latest
+    needs: [dependencies]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          upload-artifact: true
+      
+      - name: Generate additional SBOM metadata
+        run: |
+          python << 'EOF'
+          import json
+          import os
+          from datetime import datetime
+          
+          with open('sbom.cdx.json', 'r') as f:
+              sbom = json.load(f)
+          
+          # Add build metadata
+          metadata = {
+              'build': {
+                  'timestamp': datetime.utcnow().isoformat() + 'Z',
+                  'workflow': '${{ github.workflow }}',
+                  'run_id': '${{ github.run_id }}',
+                  'repository': '${{ github.repository }}',
+                  'commit': '${{ github.sha }}'
+              }
+          }
+          
+          if 'metadata' not in sbom:
+              sbom['metadata'] = {}
+          sbom['metadata'].update(metadata)
+          
+          with open('sbom.cdx.json', 'w') as f:
+              json.dump(sbom, f, indent=2)
+          EOF
