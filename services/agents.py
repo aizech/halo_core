@@ -26,7 +26,7 @@ from services.storage import get_agent_db
 
 _SETTINGS = get_settings()
 _LOGGER = logging.getLogger(__name__)
-_LOG_AGENT_PAYLOAD = True
+_LOG_AGENT_PAYLOAD = False
 _LOG_AGENT_RESPONSE = True
 _LOG_AGENT_ERRORS = True
 

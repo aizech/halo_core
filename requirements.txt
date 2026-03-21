@@ -4,8 +4,6 @@ agno>=0.1.0
 python-dotenv>=1.0.1
 
 # AI/ML dependencies
-langchain>=0.2.0
-langgraph>=1.0.10
 openai>=1.7.0
 tiktoken>=0.6.0
 
