@@ -99,7 +99,9 @@ def test_run_chat_turn_with_streaming(monkeypatch):
     )
 
     # Mock agent creation to return our fake agent
-    monkeypatch.setattr(chat_runtime, "create_chat_agent", lambda t: FakeAgent())
+    monkeypatch.setattr(
+        chat_runtime, "create_chat_agent", lambda t, agent_cache=None: FakeAgent()
+    )
     # Mock payload build to skip retrieval
     monkeypatch.setattr(
         chat_runtime,
@@ -149,7 +151,9 @@ def test_run_chat_turn_fallback_on_empty_stream(monkeypatch):
         notes=[],
     )
 
-    monkeypatch.setattr(chat_runtime, "create_chat_agent", lambda t: FakeEmptyAgent())
+    monkeypatch.setattr(
+        chat_runtime, "create_chat_agent", lambda t, agent_cache=None: FakeEmptyAgent()
+    )
     monkeypatch.setattr(
         chat_runtime,
         "build_chat_payload",
@@ -331,7 +335,9 @@ def test_run_chat_turn_fallback_on_none_stream(monkeypatch):
         notes=[],
     )
 
-    monkeypatch.setattr(chat_runtime, "create_chat_agent", lambda t: FakeAgent())
+    monkeypatch.setattr(
+        chat_runtime, "create_chat_agent", lambda t, agent_cache=None: FakeAgent()
+    )
     monkeypatch.setattr(
         chat_runtime, "build_chat_payload", lambda t: ("fake payload", [])
     )
@@ -362,7 +368,9 @@ def test_run_chat_turn_trace_contains_structured_telemetry(monkeypatch):
         agent_config={"model": "openai:gpt-5.2"},
     )
 
-    monkeypatch.setattr(chat_runtime, "create_chat_agent", lambda t: FakeTeamAgent())
+    monkeypatch.setattr(
+        chat_runtime, "create_chat_agent", lambda t, agent_cache=None: FakeTeamAgent()
+    )
     monkeypatch.setattr(
         chat_runtime,
         "build_chat_payload",
@@ -449,3 +457,47 @@ def test_create_chat_agent_passes_user_id(monkeypatch):
     assert captured["prompt"] == "hello"
     assert captured["session_id"] == "s1"
     assert captured["user_id"] == "u1"
+
+
+def test_create_chat_agent_caches_and_reuses_agent(monkeypatch):
+    """create_chat_agent stores agent in agent_cache and returns it on second call."""
+    call_count = {"n": 0}
+
+    def _fake_build(agent_config, *, prompt=None, session_id=None, user_id=None):
+        call_count["n"] += 1
+        return FakeAgent()
+
+    monkeypatch.setattr(chat_runtime.agents, "build_chat_agent", _fake_build)
+
+    cache: dict = {}
+    turn = ChatTurnInput(
+        prompt="hello",
+        session_id="s-cache",
+        agent_config={"id": "chat"},
+    )
+
+    agent1 = chat_runtime.create_chat_agent(turn, agent_cache=cache)
+    agent2 = chat_runtime.create_chat_agent(turn, agent_cache=cache)
+
+    assert agent1 is agent2
+    assert call_count["n"] == 1
+
+
+def test_compute_agent_cache_key_stable():
+    """Same session+config always produces the same key."""
+    from services.chat_runtime import _compute_agent_cache_key
+
+    config = {"id": "chat", "model": "gpt-4o"}
+    key1 = _compute_agent_cache_key("sess-1", config)
+    key2 = _compute_agent_cache_key("sess-1", config)
+    assert key1 == key2
+    assert "sess-1" in key1
+
+
+def test_compute_agent_cache_key_differs_on_config_change():
+    """Different configs produce different keys."""
+    from services.chat_runtime import _compute_agent_cache_key
+
+    key_a = _compute_agent_cache_key("s", {"model": "gpt-4o"})
+    key_b = _compute_agent_cache_key("s", {"model": "gpt-4-turbo"})
+    assert key_a != key_b

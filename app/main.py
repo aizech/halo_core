@@ -4477,6 +4477,7 @@ def render_chat_panel() -> None:
                     ),
                     on_response=_on_response,
                     on_tools=_on_tools,
+                    agent_cache=st.session_state,
                 )
                 result = run_chat_turn(turn)
                 # Update status to complete when done

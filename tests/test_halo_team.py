@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from agno.tools.wikipedia import WikipediaTools
 
 from services import agents_config
@@ -81,7 +83,8 @@ def test_build_master_team_delegate_on_complexity(monkeypatch):
         "role": "assistant",
     }
 
-    team = halo_team.build_master_team_from_config(config, prompt="report summary")
+    with patch("services.routing_policy._embed_text", return_value=None):
+        team = halo_team.build_master_team_from_config(config, prompt="report summary")
     assert team is not None
     assert list(getattr(team, "selected_member_ids", []) or []) == ["reports"]
 

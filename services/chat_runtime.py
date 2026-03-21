@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
+import json
 import logging
 import re
 import time
@@ -15,8 +17,15 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import perf_counter
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, MutableMapping
 from uuid import uuid4
+
+try:
+    import nest_asyncio as _nest_asyncio
+
+    _nest_asyncio.apply()
+except ImportError:  # pragma: no cover
+    _nest_asyncio = None
 
 from services import agents, pipelines, retrieval
 from services.settings import get_settings
@@ -295,21 +304,29 @@ class ChatTurnInput:
     log_stream_events: bool = False
     on_response: Callable[[str], None] | None = None
     on_tools: Callable[[List[object]], None] | None = None
+    agent_cache: MutableMapping[str, object] | None = None
 
 
 def build_chat_payload(turn: ChatTurnInput) -> tuple[str, List[dict]]:
     """Build the agent payload and retrieve RAG contexts.
 
     Returns (payload_text, contexts).
+
+    The manual vector search is kept to produce citation metadata (page/source
+    references appended after the response). The matching chunks are NOT
+    re-injected into the prompt because the Agent/Team already carries a native
+    Agno ``knowledge=`` store that performs the same search internally —
+    injecting them twice would double token usage with no quality gain.
     """
-    # Filter RAG results to selected sources only
     source_ids = turn.source_ids if turn.source_ids else None
     contexts = retrieval.query_similar(turn.prompt, source_ids=source_ids)
+    # Pass empty contexts so agents.build_chat_payload only includes
+    # selected-source names and notes, not raw snippet text.
     payload = agents.build_chat_payload(
         turn.prompt,
         turn.sources,
         turn.notes,
-        contexts,
+        [],
     )
     return payload, contexts
 
@@ -325,8 +342,14 @@ def _get_mcp_identifier(mcp_tool: object) -> str:
     return f"{name}|{url}|{command}"
 
 
-async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
-    """Open connections for all MCP tools attached to the agent or team members."""
+async def _manage_mcp_lifecycle(
+    agent: object, session_id: str | None = None
+) -> AsyncExitStack:
+    """Open connections for all MCP tools attached to the agent or team members.
+
+    The circuit-breaker state is keyed by ``(session_id, server_identifier)``
+    so failures for one session do not affect other concurrent users.
+    """
     stack = AsyncExitStack()
     tools_to_open = []
 
@@ -349,10 +372,11 @@ async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
     for mcp_tool in mcp_tools:
         if hasattr(mcp_tool, "__aenter__"):
             identifier = _get_mcp_identifier(mcp_tool)
+            scoped_key = f"{session_id or '_global'}|{identifier}"
             now = time.time()
 
-            # Check circuit breaker
-            breaker_state = _MCP_CIRCUIT_BREAKER_FAILURES.get(identifier)
+            # Check circuit breaker (scoped per session)
+            breaker_state = _MCP_CIRCUIT_BREAKER_FAILURES.get(scoped_key)
             if breaker_state:
                 failures, last_failure_time = breaker_state
                 if failures >= 3:
@@ -369,7 +393,7 @@ async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
                             "MCP circuit breaker timeout expired for '%s'. Retrying connection.",
                             getattr(mcp_tool, "name", "mcp"),
                         )
-                        _MCP_CIRCUIT_BREAKER_FAILURES.pop(identifier, None)
+                        _MCP_CIRCUIT_BREAKER_FAILURES.pop(scoped_key, None)
 
             try:
                 # Basic retry logic for transient connection drops
@@ -401,16 +425,16 @@ async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
                 )
 
                 # Reset breaker on success
-                if identifier in _MCP_CIRCUIT_BREAKER_FAILURES:
-                    _MCP_CIRCUIT_BREAKER_FAILURES.pop(identifier, None)
+                if scoped_key in _MCP_CIRCUIT_BREAKER_FAILURES:
+                    _MCP_CIRCUIT_BREAKER_FAILURES.pop(scoped_key, None)
 
             except asyncio.CancelledError:
                 _LOGGER.warning(
                     "Skipping MCP lifecycle for %s due to cancellation",
                     getattr(mcp_tool, "name", "mcp"),
                 )
-                failures, _ = _MCP_CIRCUIT_BREAKER_FAILURES.get(identifier, (0, 0))
-                _MCP_CIRCUIT_BREAKER_FAILURES[identifier] = (failures + 1, now)
+                failures, _ = _MCP_CIRCUIT_BREAKER_FAILURES.get(scoped_key, (0, 0))
+                _MCP_CIRCUIT_BREAKER_FAILURES[scoped_key] = (failures + 1, now)
                 continue
             except Exception:
                 _LOGGER.exception(
@@ -418,16 +442,41 @@ async def _manage_mcp_lifecycle(agent: object) -> AsyncExitStack:
                     getattr(mcp_tool, "name", "mcp"),
                 )
                 # Record failure
-                failures, _ = _MCP_CIRCUIT_BREAKER_FAILURES.get(identifier, (0, 0))
-                _MCP_CIRCUIT_BREAKER_FAILURES[identifier] = (failures + 1, now)
+                failures, _ = _MCP_CIRCUIT_BREAKER_FAILURES.get(scoped_key, (0, 0))
+                _MCP_CIRCUIT_BREAKER_FAILURES[scoped_key] = (failures + 1, now)
 
     return stack
 
 
-def create_chat_agent(turn: ChatTurnInput):
-    """Create the chat agent/team, with fallback on TypeError."""
+def _compute_agent_cache_key(
+    session_id: str | None,
+    agent_config: Dict[str, object] | None,
+) -> str:
+    """Return a stable cache key for a (session, config) pair."""
+    config_blob = (
+        json.dumps(agent_config, sort_keys=True, default=str) if agent_config else ""
+    )
+    config_hash = hashlib.sha256(config_blob.encode()).hexdigest()[:16]
+    return f"_halo_agent_cache_{session_id or 'anon'}_{config_hash}"
+
+
+def create_chat_agent(
+    turn: ChatTurnInput,
+    agent_cache: MutableMapping[str, object] | None = None,
+):
+    """Create (or return cached) chat agent/team.
+
+    If *agent_cache* is provided (e.g. ``st.session_state``), the built
+    agent is stored under a key derived from session_id + config hash and
+    reused on subsequent turns with the same configuration.
+    """
+    cache_key = _compute_agent_cache_key(turn.session_id, turn.agent_config)
+    if agent_cache is not None and cache_key in agent_cache:
+        _LOGGER.debug("Returning cached agent for key %s", cache_key)
+        return agent_cache[cache_key]
+
     try:
-        return agents.build_chat_agent(
+        agent = agents.build_chat_agent(
             turn.agent_config,
             prompt=turn.prompt,
             session_id=turn.session_id,
@@ -437,7 +486,12 @@ def create_chat_agent(turn: ChatTurnInput):
         _LOGGER.warning(
             "Prompt-aware routing unavailable; using default team selection."
         )
-        return agents.build_chat_agent(turn.agent_config)
+        agent = agents.build_chat_agent(turn.agent_config)
+
+    if agent_cache is not None and agent is not None:
+        agent_cache[cache_key] = agent
+        _LOGGER.debug("Cached agent under key %s", cache_key)
+    return agent
 
 
 async def stream_chat_response(
@@ -448,7 +502,7 @@ async def stream_chat_response(
     Returns the RunCompleted/TeamRunCompleted event payload carrying the final
     response, or None on fallback/error.
     """
-    stack = await _manage_mcp_lifecycle(agent)
+    stack = await _manage_mcp_lifecycle(agent, session_id=turn.session_id)
     try:
         async with stack:
             try:
@@ -665,7 +719,7 @@ def run_chat_turn(turn: ChatTurnInput) -> ChatTurnResult:
 
     started_at = perf_counter()
     payload, contexts = build_chat_payload(turn)
-    agent = create_chat_agent(turn)
+    agent = create_chat_agent(turn, agent_cache=turn.agent_cache)
 
     try:
         streamed = asyncio.run(stream_chat_response(agent, payload, turn))
