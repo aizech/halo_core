@@ -89,7 +89,7 @@ def load_config() -> Dict[str, List[str]]:
     _ensure_data_dir()
     if not _CONFIG_FILE.exists():
         return {}
-    with _CONFIG_FILE.open("r", encoding="utf-8") as handle:
+    with _CONFIG_FILE.open("r", encoding="utf-8-sig") as handle:
         return json.load(handle)
 
 

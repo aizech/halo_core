@@ -74,12 +74,6 @@ DEFAULT_MENU_SETTINGS: Dict[str, Any] = {
         },
         {
             "kind": "link",
-            "label": "DICOM Analysis (Opt)",
-            "icon": "bolt",
-            "page": "pages/DICOM_Analysis_Optimized.py",
-        },
-        {
-            "kind": "link",
             "label": "DICOM Benchmark",
             "icon": "speed",
             "page": "pages/DICOM_Benchmark.py",
