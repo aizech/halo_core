@@ -111,12 +111,14 @@ def _build_agent_from_config(
     return agent
 
 
-_AGENT = _build_agent()
-_LAST_TRACE: Dict[str, object] | None = None
+def _get_fallback_agent() -> Agent | None:
+    """Build a fresh fallback agent on demand (never cached at module level)."""
+    return _build_agent()
 
 
 def get_last_trace() -> Dict[str, object] | None:
-    return _LAST_TRACE
+    """Stub retained for backward compatibility; trace is managed by chat_runtime."""
+    return None
 
 
 def _record_trace(
@@ -127,7 +129,6 @@ def _record_trace(
     agent_config: Dict[str, object] | None,
     error: str | None = None,
 ) -> None:
-    global _LAST_TRACE
     trace: Dict[str, object] = {
         "payload": payload,
         "response": response,
@@ -155,15 +156,16 @@ def _record_trace(
             selected_member_ids = getattr(agent, "selected_member_ids", None)
             if selected_member_ids:
                 trace["selected_member_ids"] = list(selected_member_ids)
-    _LAST_TRACE = trace
+    _LOGGER.debug("Agent trace recorded: %s", trace)
 
 
-def _invoke_agent(payload: str) -> Any:
-    if not _AGENT:
+def _invoke_agent(payload: str, agent: Agent | None = None) -> Any:
+    target = agent or _get_fallback_agent()
+    if not target:
         raise RuntimeError("Agent not configured")
-    if hasattr(_AGENT, "run_sync"):
-        return _AGENT.run_sync(payload)
-    return _AGENT.run(payload)
+    if hasattr(target, "run_sync"):
+        return target.run_sync(payload)
+    return target.run(payload)
 
 
 def _normalize_agent_output(result: Any) -> str:
@@ -189,20 +191,15 @@ def _normalize_agent_output(result: Any) -> str:
 
 
 def _run_agent(payload: str, agent: Agent | Team | None = None) -> str:
-    if agent is None:
-        agent = _AGENT
-    if not agent:
+    effective_agent = agent if agent is not None else _get_fallback_agent()
+    if not effective_agent:
         raise RuntimeError("Agent not configured")
-    raw = (
-        _invoke_agent(payload)
-        if agent is _AGENT
-        else _normalize_agent_output(
-            agent.run_sync(payload)
-            if hasattr(agent, "run_sync")
-            else agent.run(payload)
-        )
+    raw = _normalize_agent_output(
+        effective_agent.run_sync(payload)
+        if hasattr(effective_agent, "run_sync")
+        else effective_agent.run(payload)
     )
-    return _normalize_agent_output(raw)
+    return raw
 
 
 def _format_sources(sources: Iterable[str]) -> str:
@@ -264,7 +261,7 @@ def build_chat_agent(
         return _build_agent_from_config(
             agent_config, session_id=session_id, user_id=user_id
         )
-    return _AGENT
+    return _get_fallback_agent()
 
 
 def generate_grounded_reply(
@@ -415,7 +412,11 @@ def render_studio_output(
     agent_instructions = None
     if agent_config:
         agent_instructions = build_agent_instructions(agent_config)
-    agent = _build_agent(agent_instructions) if agent_instructions else _AGENT
+    agent = (
+        _build_agent(agent_instructions)
+        if agent_instructions
+        else _get_fallback_agent()
+    )
     if agent:
         try:
             agent_name = getattr(agent, "name", "Agent")
@@ -457,7 +458,11 @@ def render_infographic_output(
     agent_instructions = None
     if agent_config:
         agent_instructions = build_agent_instructions(agent_config)
-    summary_agent = _build_agent(agent_instructions) if agent_instructions else _AGENT
+    summary_agent = (
+        _build_agent(agent_instructions)
+        if agent_instructions
+        else _get_fallback_agent()
+    )
     if not summary_agent:
         return {
             "content": "(Demo) Infografik benötigt einen OpenAI API Key.",
@@ -477,7 +482,11 @@ def render_infographic_output(
     except Exception as exc:  # pragma: no cover
         return {"content": f"Fehler bei der Zusammenfassung: {exc}", "image_path": None}
 
-    prompt_builder = _build_agent(agent_instructions) if agent_instructions else _AGENT
+    prompt_builder = (
+        _build_agent(agent_instructions)
+        if agent_instructions
+        else _get_fallback_agent()
+    )
     prompt_prompt = (
         "Erstelle einen klaren, detailreichen Prompt zur Generierung einer Infografik. "
         "Die Infografik soll die folgenden Stichpunkte visualisieren. "

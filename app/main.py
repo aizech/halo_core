@@ -11,7 +11,6 @@ import base64
 import mimetypes
 from datetime import datetime, timezone
 from pathlib import Path
-from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional
 from uuid import uuid4
 from textwrap import shorten
@@ -24,7 +23,7 @@ try:
 except ImportError:  # pragma: no cover
     RunEvent = None
 from streamlit import components
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 project_root_str = str(PROJECT_ROOT)
@@ -50,154 +49,26 @@ from services import access_policy  # noqa: E402
 from services import agents_config  # noqa: E402
 from services import exports  # noqa: E402
 from services.streaming_adapter import stream_agent_response  # noqa: E402
+from app.pages.config_sections.shared import (  # noqa: E402
+    now_iso as _now_iso,
+    render_config_dirty_hint as _render_config_dirty_hint,
+    mark_config_saved as _mark_config_saved,
+    render_config_saved_caption as _render_config_saved_caption,
+)
 from services.chat_runtime import ChatTurnInput, run_chat_turn  # noqa: E402
+from app.models import (  # noqa: E402
+    SourceItem,
+    StudioAction,
+    StudioTeam,
+    StudioTemplate,
+    StudioTemplatesConfig,
+)
 
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.info("main.py path: %s", __file__)
 _LOGGER.info("sys.path[0]: %s", sys.path[0])
 _LOGGER.info("services module path: %s", services.__file__)
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _config_saved_state_key(section_key: str) -> str:
-    return f"cfg_saved_at_{section_key}"
-
-
-def _config_baseline_state_key(section_key: str) -> str:
-    return f"cfg_baseline_{section_key}"
-
-
-def _config_signature(payload: object) -> str:
-    try:
-        return json.dumps(payload, sort_keys=True, default=str)
-    except TypeError:
-        return repr(payload)
-
-
-def _set_config_baseline(section_key: str, payload: object) -> None:
-    st.session_state[_config_baseline_state_key(section_key)] = _config_signature(
-        payload
-    )
-
-
-def _render_config_dirty_hint(
-    container: st.delta_generator.DeltaGenerator,
-    section_key: str,
-    payload: object,
-    message: str = "Ungespeicherte Änderungen.",
-) -> bool:
-    current_signature = _config_signature(payload)
-    baseline_key = _config_baseline_state_key(section_key)
-    baseline_signature = st.session_state.get(baseline_key)
-    if not isinstance(baseline_signature, str):
-        st.session_state[baseline_key] = current_signature
-        return False
-
-    is_dirty = baseline_signature != current_signature
-    if is_dirty:
-        container.warning(message)
-    return is_dirty
-
-
-def _mark_config_saved(
-    container: st.delta_generator.DeltaGenerator,
-    section_key: str,
-    message: str,
-    payload: object | None = None,
-) -> None:
-    saved_at = datetime.now().strftime("%H:%M:%S")
-    st.session_state[_config_saved_state_key(section_key)] = saved_at
-    if payload is not None:
-        _set_config_baseline(section_key, payload)
-    container.success(message)
-
-
-def _render_config_saved_caption(
-    container: st.delta_generator.DeltaGenerator,
-    section_key: str,
-) -> None:
-    saved_at = st.session_state.get(_config_saved_state_key(section_key))
-    if isinstance(saved_at, str) and saved_at.strip():
-        container.caption(f"Zuletzt gespeichert: {saved_at}")
-
-
-@dataclass
-class SourceItem:
-    name: str
-    type_label: str
-    meta: str
-    selected: bool = True
-    id: str = field(default_factory=lambda: uuid4().hex)
-    created_at: str = field(default_factory=_now_iso)
-    file_path: str | None = None  # Path to binary file for DICOM sources
-
-
-@dataclass
-class StudioAction:
-    action_id: str
-    label: str
-
-
-@dataclass
-class StudioTeam:
-    team_id: str
-    name: str
-    description: str
-
-
-@dataclass
-class StudioTemplate:
-    template_id: str
-    title: str
-    description: str
-    status: str = ""
-    icon: str = ":material/extension:"
-    color: str = "#f5f5f5"
-    badge: Optional[str] = None
-    team_id: Optional[str] = None
-    agent_id: Optional[str] = None
-    actions: List[StudioAction] = field(default_factory=list)
-    agent: Dict[str, str] = field(default_factory=dict)
-    defaults: Dict[str, str] = field(default_factory=dict)
-
-
-class StudioActionConfig(BaseModel):
-    id: str = Field("generate", alias="id")
-    label: str = "Generieren"
-
-
-class StudioTeamConfig(BaseModel):
-    id: str
-    name: str
-    description: str = ""
-
-
-class StudioTemplateConfig(BaseModel):
-    id: str
-    title: str
-    description: str
-    status: str = ""
-    icon: str = ":material/extension:"
-    color: str = "#f5f5f5"
-    badge: Optional[str] = None
-    team_id: Optional[str] = None
-    agent_id: Optional[str] = None
-    actions: list[StudioActionConfig] = Field(default_factory=list)
-    agent: dict[str, str] = Field(default_factory=dict)
-    defaults: dict[str, str] = Field(default_factory=dict)
-
-
-class StudioTemplatesConfig(BaseModel):
-    teams: list[StudioTeamConfig] = Field(default_factory=list)
-    templates: list[StudioTemplateConfig] = Field(default_factory=list)
-
-
-StudioTemplateConfig.model_rebuild()
-StudioTemplatesConfig.model_rebuild()
 
 
 def _get_studio_template(template_id: str) -> Optional[StudioTemplate]:
@@ -220,102 +91,6 @@ def _get_agent_config(agent_id: str) -> Dict[str, object] | None:
             return None
         return config
     return None
-
-
-def _default_studio_templates() -> List[StudioTemplate]:
-    default_actions = [
-        StudioAction("generate", "Generieren"),
-        StudioAction("configure", "Konfigurieren"),
-    ]
-    return [
-        StudioTemplate(
-            template_id="podcast",
-            title="Podcast",
-            description="Konvertiere Erkenntnisse in Hörstücke.",
-            status="BETA",
-            icon=":material/headphones:",
-            color="#E8F0F5",
-            badge="BETA",
-            actions=default_actions,
-            agent={"instructions": "Erzeuge ein strukturiertes Podcast-Skript."},
-        ),
-        StudioTemplate(
-            template_id="video_overview",
-            title="Videoübersicht",
-            description="Erstelle ein kurzes Drehbuch für Clips.",
-            icon=":material/movie:",
-            color="#E8F5EA",
-            actions=default_actions,
-            agent={"instructions": "Erstelle ein Clip-Storyboard mit Szenen."},
-        ),
-        StudioTemplate(
-            template_id="mindmap",
-            title="Mindmap",
-            description="Visualisiere Kernthemen und Beziehungen.",
-            icon=":material/hub:",
-            color="#FFF4EB",
-            actions=default_actions,
-            agent={"instructions": "Extrahiere Hauptthemen und Beziehungen."},
-        ),
-        StudioTemplate(
-            template_id="reports",
-            title="Berichte",
-            description="Fasse Erkenntnisse in professionellen Reports zusammen.",
-            icon=":material/bar_chart:",
-            color="#EBF0F4",
-            actions=default_actions,
-            agent={"instructions": "Erstelle einen Bericht mit klaren Abschnitten."},
-        ),
-        StudioTemplate(
-            template_id="flashcards",
-            title="Karteikarten",
-            description="Lerne mit automatisch generierten Fragen.",
-            icon=":material/folder_open:",
-            color="#FFEDEB",
-            actions=default_actions,
-            agent={"instructions": "Erzeuge Q&A-Karteikarten."},
-        ),
-        StudioTemplate(
-            template_id="quiz",
-            title="Quiz",
-            description="Teste dein Wissen mit individuellen Quizfragen.",
-            icon=":material/quiz:",
-            color="#EBF4F8",
-            actions=default_actions,
-            agent={"instructions": "Erstelle Quizfragen mit Lösungen."},
-        ),
-        StudioTemplate(
-            template_id="infographic",
-            title="Infografik",
-            description="Stelle Statistiken grafisch dar.",
-            status="BETA",
-            icon=":material/trending_up:",
-            color="#F0EBF5",
-            badge="BETA",
-            actions=default_actions,
-            agent={"instructions": "Fasse Kennzahlen als Infografik-Story zusammen."},
-        ),
-        StudioTemplate(
-            template_id="presentation",
-            title="Präsentation",
-            description="Erstelle Slides als Grundlage für Vorträge.",
-            status="BETA",
-            icon=":material/computer:",
-            color="#FFF5EB",
-            badge="BETA",
-            actions=default_actions,
-            agent={"instructions": "Erzeuge eine Folienstruktur mit Agenda."},
-        ),
-        StudioTemplate(
-            template_id="datatable",
-            title="Datentabelle",
-            description="Strukturiere Fakten in tabellarischer Form.",
-            icon=":material/table_chart:",
-            color="#F1F3F5",
-            actions=default_actions,
-            agent={"instructions": "Erstelle eine tabellarische Zusammenfassung."},
-        ),
-    ]
 
 
 def _load_studio_teams() -> List[StudioTeam]:
@@ -343,12 +118,14 @@ def _load_studio_teams() -> List[StudioTeam]:
 def _load_studio_templates() -> List[StudioTemplate]:
     templates_path = PROJECT_ROOT / "templates" / "studio_templates.json"
     if not templates_path.exists():
-        return _default_studio_templates()
+        _LOGGER.warning("Studio templates file not found: %s", templates_path)
+        return []
     try:
         payload = json.loads(templates_path.read_text(encoding="utf-8"))
         parsed = StudioTemplatesConfig.model_validate(payload)
     except (json.JSONDecodeError, ValidationError):
-        return _default_studio_templates()
+        _LOGGER.warning("Failed to parse studio templates from %s", templates_path)
+        return []
     templates: List[StudioTemplate] = []
     for item in parsed.templates:
         actions = [StudioAction(action.id, action.label) for action in item.actions]
@@ -368,7 +145,7 @@ def _load_studio_templates() -> List[StudioTemplate]:
                 defaults=item.defaults,
             )
         )
-    return templates or _default_studio_templates()
+    return templates
 
 
 def _normalize_studio_output_payload(

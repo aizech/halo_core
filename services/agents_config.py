@@ -94,17 +94,9 @@ class AgentConfig(BaseModel):
             enabled = bool(normalized.get("enabled", True))
             normalized["enabled"] = enabled
 
-            transport_raw = (
-                str(normalized.get("transport") or "streamable-http").strip().lower()
-            )
-            transport_aliases = {
-                "": "streamable-http",
-                "http": "streamable-http",
-                "streamable-http": "streamable-http",
-                "sse": "sse",
-                "stdio": "stdio",
-            }
-            transport = transport_aliases.get(transport_raw, transport_raw)
+            from services.agent_factory import normalize_transport
+
+            transport = normalize_transport(str(normalized.get("transport") or ""))
             if transport not in {"streamable-http", "sse", "stdio"}:
                 raise ValueError(
                     "mcp_servers.transport must be one of streamable-http, sse, stdio"

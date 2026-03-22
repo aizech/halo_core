@@ -36,6 +36,21 @@ except ImportError:  # pragma: no cover - optional dependency
 _SETTINGS = get_settings()
 
 
+_TRANSPORT_ALIASES: Dict[str, str] = {
+    "": "streamable-http",
+    "http": "streamable-http",
+    "streamable-http": "streamable-http",
+    "sse": "sse",
+    "stdio": "stdio",
+}
+
+
+def normalize_transport(raw: str) -> str:
+    """Normalise a raw MCP transport string to a canonical value."""
+    key = str(raw or "").strip().lower()
+    return _TRANSPORT_ALIASES.get(key, key)
+
+
 def normalize_model_id(raw: object, default_model_id: str = "openai:gpt-5.2") -> str:
     if not raw:
         return default_model_id
@@ -112,12 +127,7 @@ def build_mcp_tools(
             logger.info("MCP server '%s' is disabled; skipping", server_name)
             continue
 
-        transport_raw = str(item.get("transport") or "streamable-http").strip().lower()
-        transport = (
-            "streamable-http"
-            if transport_raw in {"", "http", "streamable-http"}
-            else transport_raw
-        )
+        transport = normalize_transport(str(item.get("transport") or ""))
         if transport not in {"streamable-http", "sse", "stdio"}:
             logger.warning(
                 "MCP server '%s' skipped: unsupported transport: %s",
