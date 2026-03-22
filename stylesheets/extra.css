@@ -1,0 +1,225 @@
+/* HALO Core Docs - Custom Theme Colors */
+/* Derived from corpusanalytica.com primary color #00C2A8 */
+
+:root {
+  /* Primary colors */
+  --ca-primary: #00C2A8;
+  --ca-primary-dark: #008B74;
+  --ca-primary-light: #65FBDF;
+  
+  /* Secondary colors */
+  --ca-secondary: #0f3460;
+  --ca-secondary-light: #1a4a7a;
+  
+  /* Neutral colors */
+  --ca-dark: #1a1a2e;
+  --ca-dark-alt: #16213e;
+  --ca-light: #ffffff;
+  --ca-light-alt: #f8f9fa;
+  --ca-gray: #6c757d;
+  --ca-gray-light: #e8e8e8;
+}
+
+/* Light mode overrides */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--ca-primary);
+  --md-primary-fg-color--light: var(--ca-primary-light);
+  --md-primary-fg-color--dark: var(--ca-primary-dark);
+  --md-primary-bg-color: var(--ca-light);
+  --md-primary-bg-color--light: var(--ca-light-alt);
+  
+  --md-accent-fg-color: var(--ca-primary);
+  --md-accent-fg-color--transparent: rgba(0, 194, 168, 0.1);
+  
+  --md-typeset-a-color: var(--ca-primary);
+  --md-code-hl-keyword-color: var(--ca-primary-dark);
+  --md-code-hl-function-color: var(--ca-secondary);
+}
+
+/* Dark mode overrides */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--ca-primary);
+  --md-primary-fg-color--light: var(--ca-primary-light);
+  --md-primary-fg-color--dark: var(--ca-primary-dark);
+  --md-primary-bg-color: var(--ca-dark);
+  --md-primary-bg-color--light: var(--ca-dark-alt);
+  
+  --md-accent-fg-color: var(--ca-primary-light);
+  --md-accent-fg-color--transparent: rgba(101, 251, 223, 0.1);
+  
+  --md-typeset-a-color: var(--ca-primary-light);
+  --md-code-hl-keyword-color: var(--ca-primary-light);
+  --md-code-hl-function-color: var(--ca-primary-light);
+  
+  --md-hue: 210;
+}
+
+/* Header styling */
+.md-header {
+  background: linear-gradient(135deg, var(--ca-dark) 0%, var(--ca-dark-alt) 100%);
+}
+
+[data-md-color-scheme="default"] .md-header {
+  background: linear-gradient(135deg, var(--ca-primary-dark) 0%, var(--ca-primary) 100%);
+}
+
+/* Navigation tabs */
+.md-tabs {
+  background: var(--ca-dark-alt);
+}
+
+[data-md-color-scheme="default"] .md-tabs {
+  background: var(--ca-primary-dark);
+}
+
+/* Active link styling */
+.md-nav__link--active {
+  color: var(--ca-primary);
+}
+
+[data-md-color-scheme="slate"] .md-nav__link--active {
+  color: var(--ca-primary-light);
+}
+
+/* Link hover effects */
+.md-nav__link:hover {
+  color: var(--ca-primary);
+}
+
+[data-md-color-scheme="slate"] .md-nav__link:hover {
+  color: var(--ca-primary-light);
+}
+
+/* Button styling */
+.md-button {
+  background-color: var(--ca-primary);
+  border-color: var(--ca-primary);
+}
+
+.md-button:hover {
+  background-color: var(--ca-primary-dark);
+  border-color: var(--ca-primary-dark);
+}
+
+/* Search highlighting */
+.md-search-result__item:hover,
+.md-search-result__item--active {
+  background-color: var(--ca-primary);
+}
+
+/* Code blocks */
+[data-md-color-scheme="default"] .highlight {
+  background-color: var(--ca-light-alt);
+}
+
+[data-md-color-scheme="slate"] .highlight {
+  background-color: var(--ca-dark-alt);
+}
+
+/* Admonitions */
+.md-typeset .admonition,
+.md-typeset details {
+  border-left-color: var(--ca-primary);
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  background-color: rgba(0, 194, 168, 0.1);
+}
+
+/* Footer */
+.md-footer {
+  background-color: var(--ca-dark);
+}
+
+[data-md-color-scheme="default"] .md-footer {
+  background-color: var(--ca-primary-dark);
+}
+
+/* Sidebar navigation */
+.md-sidebar__scrollwrap {
+  scrollbar-color: var(--ca-primary) transparent;
+}
+
+/* Progress indicator */
+.md-progress {
+  background-color: var(--ca-primary);
+}
+
+/* Table styling */
+.md-typeset table:not([class]) {
+  border-color: var(--ca-gray-light);
+}
+
+.md-typeset table:not([class]) th {
+  background-color: rgba(0, 194, 168, 0.1);
+}
+
+/* Logo styling */
+.md-logo img {
+  height: 2rem;
+  width: auto;
+}
+
+/* Custom utility classes */
+.ca-primary-text {
+  color: var(--ca-primary);
+}
+
+.ca-secondary-text {
+  color: var(--ca-secondary);
+}
+
+.ca-highlight-box {
+  background: linear-gradient(135deg, rgba(0, 194, 168, 0.1) 0%, rgba(15, 52, 96, 0.1) 100%);
+  border-left: 4px solid var(--ca-primary);
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0.25rem;
+}
+
+/* Feature cards */
+.ca-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.ca-feature-card {
+  background: var(--md-default-bg-color);
+  border: 1px solid var(--ca-gray-light);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ca-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 194, 168, 0.15);
+}
+
+.ca-feature-card h3 {
+  color: var(--ca-primary);
+  margin-top: 0;
+}
+
+/* Status badges */
+.ca-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ca-badge-primary {
+  background-color: var(--ca-primary);
+  color: white;
+}
+
+.ca-badge-secondary {
+  background-color: var(--ca-secondary);
+  color: white;
+}
