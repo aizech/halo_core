@@ -166,7 +166,7 @@ def build_master_team_from_config(
         for server in master_mcp_servers:
             if not isinstance(server, dict):
                 continue
-            if not bool(server.get("enabled", False)):
+            if not bool(server.get("enabled", True)):
                 continue
             name = str(server.get("name") or "").strip()
             if name:

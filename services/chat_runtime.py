@@ -21,6 +21,10 @@ from typing import Callable, Dict, List, MutableMapping
 from uuid import uuid4
 
 try:
+    # nest_asyncio.apply() is intentional: Streamlit runs its own asyncio event loop,
+    # and asyncio.run() (used by streaming_adapter.py) raises RuntimeError if called
+    # inside a running loop without this patch.  The alternative would be migrating all
+    # async callers to a dedicated thread pool — that is deferred to a future refactor.
     import nest_asyncio as _nest_asyncio
 
     _nest_asyncio.apply()

@@ -182,21 +182,17 @@ def delete_user_memory(*, user_id: str, memory_id: str) -> bool:
         return False
 
     if hasattr(db, "delete_user_memory"):
+        import inspect
+
         try:
-            db.delete_user_memory(memory_id=memory_id, user_id=user_id)
-            return True
-        except TypeError:
-            try:
+            params = inspect.signature(db.delete_user_memory).parameters
+            if "user_id" in params:
+                db.delete_user_memory(memory_id=memory_id, user_id=user_id)
+            elif "memory_id" in params:
                 db.delete_user_memory(memory_id=memory_id)
-                return True
-            except TypeError:
-                try:
-                    db.delete_user_memory(memory_id)
-                    return True
-                except Exception:
-                    pass
-            except Exception:
-                pass
+            else:
+                db.delete_user_memory(memory_id)
+            return True
         except Exception:
             pass
 

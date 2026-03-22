@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re as _re
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -31,6 +32,14 @@ _ID_COL = "id"
 _PAYLOAD_COL = "payload"
 
 _EMBEDDING_DIMENSIONS: int | None = None
+
+
+_SOURCE_ID_RE = _re.compile(r"^[0-9a-f]{32}$")
+
+
+def _is_safe_source_id(value: str) -> bool:
+    """Return True only for uuid4().hex-format source IDs (32 lowercase hex chars)."""
+    return bool(_SOURCE_ID_RE.match(value))
 
 
 def _escape(value: str) -> str:
@@ -310,7 +319,12 @@ def get_source_chunk_texts(
     table = _ensure_sources_table(db)
 
     if source_id:
-        condition = f"meta.source_id == '{_escape(source_id)}'"
+        if not _is_safe_source_id(source_id):
+            _LOGGER.warning(
+                "get_source_chunk_texts: unsafe source_id rejected: %r", source_id
+            )
+            return []
+        condition = f"meta.source_id == '{source_id}'"
     else:
         condition = f"meta.title == '{_escape(title)}'"
 
@@ -349,12 +363,19 @@ def delete_source_chunks(source_id: str, title: Optional[str] = None) -> None:
     if _TABLE_NAME not in db.table_names():
         return
     table = _ensure_sources_table(db)
-    condition = f"meta.source_id == '{_escape(source_id)}'"
+    if not _is_safe_source_id(source_id):
+        _LOGGER.warning(
+            "delete_source_chunks: unsafe source_id rejected: %r", source_id
+        )
+        return
+    condition = f"meta.source_id == '{source_id}'"
     try:
         table.delete(condition)
         return
     except Exception:  # source_id missing on older rows
-        pass
+        _LOGGER.debug(
+            "delete_source_chunks by source_id failed; retrying by title", exc_info=True
+        )
     if title:
         table.delete(f"meta.title == '{_escape(title)}'")
 
@@ -370,12 +391,17 @@ def rename_source(
         return
     table = db.open_table(_TABLE_NAME)
     values = {"meta.title": new_title}
-    condition = f"meta.source_id == '{_escape(source_id)}'"
+    if not _is_safe_source_id(source_id):
+        _LOGGER.warning("rename_source: unsafe source_id rejected: %r", source_id)
+        return
+    condition = f"meta.source_id == '{source_id}'"
     try:
         table.update(where=condition, values=values)
         return
     except Exception:
-        pass
+        _LOGGER.debug(
+            "rename_source update by source_id failed; retrying by title", exc_info=True
+        )
     if previous_title:
         condition = f"meta.title == '{_escape(previous_title)}'"
         rows: List[Dict[str, object]] = []
