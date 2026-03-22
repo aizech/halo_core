@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Optional
 from uuid import uuid4
@@ -15,6 +17,8 @@ from openai import OpenAI
 
 from services.settings import get_settings
 
+_LOGGER = logging.getLogger(__name__)
+
 _SETTINGS = get_settings()
 _DB_PATH = Path(_SETTINGS.data_dir) / "lancedb"
 _TABLE_NAME = "sources"
@@ -25,6 +29,8 @@ _client = OpenAI(api_key=_api_key) if _api_key else None
 _VECTOR_COL = "vector"
 _ID_COL = "id"
 _PAYLOAD_COL = "payload"
+
+_EMBEDDING_DIMENSIONS: int | None = None
 
 
 def _escape(value: str) -> str:
@@ -91,7 +97,7 @@ def _table_vector_col_is_valid(table: lancedb.table.LanceTable) -> bool:
 
 
 def _ensure_sources_table(db: lancedb.LanceDBConnection) -> lancedb.table.LanceTable:
-    dimensions = int(_embed("dimensions_probe").shape[0])
+    dimensions = _get_embedding_dimensions()
     schema = _sources_schema(dimensions)
 
     if _TABLE_NAME not in db.table_names():
@@ -168,6 +174,7 @@ def _ensure_meta_field(
     return db.open_table(_TABLE_NAME)
 
 
+@lru_cache(maxsize=256)
 def _embed(text: str) -> NDArray[np.float32]:
     if _client:
         response = _client.embeddings.create(model="text-embedding-3-small", input=text)
@@ -176,6 +183,14 @@ def _embed(text: str) -> NDArray[np.float32]:
     seed = abs(hash(text)) % (2**32)
     rng = np.random.default_rng(seed)
     return rng.random(1536, dtype=np.float32)
+
+
+def _get_embedding_dimensions() -> int:
+    """Return embedding vector dimensions, probing once and caching the result."""
+    global _EMBEDDING_DIMENSIONS
+    if _EMBEDDING_DIMENSIONS is None:
+        _EMBEDDING_DIMENSIONS = int(_embed("dimensions_probe").shape[0])
+    return _EMBEDDING_DIMENSIONS
 
 
 def index_source_text(title: str, body: str, meta: Dict[str, str]) -> None:
@@ -284,6 +299,7 @@ def get_source_chunk_texts(
     """Return chunk texts for a source from LanceDB.
 
     We prefer matching by ``meta.source_id`` because source titles can be renamed.
+    Uses a LanceDB predicate filter to avoid a full table scan.
     """
 
     if not source_id and not title:
@@ -293,23 +309,34 @@ def get_source_chunk_texts(
         return []
     table = _ensure_sources_table(db)
 
-    rows = _read_table_rows(table)
-    if not rows:
-        return []
+    if source_id:
+        condition = f"meta.source_id == '{_escape(source_id)}'"
+    else:
+        condition = f"meta.title == '{_escape(title)}'"
+
+    try:
+        rows = (
+            table.search().where(condition, prefilter=True).limit(max_chunks).to_list()
+        )
+    except Exception:
+        _LOGGER.debug(
+            "LanceDB predicate filter failed; falling back to full scan", exc_info=True
+        )
+        rows = _read_table_rows(table)
 
     matched: List[str] = []
     for row in rows:
-        meta = row.get("meta") or {}
-        if not isinstance(meta, dict):
+        if not isinstance(row, dict):
             continue
-        if source_id and str(meta.get("source_id") or "") == source_id:
-            text = row.get("text")
-            if text:
-                matched.append(str(text))
-        elif not source_id and title and str(meta.get("title") or "") == title:
-            text = row.get("text")
-            if text:
-                matched.append(str(text))
+        meta = row.get("meta") or {}
+        if isinstance(meta, dict):
+            if source_id and str(meta.get("source_id") or "") != source_id:
+                continue
+            if not source_id and title and str(meta.get("title") or "") != title:
+                continue
+        text = row.get("text")
+        if text:
+            matched.append(str(text))
         if len(matched) >= max_chunks:
             break
     return matched
