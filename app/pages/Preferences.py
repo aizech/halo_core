@@ -3,6 +3,7 @@ from __future__ import annotations
 import streamlit as st
 
 from app import main
+import app.pages.config_sections.preferences as preferences
 
 
 def render_preferences_page() -> None:
@@ -14,7 +15,7 @@ def render_preferences_page() -> None:
     st.title("Preferences")
     st.caption("Configure app functionality, authentication, and system settings.")
 
-    main._render_preferences_configuration(st)
+    preferences.render(st)
 
 
 if __name__ == "__main__":

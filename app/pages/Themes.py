@@ -3,6 +3,7 @@ from __future__ import annotations
 import streamlit as st
 
 from app import main
+import app.pages.config_sections.themes as themes
 
 
 def render_themes_page() -> None:
@@ -14,7 +15,7 @@ def render_themes_page() -> None:
     st.title("Themes")
     st.caption("Configure visual appearance and theme settings.")
 
-    main._render_theme_configuration(st)
+    themes.render(st)
 
 
 if __name__ == "__main__":
