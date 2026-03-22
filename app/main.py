@@ -64,7 +64,10 @@ from app.models import (  # noqa: E402
     StudioTemplatesConfig,
 )
 
-logging.basicConfig(level=logging.INFO)
+if not logging.root.handlers:
+    logging.basicConfig(level=logging.INFO)
+else:
+    logging.root.setLevel(logging.INFO)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.info("main.py path: %s", __file__)
 _LOGGER.info("sys.path[0]: %s", sys.path[0])

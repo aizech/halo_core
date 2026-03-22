@@ -1,6 +1,6 @@
 # Core application
-streamlit>=1.28.0
-agno>=0.1.0
+streamlit>=1.40.0,<2
+agno>=2.5.0,<3
 python-dotenv>=1.0.1
 
 # AI/ML dependencies
@@ -45,10 +45,8 @@ ddgs>=0.1.0
 youtube_transcript_api>=0.5.0
 pubmed>=0.0.2
 
-# UI/Docs
+# UI
 streamlit-on-hover-tabs
-mkdocs>=1.5.0
-mkdocs-material>=9.0.0
 
 # Security/Auth
 cryptography>=40.0.0
@@ -59,16 +57,5 @@ protobuf>=3.20.0
 pydicom>=2.4.0
 fpdf2>=2.7.0
 
-# Development tools
-black>=23.0.0
-
-# Security scanning tools
-bandit[toml]>=1.7.0
-pip-audit>=2.5.0
-safety>=2.3.0
-pip-licenses>=4.0.0
-cyclonedx-bom>=4.0.0
-# trufflehog installed separately in CI workflows
-
-# Monitoring/Analytics  
+# Monitoring/Analytics
 langfuse>=3.0.0

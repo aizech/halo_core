@@ -66,6 +66,19 @@ class Settings(BaseSettings):
         validation_alias="DICOM_PACS_AE_TITLE",
         description="DICOM PACS AE Title.",
     )
+    default_model: str = Field(
+        default="openai:gpt-4o",
+        validation_alias="HALO_DEFAULT_MODEL",
+        description="Default model ID used when no agent-specific model is configured.",
+    )
+    default_chat_instructions: str = Field(
+        default=(
+            "Du bist ein Assistent, der Fragen nur mit den bereitgestellten Quellen beantwortet. "
+            "Zitiere Quellen inline im Format [Quelle]."
+        ),
+        validation_alias="HALO_DEFAULT_CHAT_INSTRUCTIONS",
+        description="Default system instructions for the chat agent.",
+    )
 
     @field_validator("dicom_pacs_port", mode="before")
     @classmethod

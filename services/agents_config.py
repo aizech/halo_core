@@ -184,10 +184,12 @@ def _validate_agent_config(payload: Dict[str, object], path: Path) -> Dict[str, 
     return normalized
 
 
-DEFAULT_CHAT_INSTRUCTIONS = (
-    "Du bist ein Assistent, der Fragen nur mit den bereitgestellten Quellen beantwortet. "
-    "Zitiere Quellen inline im Format [Quelle]."
-)
+def _default_chat_instructions() -> str:
+    """Return the default chat instructions, overridable via HALO_DEFAULT_CHAT_INSTRUCTIONS."""
+    return get_settings().default_chat_instructions
+
+
+DEFAULT_CHAT_INSTRUCTIONS = _default_chat_instructions()
 
 DEFAULT_MCP_SERVERS = [
     {
@@ -287,7 +289,7 @@ def _default_chat_config() -> Dict[str, object]:
         "name": "HALO Master",
         "description": "Beantwortet Nutzerfragen basierend auf den ausgewählten Quellen.",
         "role": "assistant",
-        "instructions": DEFAULT_CHAT_INSTRUCTIONS,
+        "instructions": _default_chat_instructions(),
         "members": ["reports", "infographic"],
         "tools": ["image"],
         "tool_settings": {
@@ -296,7 +298,7 @@ def _default_chat_config() -> Dict[str, object]:
             }
         },
         "mcp_servers": list(DEFAULT_MCP_SERVERS),
-        "model": "openai:gpt-5.2",
+        "model": get_settings().default_model,
         "stream_events": True,
         "enabled": True,
     }

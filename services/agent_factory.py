@@ -51,7 +51,9 @@ def normalize_transport(raw: str) -> str:
     return _TRANSPORT_ALIASES.get(key, key)
 
 
-def normalize_model_id(raw: object, default_model_id: str = "openai:gpt-5.2") -> str:
+def normalize_model_id(raw: object, default_model_id: str | None = None) -> str:
+    if default_model_id is None:
+        default_model_id = _SETTINGS.default_model
     if not raw:
         return default_model_id
     model_id = str(raw)

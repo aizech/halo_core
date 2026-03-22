@@ -112,6 +112,71 @@ def test_delete_user_memory_falls_back_to_sql(monkeypatch):
     assert ("m1", "u1") in db.connection.deleted
 
 
+class FakeDbMemoryIdOnly:
+    """Simulates a db whose delete_user_memory only accepts memory_id (no user_id)."""
+
+    def __init__(self):
+        self.connection = FakeConnection()
+        self.deleted: list[str] = []
+
+    def delete_user_memory(self, memory_id: str):
+        self.deleted.append(memory_id)
+
+
+class FakeDbPositionalOnly:
+    """Simulates a db whose delete_user_memory only accepts a positional arg."""
+
+    def __init__(self):
+        self.connection = FakeConnection()
+        self.deleted: list[str] = []
+
+    def delete_user_memory(self, mid):
+        self.deleted.append(mid)
+
+
+class FakeDbDeleteRaises:
+    """Simulates a db whose delete_user_memory always raises."""
+
+    def __init__(self):
+        self.connection = FakeConnection()
+        self.connection.rows = [
+            ("m1", '"text"', "[]", 1700000000, "u1"),
+        ]
+
+    def delete_user_memory(self, **kwargs):
+        raise RuntimeError("backend error")
+
+
+def test_delete_user_memory_memory_id_only_signature(monkeypatch):
+    db = FakeDbMemoryIdOnly()
+    monkeypatch.setattr(user_memory.storage, "get_agent_db", lambda: db)
+
+    ok = user_memory.delete_user_memory(user_id="u1", memory_id="m99")
+
+    assert ok is True
+    assert "m99" in db.deleted
+
+
+def test_delete_user_memory_positional_only_signature(monkeypatch):
+    db = FakeDbPositionalOnly()
+    monkeypatch.setattr(user_memory.storage, "get_agent_db", lambda: db)
+
+    ok = user_memory.delete_user_memory(user_id="u1", memory_id="m42")
+
+    assert ok is True
+    assert "m42" in db.deleted
+
+
+def test_delete_user_memory_falls_back_to_sql_when_api_raises(monkeypatch):
+    db = FakeDbDeleteRaises()
+    monkeypatch.setattr(user_memory.storage, "get_agent_db", lambda: db)
+
+    ok = user_memory.delete_user_memory(user_id="u1", memory_id="m1")
+
+    assert ok is True
+    assert ("m1", "u1") in db.connection.deleted
+
+
 def test_clear_user_memories_deletes_all_for_user(monkeypatch):
     db = FakeDbNoApi()
     monkeypatch.setattr(user_memory.storage, "get_agent_db", lambda: db)
