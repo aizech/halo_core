@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -12,6 +13,18 @@ from services import chunking, parsers, retrieval
 _LOGGER = logging.getLogger(__name__)
 
 DocumentPayload = Dict[str, str]
+
+_last_search_time: float = 0
+MIN_SEARCH_INTERVAL: float = 1.0
+
+
+def _rate_limit_search() -> None:
+    """Apply rate limiting to prevent DuckDuckGo rate limits."""
+    global _last_search_time
+    elapsed = time.time() - _last_search_time
+    if elapsed < MIN_SEARCH_INTERVAL:
+        time.sleep(MIN_SEARCH_INTERVAL - elapsed)
+    _last_search_time = time.time()
 
 
 def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
@@ -28,37 +41,39 @@ def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
         return []
 
     try:
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
     except ImportError:
-        _LOGGER.warning("duckduckgo_search not installed, returning empty results")
+        _LOGGER.warning("ddgs not installed, returning empty results")
         return []
 
     results: List[Dict[str, str]] = []
     try:
-        with DDGS() as ddgs:
-            search_results = ddgs.text(query, max_results=max_results)
-            if search_results:
-                for item in search_results:
-                    results.append(
-                        {
-                            "title": item.get("title", "Untitled"),
-                            "type": "Web",
-                            "meta": f"Web • {datetime.now():%d.%m.%Y}",
-                            "description": item.get("body", "")[:300],
-                            "url": item.get("href", ""),
-                        }
-                    )
+        _rate_limit_search()
+        ddgs = DDGS()
+        search_results = ddgs.text(query, max_results=max_results)
+        if search_results:
+            for item in search_results:
+                results.append(
+                    {
+                        "title": item.get("title", "Untitled"),
+                        "type": "Web",
+                        "meta": f"Web • {datetime.now():%d.%m.%Y}",
+                        "description": item.get("body", "")[:300],
+                        "url": item.get("href", ""),
+                    }
+                )
     except Exception as e:
         _LOGGER.error("DuckDuckGo search failed: %s", e)
 
     return results
 
 
-def scrape_web_content(url: str) -> Dict[str, str]:
-    """Scrape content from a URL using WebsiteTools.
+def scrape_web_content(url: str, max_retries: int = 3) -> Dict[str, str]:
+    """Scrape content from a URL using WebsiteTools with retry logic.
 
     Args:
         url: URL to scrape
+        max_retries: Maximum number of retry attempts (default: 3)
 
     Returns:
         Dict with keys: title, body, source_url, or empty dict on failure
@@ -72,22 +87,42 @@ def scrape_web_content(url: str) -> Dict[str, str]:
         _LOGGER.warning("agno.tools.website not available")
         return {}
 
-    try:
-        tools = WebsiteTools()
-        # WebsiteTools returns content via its methods
-        # Use the web scraper to extract text content
-        content = tools.read(url)
+    last_error: Exception | None = None
+    for attempt in range(max_retries):
+        try:
+            tools = WebsiteTools()
+            content = tools.read(url)
 
-        if content:
-            return {
-                "title": url.split("/")[-1] or url,
-                "body": content,
-                "source_url": url,
-            }
-        return {}
-    except Exception as e:
-        _LOGGER.error("Web scraping failed for %s: %s", url, e)
-        return {}
+            if content:
+                return {
+                    "title": url.split("/")[-1] or url,
+                    "body": content,
+                    "source_url": url,
+                }
+            if attempt == 0:
+                _LOGGER.warning(
+                    "Web scraping returned empty content for %s (no retries needed)",
+                    url,
+                )
+            return {}
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                _LOGGER.warning(
+                    "Web scraping attempt %d/%d failed for %s: %s",
+                    attempt + 1,
+                    max_retries,
+                    url,
+                    e,
+                )
+
+    _LOGGER.error(
+        "Web scraping failed for %s after %d attempts: %s",
+        url,
+        max_retries,
+        last_error,
+    )
+    return {}
 
 
 def ingest_source_content(title: str, body: str, meta: Dict[str, str]) -> None:
