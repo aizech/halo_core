@@ -233,7 +233,7 @@ def build_skills(
 
     skills_dir = get_skills_dir()
     if skills_dir is None or not skills_dir.exists():
-        logger.debug(f"Skills directory not found")
+        logger.debug("Skills directory not found")
         return None
 
     try:
