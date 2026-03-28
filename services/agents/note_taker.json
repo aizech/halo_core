@@ -18,6 +18,9 @@
     "structuring",
     "key_point_extraction"
   ],
+  "skill_refs": [
+    "note-taking"
+  ],
   "tools": [],
   "model": "openai:gpt-4.1-mini",
   "enabled": true

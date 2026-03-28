@@ -20,6 +20,9 @@
     "information_synthesis",
     "current_awareness"
   ],
+  "skill_refs": [
+    "web-research"
+  ],
   "tools": ["duckduckgo", "website", "arxiv"],
   "tool_settings": {
     "duckduckgo": {

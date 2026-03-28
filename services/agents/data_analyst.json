@@ -21,6 +21,9 @@
     "quantitative_reasoning",
     "data_visualization"
   ],
+  "skill_refs": [
+    "data-analysis"
+  ],
   "tools": ["calculator", "duckduckgo"],
   "model": "openai:gpt-4.1",
   "enabled": true

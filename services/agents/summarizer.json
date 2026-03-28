@@ -18,6 +18,9 @@
     "key_point_identification",
     "clarity"
   ],
+  "skill_refs": [
+    "summarization"
+  ],
   "tools": [],
   "model": "openai:gpt-4.1-mini",
   "enabled": true
