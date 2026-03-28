@@ -20,6 +20,9 @@
     "everyday_tasks",
     "quick_answers"
   ],
+  "skill_refs": [
+    "team-coordination"
+  ],
   "members": [
     "general_assistant",
     "note_taker",

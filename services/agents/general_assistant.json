@@ -18,6 +18,9 @@
     "task_coordination",
     "practical_help"
   ],
+  "skill_refs": [
+    "general-assistance"
+  ],
   "tools": ["duckduckgo", "calculator"],
   "model": "openai:gpt-4.1-mini",
   "enabled": true
