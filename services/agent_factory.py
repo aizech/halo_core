@@ -14,6 +14,8 @@ from agno.models.openai import OpenAIChat
 
 from services.settings import get_settings
 
+_LOGGER = logging.getLogger(__name__)
+
 try:
     from agno.skills import Skills, LocalSkills
 except ImportError:
@@ -210,6 +212,12 @@ def get_skills_dir() -> Path | None:
     default_dir = Path(__file__).parent.parent / "skills"
     if default_dir.exists():
         return default_dir
+    _LOGGER.warning(
+        "Skills directory not found at %s. "
+        "Agent skills will not be available. "
+        "Create a 'skills/' directory with skill definitions.",
+        default_dir,
+    )
     return None
 
 

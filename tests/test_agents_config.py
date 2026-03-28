@@ -578,3 +578,20 @@ def test_agent_tools_exist_in_registry():
                 )
 
     assert not errors, "\n".join(errors)
+
+
+def test_team_members_exist():
+    """All team members should reference valid agent configs."""
+    configs = agents_config.load_agent_configs()
+    errors = []
+
+    for agent_id, config in configs.items():
+        members = config.get("members", [])
+        for member_id in members:
+            if member_id not in configs:
+                errors.append(
+                    f"Team '{agent_id}' references non-existent member: '{member_id}'. "
+                    f"Available agents: {sorted(configs.keys())}"
+                )
+
+    assert not errors, "\n".join(errors)

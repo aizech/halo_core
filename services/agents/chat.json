@@ -17,6 +17,9 @@
     "simple_queries",
     "fallback_handling"
   ],
+  "skill_refs": [
+    "general-assistance"
+  ],
   "tools": [],
   "model": "openai:gpt-4.1-mini",
   "enabled": true
