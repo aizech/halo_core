@@ -21,6 +21,9 @@
     "storytelling",
     "audience_engagement"
   ],
+  "skill_refs": [
+    "content-creation"
+  ],
   "tools": ["duckduckgo", "website"],
   "tool_settings": {
     "duckduckgo": {

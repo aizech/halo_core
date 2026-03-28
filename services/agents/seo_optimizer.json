@@ -20,6 +20,9 @@
     "search_trends",
     "meta_optimization"
   ],
+  "skill_refs": [
+    "seo-optimization"
+  ],
   "tools": ["duckduckgo", "website"],
   "tool_settings": {
     "duckduckgo": {
