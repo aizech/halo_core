@@ -559,3 +559,22 @@ def test_load_agent_configs_creates_missing_configs(tmp_path, monkeypatch):
 
     assert "chat" in configs
     assert (data_dir / "agents" / "chat.json").exists()
+
+
+def test_agent_tools_exist_in_registry():
+    """All tools referenced in agent configs should exist in tool registry."""
+    from services.tool_registry import TOOL_BUILDERS
+
+    configs = agents_config.load_agent_configs()
+    errors = []
+
+    for agent_id, config in configs.items():
+        tools = config.get("tools", [])
+        for tool in tools:
+            if tool not in TOOL_BUILDERS:
+                errors.append(
+                    f"Agent '{agent_id}' references unknown tool: '{tool}'. "
+                    f"Available tools: {sorted(TOOL_BUILDERS.keys())}"
+                )
+
+    assert not errors, "\n".join(errors)

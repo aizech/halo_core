@@ -20,6 +20,9 @@
     "artistic_direction",
     "visual_storytelling"
   ],
+  "skill_refs": [
+    "image-generation"
+  ],
   "tools": ["image"],
   "tool_settings": {
     "image": {

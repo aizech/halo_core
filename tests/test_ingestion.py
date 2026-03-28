@@ -58,3 +58,45 @@ def test_dicom_magic_too_short() -> None:
 
     short = b"\x00" * 64
     assert parsers.is_dicom_file(short) is False
+
+
+def test_search_web_returns_results() -> None:
+    """Test that search_web returns non-empty results for valid queries."""
+    results = ingestion.search_web("artificial intelligence", max_results=3)
+    assert isinstance(results, list)
+    assert len(results) > 0
+    for result in results:
+        assert "title" in result
+        assert "url" in result
+        assert "description" in result
+        assert result["type"] == "Web"
+
+
+def test_search_web_empty_query() -> None:
+    """Test that search_web returns empty list for empty query."""
+    results = ingestion.search_web("")
+    assert results == []
+
+    results = ingestion.search_web("   ")
+    assert results == []
+
+
+def test_scrape_web_content_invalid_url() -> None:
+    """Test that scrape_web_content handles invalid URLs."""
+    result = ingestion.scrape_web_content("")
+    assert result == {}
+
+    result = ingestion.scrape_web_content("not-a-url")
+    assert result == {}
+
+
+def test_scrape_web_content_url_expected_format() -> None:
+    """Test that scrape_web_content returns dict with expected keys for valid URL."""
+    # This test uses a real URL but just checks the format
+    result = ingestion.scrape_web_content("https://example.com")
+    # May be empty if scraping fails, but should be a dict
+    assert isinstance(result, dict)
+    if result:
+        assert "title" in result
+        assert "body" in result
+        assert "source_url" in result

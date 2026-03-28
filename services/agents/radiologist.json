@@ -31,7 +31,7 @@
   ],
   "tools": [
     "pubmed",
-    "web_search"
+    "websearch"
   ],
   "tool_settings": {
     "pubmed": {

@@ -22,6 +22,7 @@ Supported fields:
 - behavior:
   - `instructions`
   - `skills`
+  - `skill_refs`
   - `tools`
   - `mcp_calls`
 - runtime:
@@ -36,7 +37,8 @@ Supported fields:
 Validation behavior:
 
 - `instructions` accepts `str` or `list[str]`, normalized to a single string
-- list fields (`skills`, `tools`, `mcp_calls`, `members`) must contain only strings
+- list fields (`skills`, `skill_refs`, `tools`, `mcp_calls`, `members`) must contain only strings
+- `skill_refs` references Agno skills in the `skills/` directory
 - invalid payloads fail with descriptive, per-field error messages
 
 ## 3) Config file location and bootstrap
