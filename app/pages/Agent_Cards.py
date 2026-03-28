@@ -50,7 +50,6 @@ _MATERIAL_ICONS: dict[str, str] = {
     "content_writer": "edit",
     "seo_optimizer": "search",
     "general_assistant": "support_agent",
-    "showcase_assistant": "star",
 }
 
 
