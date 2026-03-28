@@ -7,11 +7,18 @@ This module focuses on model building and MCP tool assembly.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any, Dict, List
 
 from agno.models.openai import OpenAIChat
 
 from services.settings import get_settings
+
+try:
+    from agno.skills import Skills, LocalSkills
+except ImportError:
+    Skills = None
+    LocalSkills = None
 
 try:  # Optional MCP tool kit
     from agno.tools.mcp import MCPTools
@@ -193,3 +200,55 @@ def build_mcp_tools(
             logger.exception("Failed to build MCPTools for server '%s'", server_name)
 
     return tools
+
+
+def get_skills_dir() -> Path | None:
+    """Get the skills directory path from settings or default location."""
+    skills_dir = getattr(_SETTINGS, "skills_dir", None)
+    if skills_dir:
+        return Path(skills_dir)
+    default_dir = Path(__file__).parent.parent / "skills"
+    if default_dir.exists():
+        return default_dir
+    return None
+
+
+def build_skills(
+    skill_names: List[str] | None = None,
+    *,
+    logger: logging.Logger,
+) -> Skills | None:
+    """Build Agno Skills from the skills directory.
+
+    Args:
+        skill_names: Optional list of specific skill names to load.
+                    If None, loads all skills from the skills directory.
+
+    Returns:
+        Skills object or None if skills cannot be loaded.
+    """
+    if Skills is None or LocalSkills is None:
+        logger.debug("Agno skills not available")
+        return None
+
+    skills_dir = get_skills_dir()
+    if skills_dir is None or not skills_dir.exists():
+        logger.debug(f"Skills directory not found")
+        return None
+
+    try:
+        if skill_names:
+            skill_paths = [skills_dir / name for name in skill_names]
+            loaders = [LocalSkills(str(p)) for p in skill_paths if p.exists()]
+            if not loaders:
+                logger.debug(f"No valid skill paths found for: {skill_names}")
+                return None
+            skills = Skills(loaders=loaders)
+        else:
+            skills = Skills(loaders=[LocalSkills(str(skills_dir))])
+
+        logger.info(f"Loaded skills from: {skills_dir}")
+        return skills
+    except Exception as e:
+        logger.warning(f"Failed to load skills: {e}")
+        return None

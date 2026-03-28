@@ -24,6 +24,7 @@ class AgentConfig(BaseModel):
     type: str = "agent"  # "agent" or "team"
     instructions: str | List[str] = ""
     skills: List[str] = Field(default_factory=list)
+    skill_refs: List[str] = Field(default_factory=list)
     tools: List[str] = Field(default_factory=list)
     mcp_calls: List[str] = Field(default_factory=list)
     mcp_servers: List[Dict[str, Any]] = Field(default_factory=list)
@@ -52,7 +53,7 @@ class AgentConfig(BaseModel):
             return value
         raise ValueError("instructions must be a string or list of strings")
 
-    @field_validator("skills", "tools", "mcp_calls", "members")
+    @field_validator("skills", "skill_refs", "tools", "mcp_calls", "members")
     @classmethod
     def _validate_string_list(cls, value: List[str]) -> List[str]:
         if all(isinstance(item, str) for item in value):

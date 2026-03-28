@@ -22,6 +22,9 @@
     "therapeutic_alternatives",
     "adverse_effect_monitoring"
   ],
+  "skill_refs": [
+    "pharmacology"
+  ],
   "tools": ["pubmed", "calculator"],
   "tool_settings": {
     "pubmed": {

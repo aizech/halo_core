@@ -23,6 +23,9 @@
     "medical_terminology",
     "documentation_standards"
   ],
+  "skill_refs": [
+    "medical-documentation"
+  ],
   "tools": [],
   "model": "openai:gpt-4.1",
   "enabled": true

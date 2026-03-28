@@ -22,6 +22,10 @@
     "research_methodology",
     "statistical_interpretation"
   ],
+  "skill_refs": [
+    "research-synthesis",
+    "clinical-reasoning"
+  ],
   "tools": ["pubmed", "arxiv", "duckduckgo"],
   "tool_settings": {
     "pubmed": {

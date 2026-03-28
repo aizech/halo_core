@@ -12,6 +12,7 @@ from services.agents_config import build_agent_instructions
 from services.agent_factory import (
     build_mcp_tools,
     build_model,
+    build_skills,
     build_tools,
     normalize_model_id,
 )
@@ -63,6 +64,12 @@ def build_agent_from_config(
                 name,
             )
 
+    # Build skills if defined in config
+    skill_refs = config.get("skill_refs") or []
+    skills = None
+    if skill_refs:
+        skills = build_skills(skill_refs, logger=_LOGGER)
+
     agent = Agent(
         name=name,
         instructions=instructions,
@@ -77,6 +84,7 @@ def build_agent_from_config(
         enable_user_memories=db is not None,
         knowledge=knowledge,
         search_knowledge=knowledge is not None,
+        skills=skills,
     )
     tools = build_tools(
         config.get("tools"),

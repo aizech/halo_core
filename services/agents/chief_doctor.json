@@ -22,6 +22,11 @@
     "differential_diagnosis",
     "treatment_planning"
   ],
+  "skill_refs": [
+    "medical-diagnosis",
+    "clinical-reasoning",
+    "team-coordination"
+  ],
   "tools": ["pubmed", "duckduckgo", "calculator"],
   "tool_settings": {
     "pubmed": {

@@ -26,6 +26,9 @@
     "medical_image_analysis",
     "dicom_interpretation"
   ],
+  "skill_refs": [
+    "medical-imaging"
+  ],
   "tools": [
     "pubmed",
     "web_search"

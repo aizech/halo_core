@@ -21,6 +21,10 @@
     "cardiac_risk_stratification",
     "preventive_cardiology"
   ],
+  "skill_refs": [
+    "medical-diagnosis",
+    "clinical-reasoning"
+  ],
   "tools": ["pubmed", "calculator"],
   "tool_settings": {
     "pubmed": {

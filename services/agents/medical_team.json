@@ -23,6 +23,10 @@
     "evidence_based_medicine",
     "clinical_decision_support"
   ],
+  "skill_refs": [
+    "team-coordination",
+    "clinical-reasoning"
+  ],
   "members": [
     "chief_doctor",
     "radiologist",
