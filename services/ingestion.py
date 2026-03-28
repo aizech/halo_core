@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import logging
+import re
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 from services import chunking, parsers, retrieval
+
+if TYPE_CHECKING:
+    from agno.tools.website import WebsiteTools
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,15 +21,40 @@ DocumentPayload = Dict[str, str]
 
 _last_search_time: float = 0
 MIN_SEARCH_INTERVAL: float = 1.0
+_rate_limit_lock = threading.Lock()
+
+_website_tools_instance: "WebsiteTools | None" = None
+
+
+def _get_website_tools() -> "WebsiteTools | None":
+    """Get or create a singleton WebsiteTools instance."""
+    global _website_tools_instance
+    if _website_tools_instance is None:
+        try:
+            from agno.tools.website import WebsiteTools
+
+            _website_tools_instance = WebsiteTools()
+        except ImportError:
+            _LOGGER.warning("agno.tools.website not available")
+            return None
+    return _website_tools_instance
 
 
 def _rate_limit_search() -> None:
-    """Apply rate limiting to prevent DuckDuckGo rate limits."""
+    """Apply rate limiting to prevent DuckDuckGo rate limits (thread-safe)."""
     global _last_search_time
-    elapsed = time.time() - _last_search_time
-    if elapsed < MIN_SEARCH_INTERVAL:
-        time.sleep(MIN_SEARCH_INTERVAL - elapsed)
-    _last_search_time = time.time()
+    with _rate_limit_lock:
+        elapsed = time.time() - _last_search_time
+        if elapsed < MIN_SEARCH_INTERVAL:
+            time.sleep(MIN_SEARCH_INTERVAL - elapsed)
+        _last_search_time = time.time()
+
+
+def _sanitize_query(query: str) -> str:
+    """Sanitize search query to prevent injection attacks."""
+    sanitized = query.strip()[:500]
+    sanitized = re.sub(r"[^\w\s\-.,']", "", sanitized)
+    return sanitized
 
 
 def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
@@ -40,6 +70,10 @@ def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
     if not query or not query.strip():
         return []
 
+    sanitized_query = _sanitize_query(query)
+    if not sanitized_query:
+        return []
+
     try:
         from ddgs import DDGS
     except ImportError:
@@ -50,7 +84,7 @@ def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
     try:
         _rate_limit_search()
         ddgs = DDGS()
-        search_results = ddgs.text(query, max_results=max_results)
+        search_results = ddgs.text(sanitized_query, max_results=max_results)
         if search_results:
             for item in search_results:
                 results.append(
@@ -81,16 +115,13 @@ def scrape_web_content(url: str, max_retries: int = 3) -> Dict[str, str]:
     if not url or not url.strip():
         return {}
 
-    try:
-        from agno.tools.website import WebsiteTools
-    except ImportError:
-        _LOGGER.warning("agno.tools.website not available")
+    tools = _get_website_tools()
+    if tools is None:
         return {}
 
     last_error: Exception | None = None
     for attempt in range(max_retries):
         try:
-            tools = WebsiteTools()
             content = tools.read(url)
 
             if content:

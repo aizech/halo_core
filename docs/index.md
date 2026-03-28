@@ -62,6 +62,13 @@ Developer documentation:
 - [UI Panels and Pages](reference/ui-panels-and-pages.md) — Frontend architecture
 - [Development, Testing, and Operations](reference/development-testing-and-operations.md) — DevOps
 
+### Skills
+
+HALO Core uses Agno Skills for domain-specific agent capabilities:
+
+- [Skills Guide](../skills/README.md) — How to create and use skills
+- 15+ pre-built skills for medical, research, marketing, and general tasks
+
 ---
 
 ## Key Features

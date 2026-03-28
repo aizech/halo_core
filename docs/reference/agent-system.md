@@ -315,3 +315,14 @@ The current architecture intentionally keeps:
 - deterministic, test-covered routing/stream handling
 
 This supports incremental hardening while preserving existing app behavior.
+
+## 18) Agents without tools
+
+Some agents intentionally have no tools configured:
+
+- **chat**: Fallback agent for simple conversations - uses skills for basic assistance
+- **medical_scribe**: Documentation-focused - no external tools needed
+- **note_taker**: Information capture specialist - no external tools needed
+- **summarizer**: Text condensation specialist - no external tools needed
+
+These agents perform their tasks through instructions and skills alone, without needing external tools like web search or calculators.
