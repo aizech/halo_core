@@ -22,8 +22,8 @@
         
       
       
-      <link rel="icon" href="../../assets/icon_dark.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+      <link rel="icon" href="../../assets/icon_light.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -1783,6 +1783,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#18-agents-without-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18) Agents without tools
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2280,6 +2291,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#18-agents-without-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18) Agents without tools
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2319,6 +2341,7 @@
 <li>behavior:</li>
 <li><code>instructions</code></li>
 <li><code>skills</code></li>
+<li><code>skill_refs</code></li>
 <li><code>tools</code></li>
 <li><code>mcp_calls</code></li>
 <li>runtime:</li>
@@ -2333,7 +2356,8 @@
 <p>Validation behavior:</p>
 <ul>
 <li><code>instructions</code> accepts <code>str</code> or <code>list[str]</code>, normalized to a single string</li>
-<li>list fields (<code>skills</code>, <code>tools</code>, <code>mcp_calls</code>, <code>members</code>) must contain only strings</li>
+<li>list fields (<code>skills</code>, <code>skill_refs</code>, <code>tools</code>, <code>mcp_calls</code>, <code>members</code>) must contain only strings</li>
+<li><code>skill_refs</code> references Agno skills in the <code>skills/</code> directory</li>
 <li>invalid payloads fail with descriptive, per-field error messages</li>
 </ul>
 <h2 id="3-config-file-location-and-bootstrap">3) Config file location and bootstrap</h2>
@@ -2706,6 +2730,15 @@
 <li>deterministic, test-covered routing/stream handling</li>
 </ul>
 <p>This supports incremental hardening while preserving existing app behavior.</p>
+<h2 id="18-agents-without-tools">18) Agents without tools</h2>
+<p>Some agents intentionally have no tools configured:</p>
+<ul>
+<li><strong>chat</strong>: Fallback agent for simple conversations - uses skills for basic assistance</li>
+<li><strong>medical_scribe</strong>: Documentation-focused - no external tools needed</li>
+<li><strong>note_taker</strong>: Information capture specialist - no external tools needed</li>
+<li><strong>summarizer</strong>: Text condensation specialist - no external tools needed</li>
+</ul>
+<p>These agents perform their tasks through instructions and skills alone, without needing external tools like web search or calculators.</p>
 
 
 

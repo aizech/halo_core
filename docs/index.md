@@ -66,7 +66,7 @@ Developer documentation:
 
 HALO Core uses Agno Skills for domain-specific agent capabilities:
 
-- [Skills Guide](../skills/README.md) — How to create and use skills
+- [Skills Guide](https://github.com/aizech/halo_core/tree/main/skills/README.md) — How to create and use skills
 - 15+ pre-built skills for medical, research, marketing, and general tasks
 
 ---
