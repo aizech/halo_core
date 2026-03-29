@@ -26,7 +26,7 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: .
-          extra_args: --debug --json --since_commit=HEAD~10
+          extra_args: --json
         continue-on-error: true
 
   # Static Application Security Testing (SAST)
