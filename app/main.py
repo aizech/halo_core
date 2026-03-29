@@ -4,15 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
-import warnings
-
-warnings.filterwarnings("ignore", message=".*has conflict with protected namespace.*", category=UserWarning)
-
-import sys
 import re
+import sys
 import uuid
 import base64
 import mimetypes
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Literal, Optional
@@ -28,6 +25,10 @@ except ImportError:  # pragma: no cover
     RunEvent = None
 from streamlit import components
 from pydantic import ValidationError
+
+warnings.filterwarnings(
+    "ignore", message=".*has conflict with protected namespace.*", category=UserWarning
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 project_root_str = str(PROJECT_ROOT)
