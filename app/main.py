@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
+import warnings
+
+warnings.filterwarnings("ignore", message=".*has conflict with protected namespace.*", category=UserWarning)
+
 import sys
 import re
 import uuid
@@ -96,6 +100,7 @@ def _get_agent_config(agent_id: str) -> Dict[str, object] | None:
     return None
 
 
+@st.cache_data(ttl=300, show_spinner=False)
 def _load_studio_teams() -> List[StudioTeam]:
     """Load studio teams from templates config."""
     templates_path = PROJECT_ROOT / "templates" / "studio_templates.json"
@@ -118,6 +123,7 @@ def _load_studio_teams() -> List[StudioTeam]:
     return teams
 
 
+@st.cache_data(ttl=300, show_spinner=False)
 def _load_studio_templates() -> List[StudioTemplate]:
     templates_path = PROJECT_ROOT / "templates" / "studio_templates.json"
     if not templates_path.exists():

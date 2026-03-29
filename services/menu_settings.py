@@ -161,8 +161,26 @@ def _normalize_access_level(value: Any) -> str:
     return "public"
 
 
+_DEFAULT_ITEMS: List[Dict[str, Any]] | None = None
+_DEFAULT_SETTINGS: Dict[str, Any] | None = None
+
+
+def _get_default_items() -> List[Dict[str, Any]]:
+    global _DEFAULT_ITEMS
+    if _DEFAULT_ITEMS is None:
+        _DEFAULT_ITEMS = deepcopy(DEFAULT_MENU_SETTINGS["items"])
+    return _DEFAULT_ITEMS
+
+
+def _get_default_settings() -> Dict[str, Any]:
+    global _DEFAULT_SETTINGS
+    if _DEFAULT_SETTINGS is None:
+        _DEFAULT_SETTINGS = deepcopy(DEFAULT_MENU_SETTINGS)
+    return _DEFAULT_SETTINGS
+
+
 def _normalize_items(value: Any) -> List[Dict[str, Any]]:
-    defaults = deepcopy(DEFAULT_MENU_SETTINGS["items"])
+    defaults = deepcopy(_get_default_items())
     if not isinstance(value, list):
         return defaults
     cleaned: List[Dict[str, Any]] = []
@@ -249,7 +267,7 @@ def _normalize_items(value: Any) -> List[Dict[str, Any]]:
 
 
 def normalize_menu_settings(raw: Any) -> Dict[str, Any]:
-    defaults = deepcopy(DEFAULT_MENU_SETTINGS)
+    defaults = deepcopy(_get_default_settings())
     if not isinstance(raw, dict):
         return defaults
 
