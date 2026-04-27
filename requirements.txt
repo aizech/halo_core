@@ -50,7 +50,7 @@ streamlit-on-hover-tabs
 
 # Security/Auth
 cryptography>=40.0.0
-Authlib>=1.2.0
+Authlib>=1.7.0
 protobuf>=3.20.0
 
 # Medical/Imaging
