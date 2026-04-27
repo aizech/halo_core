@@ -43,7 +43,7 @@ moviepy>=1.0.3
 wikipedia>=1.4.0
 ddgs>=0.1.0
 youtube_transcript_api>=0.5.0
-pubmed>=0.0.2
+pubmed>=0.0.2.post0
 
 # UI
 streamlit-on-hover-tabs
