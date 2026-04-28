@@ -158,7 +158,7 @@ jobs:
           pip install cyclonedx-bom
       
       - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@v0.18.0
+        uses: anchore/sbom-action@v0.24.0
         with:
           format: cyclonedx-json
           output-file: sbom.cdx.json
