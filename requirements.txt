@@ -49,7 +49,7 @@ pubmed>=0.0.2.post0
 streamlit-on-hover-tabs
 
 # Security/Auth
-cryptography>=40.0.0
+cryptography>=47.0.0
 Authlib>=1.7.0
 protobuf>=3.20.0
 
