@@ -33,6 +33,8 @@ python-docx>=1.2.0
 python-pptx>=0.6.21
 openpyxl>=3.0.10
 xlrd>=2.0.2
+openpyxl>=3.1.5
+xlrd>=2.0.1
 pillow>=9.5.0
 
 # Media processing
@@ -49,7 +51,7 @@ pubmed>=0.0.2.post0
 streamlit-on-hover-tabs
 
 # Security/Auth
-cryptography>=40.0.0
+cryptography>=47.0.0
 Authlib>=1.7.0
 protobuf>=3.20.0
 
